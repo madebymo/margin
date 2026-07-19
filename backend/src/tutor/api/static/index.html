@@ -35,6 +35,23 @@
            color: white; cursor: pointer; font-size: 13px; }
   button.secondary { background: #333a46; }
   button:disabled { opacity: .35; cursor: default; }
+  .widgetbox { background: #221d33; border: 1px solid #4a3f73; align-self: flex-start;
+               max-width: 72%; padding: 12px 14px; border-radius: 12px;
+               display: flex; flex-direction: column; gap: 8px; }
+  .widget-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .widget-controls input[type=range] { flex: 1; min-width: 160px; }
+  .widget-controls input[type=text] { flex: 1; min-width: 160px; padding: 8px;
+               border-radius: 7px; border: 1px solid #333a46; background: #0f1115; color: #e8eaed; }
+  .region { background: #333a46; }
+  .region.selected { background: #3b6cd4; }
+  .maprow { display: flex; gap: 8px; align-items: center; }
+  .maprow span { min-width: 40%; }
+  .maprow select { flex: 1; padding: 6px; border-radius: 7px; border: 1px solid #333a46;
+               background: #0f1115; color: #e8eaed; }
+  .slider-value { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+  .feedback { font-size: 12.5px; min-height: 1em; }
+  .feedback.ok { color: #7dd97d; }
+  .feedback.no { color: #e89a9a; }
 </style>
 </head>
 <body>
@@ -96,13 +113,109 @@ async function api(path, body) {
   return response.json();
 }
 
+function shuffled(list) {
+  const array = [...list];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function renderWidget(item) {
+  const w = item.widget;
+  const box = document.createElement("div");
+  box.className = "widgetbox";
+  const tag = document.createElement("span");
+  tag.className = "kind-tag";
+  tag.textContent = "interactive: " + w.widget_type;
+  const promptEl = document.createElement("div");
+  promptEl.textContent = w.prompt || "";
+  const controls = document.createElement("div");
+  controls.className = "widget-controls";
+  const feedback = document.createElement("div");
+  feedback.className = "feedback";
+  let getResponse = () => ({});
+
+  if (w.widget_type === "slider") {
+    const range = document.createElement("input");
+    range.type = "range";
+    range.min = w.params.min;
+    range.max = w.params.max;
+    range.step = w.params.step;
+    range.value = w.params.min;
+    const value = document.createElement("span");
+    value.className = "slider-value";
+    value.textContent = range.value;
+    range.addEventListener("input", () => { value.textContent = range.value; });
+    controls.append(range, value);
+    getResponse = () => ({ value: parseFloat(range.value) });
+  } else if (w.widget_type === "click_region") {
+    for (const region of w.regions) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "region";
+      btn.dataset.id = region.id;
+      btn.textContent = region.label || region.id;
+      btn.addEventListener("click", () => btn.classList.toggle("selected"));
+      controls.append(btn);
+    }
+    getResponse = () => ({
+      selected: [...controls.querySelectorAll(".region.selected")].map((b) => b.dataset.id),
+    });
+  } else if (w.widget_type === "mapping") {
+    controls.style.flexDirection = "column";
+    controls.style.alignItems = "stretch";
+    const rows = [];
+    const options = shuffled(w.right);
+    for (const left of w.left) {
+      const row = document.createElement("div");
+      row.className = "maprow";
+      const label = document.createElement("span");
+      label.textContent = left;
+      const select = document.createElement("select");
+      select.append(new Option("choose…", ""));
+      for (const right of options) select.append(new Option(right, right));
+      row.append(label, select);
+      rows.push([left, select]);
+      controls.append(row);
+    }
+    getResponse = () => ({
+      pairs: rows.filter(([, s]) => s.value).map(([l, s]) => [l, s.value]),
+    });
+  } else {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "your answer…";
+    controls.append(input);
+    getResponse = () => ({ text: input.value });
+  }
+
+  const checkBtn = document.createElement("button");
+  checkBtn.textContent = "Check";
+  checkBtn.addEventListener("click", () => guard(async () => {
+    const data = await api(`/sessions/${sessionId}/widget`, {
+      key: item.key,
+      response: getResponse(),
+    });
+    feedback.textContent = data.message;
+    feedback.className = "feedback " + (data.correct ? "ok" : "no");
+    if (data.correct) {
+      checkBtn.disabled = true;
+      controls.querySelectorAll("input,select,button").forEach((el) => { el.disabled = true; });
+    }
+  }));
+
+  box.append(tag, promptEl, controls, checkBtn, feedback);
+  log.appendChild(box);
+  log.scrollTop = log.scrollHeight;
+}
+
 function applyTurn(turn) {
   sessionId = turn.session_id;
   for (const item of turn.interactions) {
     add(item.kind === "message" ? "tutor" : item.kind, item.text);
-    if (item.widget) {
-      add("checkin", "[interactive: " + item.widget.widget_type + "]\n" + (item.widget.prompt || ""));
-    }
+    if (item.widget) renderWidget(item);
   }
   phase.textContent = turn.phase;
   if (turn.llm_enabled === false) add("tutor", "(LLM unavailable — using template content.)");

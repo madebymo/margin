@@ -35,6 +35,13 @@ from tutor.orchestrator.routing import route
 from tutor.schemas.common import ResponseClass
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import EvidenceEvent, LearnerProfile
+from tutor.schemas.widgets import (
+    ClickRegionWidget,
+    LiveInputWidget,
+    MappingWidget,
+    SliderWidget,
+    WidgetConfig,
+)
 from tutor.verify.checker import check_answer
 
 _CALC_ASSUMED_FLOOR = {"Algebra 1", "Algebra 2", "Precalculus"}
@@ -75,6 +82,42 @@ class _Pending(BaseModel):
     hints_given: int = 0
 
 
+def _score_widget(widget: WidgetConfig, response: dict) -> bool:
+    """Authoritative server-side scoring for one widget attempt."""
+    if isinstance(widget, SliderWidget):
+        try:
+            value = float(response.get("value"))
+        except (TypeError, ValueError):
+            return False
+        condition = widget.success_condition
+        return abs(value - condition.target) <= condition.tolerance
+    if isinstance(widget, ClickRegionWidget):
+        selected = response.get("selected")
+        if not isinstance(selected, list):
+            return False
+        return {str(item) for item in selected} == set(widget.correct_region_ids)
+    if isinstance(widget, MappingWidget):
+        pairs = response.get("pairs")
+        if not isinstance(pairs, list):
+            return False
+        try:
+            chosen = {(str(left), str(right)) for left, right in pairs}
+        except (TypeError, ValueError):
+            return False
+        return chosen == {(left, right) for left, right in widget.correct_pairs}
+    if isinstance(widget, LiveInputWidget):
+        text = response.get("text")
+        if not isinstance(text, str) or not text.strip():
+            return False
+        return check_answer(
+            widget.checker.expected,
+            text,
+            widget.checker.equivalence,
+            widget.checker.tolerance,
+        )
+    return False
+
+
 class SessionOrchestrator:
     """Drives one session from intake to capstone."""
 
@@ -107,6 +150,8 @@ class SessionOrchestrator:
             evaluator=evaluator,
         )
         self._planned_lessons: dict[str, PlannedLesson] = {}
+        self._active_widgets: dict[str, tuple[str, WidgetConfig]] = {}
+        self._widget_attempts: dict[str, int] = {}
         self._diag = DiagnosisController(graph, target_kc, self.learner, probe_budget)
         self._exit_consecutive = exit_consecutive
         self.envelope = EpisodeEnvelope(
@@ -157,6 +202,44 @@ class SessionOrchestrator:
         text = self._pending.hints[self._pending.hints_given]
         self._pending.hints_given += 1
         return text
+
+    def answer_widget(self, key: str, response: dict) -> tuple[bool, str]:
+        """Score a widget attempt (authoritative, server-side).
+
+        Widget practice is formative: it never advances the state machine or
+        consumes routing budget, and only the first attempt per key becomes
+        an evidence event (repeats are scored but not re-recorded).
+        """
+        if self.phase in (SessionPhase.DONE, SessionPhase.STOPPED):
+            raise RuntimeError("session is over")
+        if key not in self._active_widgets:
+            raise KeyError(f"unknown widget: {key}")
+        kc, widget = self._active_widgets[key]
+        correct = _score_widget(widget, response)
+        attempts = self._widget_attempts.get(key, 0)
+        self._widget_attempts[key] = attempts + 1
+        if attempts == 0:
+            self.learner.apply_event(
+                EvidenceEvent(
+                    event_id=uuid4(),
+                    learner_id=self.learner.learner_id,
+                    t=datetime.now(timezone.utc),
+                    item_id=key,
+                    kc_ids=[kc],
+                    correct=correct,
+                    response_class=ResponseClass.WIDGET,
+                    content_versions={
+                        "graph": str(self._graph.graph_version),
+                        "generator": "template-v1",
+                    },
+                )
+            )
+        message = (
+            "Nice — that's it."
+            if correct
+            else "Not yet — adjust your answer and try again."
+        )
+        return correct, message
 
     def _ancestors_of(self, kc: str) -> set[str]:
         return graph_service.ancestor_subgraph(self._graph, kc).node_ids() - {kc}
@@ -299,6 +382,8 @@ class SessionOrchestrator:
             text=planned.narrative,
             widget=planned.widget.model_dump() if planned.widget is not None else None,
         )
+        if planned.widget is not None:
+            self._active_widgets[lesson.key] = (kc, planned.widget)
         return [lesson, *self._issue_checkin(kc)]
 
     def _issue_checkin(self, kc: str) -> list[Interaction]:

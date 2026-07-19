@@ -67,6 +67,20 @@ class HintResponse(BaseModel):
     hint: str | None
 
 
+class WidgetAnswerRequest(BaseModel):
+    """One widget attempt: the lesson interaction key plus the raw response."""
+
+    key: str = Field(min_length=1)
+    response: dict
+
+
+class WidgetAnswerResponse(BaseModel):
+    """Server-side verdict for a widget attempt."""
+
+    correct: bool
+    message: str
+
+
 def _turn(
     session_id: str,
     orchestrator: SessionOrchestrator,
@@ -158,6 +172,18 @@ def create_app(graph: GraphDocument | None = None) -> FastAPI:
         """Serve the next hint (marks the eventual answer as assisted)."""
         orchestrator = _get_session(session_id)
         return HintResponse(hint=orchestrator.hint())
+
+    @app.post("/sessions/{session_id}/widget", response_model=WidgetAnswerResponse)
+    def answer_widget(session_id: str, request: WidgetAnswerRequest) -> WidgetAnswerResponse:
+        """Score a widget attempt (authoritative, server-side)."""
+        orchestrator = _get_session(session_id)
+        try:
+            correct, message = orchestrator.answer_widget(request.key, request.response)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="unknown widget") from None
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from None
+        return WidgetAnswerResponse(correct=correct, message=message)
 
     @app.get("/sessions/{session_id}", response_model=TurnResponse)
     def get_session(session_id: str) -> TurnResponse:
