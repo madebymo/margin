@@ -26,19 +26,23 @@ _PREFIX = {
 def _render(interactions: list[Interaction]) -> None:
     for interaction in interactions:
         print(f"\n[{_PREFIX[interaction.kind]}] {interaction.text}")
+        if interaction.widget:
+            widget_type = interaction.widget.get("widget_type", "widget")
+            prompt = interaction.widget.get("prompt", "")
+            print(f"[interactive:{widget_type}] {prompt}")
 
 
 def _build_llm_ports(graph, profile, provider: str):
-    """Construct LLM-backed ports, or (None, None) with a warning if unavailable."""
+    """Construct all LLM-backed ports, or None with a warning if unavailable."""
     try:
         from tutor.llm.factory import build_llm_ports
 
-        diagnostician, lesson_writer = build_llm_ports(graph, profile, provider)
+        ports = build_llm_ports(graph, profile, provider)
     except Exception as exc:  # noqa: BLE001 — degrade to templates with a notice
         print(f"[warn] LLM ports unavailable ({exc}); using template ports.")
-        return None, None
-    print("[info] LLM-backed diagnostician and lesson writer enabled.")
-    return diagnostician, lesson_writer
+        return None
+    print("[info] LLM diagnostician, lesson planner, and evaluator enabled.")
+    return ports
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,15 +66,15 @@ def main(argv: list[str] | None = None) -> int:
 
     graph = load_graph()
     profile = LearnerProfile(course=args.course, age_band=args.age_band)
-    diagnostician = lesson_writer = None
-    if args.llm:
-        diagnostician, lesson_writer = _build_llm_ports(graph, profile, args.provider)
+    ports = _build_llm_ports(graph, profile, args.provider) if args.llm else None
     orchestrator = SessionOrchestrator(
         graph,
         args.target,
         profile,
-        diagnostician=diagnostician,
-        lesson_writer=lesson_writer,
+        diagnostician=ports.diagnostician if ports else None,
+        lesson_writer=ports.lesson_writer if ports else None,
+        interaction_generator=ports.interaction_generator if ports else None,
+        evaluator=ports.evaluator if ports else None,
     )
     _render(orchestrator.begin())
 

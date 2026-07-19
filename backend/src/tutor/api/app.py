@@ -113,15 +113,17 @@ def create_app(graph: GraphDocument | None = None) -> FastAPI:
     def create_session(request: CreateSessionRequest) -> TurnResponse:
         """Start a session: intake -> first diagnostic probe."""
         profile = LearnerProfile(course=request.course, age_band=request.age_band)
-        diagnostician = lesson_writer = None
+        diagnostician = lesson_writer = interaction_generator = evaluator = None
         llm_enabled = False
         if request.llm:
             try:
                 from tutor.llm.factory import build_llm_ports
 
-                diagnostician, lesson_writer = build_llm_ports(
-                    resolved_graph, profile, request.provider
-                )
+                ports = build_llm_ports(resolved_graph, profile, request.provider)
+                diagnostician = ports.diagnostician
+                lesson_writer = ports.lesson_writer
+                interaction_generator = ports.interaction_generator
+                evaluator = ports.evaluator
                 llm_enabled = True
             except LLMError as exc:
                 logger.warning("LLM ports unavailable (%s); using templates", exc)
@@ -132,6 +134,8 @@ def create_app(graph: GraphDocument | None = None) -> FastAPI:
                 profile,
                 diagnostician=diagnostician,
                 lesson_writer=lesson_writer,
+                interaction_generator=interaction_generator,
+                evaluator=evaluator,
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from None

@@ -18,6 +18,12 @@ from tutor.graph import service as graph_service
 from tutor.learner.service import LearnerModelService
 from tutor.orchestrator.diagnosis import DiagnosisController, ProbeResult
 from tutor.orchestrator.envelope import CheckinOutcome, EpisodeEnvelope, RoutingAction
+from tutor.orchestrator.planner import (
+    EvaluatorPort,
+    InteractionGeneratorPort,
+    LessonPlanner,
+    PlannedLesson,
+)
 from tutor.orchestrator.ports import (
     DiagnosticianPort,
     ErrorAnalysis,
@@ -53,6 +59,7 @@ class Interaction(BaseModel):
     kind: Literal["message", "probe", "lesson", "checkin", "capstone"]
     kc_id: str | None = None
     text: str
+    widget: dict | None = None
 
 
 class _Pending(BaseModel):
@@ -78,6 +85,8 @@ class SessionOrchestrator:
         profile: LearnerProfile,
         diagnostician: DiagnosticianPort | None = None,
         lesson_writer: LessonWriterPort | None = None,
+        interaction_generator: InteractionGeneratorPort | None = None,
+        evaluator: EvaluatorPort | None = None,
         probe_budget: int = 8,
         exit_consecutive: int = 2,
         interaction_budget: int = 40,
@@ -92,6 +101,12 @@ class SessionOrchestrator:
         self.learner = LearnerModelService(graph, assumed_floor_levels=floor)
         self._diagnostician = diagnostician or TemplateDiagnostician()
         self._writer = lesson_writer or TemplateLessonWriter()
+        self._planner = LessonPlanner(
+            writer=self._writer,
+            generator=interaction_generator,
+            evaluator=evaluator,
+        )
+        self._planned_lessons: dict[str, PlannedLesson] = {}
         self._diag = DiagnosisController(graph, target_kc, self.learner, probe_budget)
         self._exit_consecutive = exit_consecutive
         self.envelope = EpisodeEnvelope(
@@ -273,8 +288,16 @@ class SessionOrchestrator:
     def _issue_lesson(self, kc: str) -> list[Interaction]:
         self._consecutive = 0
         node = self._nodes[kc]
+        planned = self._planned_lessons.get(kc)
+        if planned is None:
+            planned = self._planner.plan_lesson(node)
+            self._planned_lessons[kc] = planned
         lesson = Interaction(
-            key=self._next_key(), kind="lesson", kc_id=kc, text=self._writer.lesson_text(node)
+            key=self._next_key(),
+            kind="lesson",
+            kc_id=kc,
+            text=planned.narrative,
+            widget=planned.widget.model_dump() if planned.widget is not None else None,
         )
         return [lesson, *self._issue_checkin(kc)]
 

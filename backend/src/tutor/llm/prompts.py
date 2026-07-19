@@ -8,7 +8,7 @@ from tutor.schemas.kc import KCNode
 from tutor.schemas.learner import LearnerProfile
 from tutor.schemas.pedagogy import Metaphor, Misconception, PedagogyPack
 
-PROMPT_VERSION = "p1"
+PROMPT_VERSION = "p2"
 
 MATH_FORMAT_RULES = (
     "All math must be plain ASCII parseable by SymPy: use ^ or ** for powers, "
@@ -150,3 +150,75 @@ def checkin_user(
         lines.extend(f"- {m.id}: {m.description}" for m in pack.misconceptions)
     lines.append("Write the check-in JSON now.")
     return "\n".join(lines)
+
+
+INTERACTION_SYSTEM = f"""You are the interaction generator inside an adaptive math tutoring system.
+Design 2-3 candidate interactive widgets for ONE mini-lesson.
+Output ONLY JSON: {{"candidates": [<widget>, ...]}}
+Each widget must be exactly one of these shapes (discriminated by "widget_type"):
+- {{"widget_type": "slider", "learning_objective": str, "prompt": str, "params": {{"min": num, "max": num, "step": num > 0, "plot": str or null}}, "success_condition": {{"target": num, "tolerance": num >= 0}}}}
+- {{"widget_type": "click_region", "learning_objective": str, "prompt": str, "regions": [{{"id": str, "label": str}}, ...at least 2], "correct_region_ids": [str, ...]}}
+- {{"widget_type": "mapping", "learning_objective": str, "prompt": str, "left": [str, ...at least 2], "right": [str, ...at least 2], "correct_pairs": [[left_item, right_item], ...]}}
+- {{"widget_type": "live_input", "learning_objective": str, "prompt": str, "input_kind": "number" or "expression", "checker": {{"equivalence": "sympy_equiv" or "numeric", "expected": str}}}}
+{MATH_FORMAT_RULES}
+The interaction must let the student DO the skill (production), not merely
+recognize it. Never include an expected answer inside any prompt or label.
+When repair feedback is provided, fix exactly those problems."""
+
+EVALUATOR_SYSTEM = """You are the content evaluator inside an adaptive math tutoring system.
+Judge ONE widget candidate against its mini-lesson. Be adversarial: reject on
+any doubt about mathematical correctness.
+Output ONLY JSON:
+{"hard": {"correctness": bool, "alignment": bool, "consistency": bool, "safety": bool},
+ "soft": {"clarity": 1-5, "scaffolding": 1-5, "cognitive_load": 1-5, "engagement": 1-5, "age_fit": 1-5},
+ "abstain": bool, "feedback": <one short sentence>}
+Hard gates: correctness = the math and the expected/success values are right,
+including domains; alignment = the widget exercises exactly the lesson's KC;
+consistency = prompt, answer checking, and objective agree; safety = content
+appropriate for a school-age student. Set abstain=true when unsure — an
+abstention counts as a rejection."""
+
+
+def interaction_user(
+    node: KCNode,
+    attempt: int,
+    feedback: list[str],
+    preferred_types: list[str] | None = None,
+    pack: PedagogyPack | None = None,
+    profile: LearnerProfile | None = None,
+) -> str:
+    """Build the user message for interaction generation."""
+    lines = [
+        f"KC: {node.id} — {node.name}",
+        f"Description: {node.description}",
+        "Reference examples:",
+        *[f"- {example}" for example in node.canonical_examples],
+        *_profile_lines(profile),
+        f"Attempt index: {attempt}",
+    ]
+    if preferred_types:
+        lines.append(f"Preferred widget types for this KC: {', '.join(preferred_types)}")
+    if pack and pack.metaphors:
+        lines.append(f"Primary metaphor: {pack.metaphors[0].description}")
+    if pack and pack.misconceptions:
+        lines.append("Target these misconceptions where natural:")
+        lines.extend(f"- {m.id}: {m.description}" for m in pack.misconceptions)
+    if feedback:
+        lines.append("Repair feedback from previous rejected candidates:")
+        lines.extend(f"- {item}" for item in feedback[-5:])
+    lines.append("Write the candidates JSON now.")
+    return "\n".join(lines)
+
+
+def evaluator_user(node: KCNode, narrative: str, widget_json: str) -> str:
+    """Build the user message for widget evaluation."""
+    excerpt = narrative if len(narrative) <= 600 else narrative[:600] + "…"
+    return "\n".join(
+        [
+            f"KC: {node.id} — {node.name}",
+            f"Description: {node.description}",
+            f"Lesson narrative (excerpt):\n{excerpt}",
+            f"Widget candidate JSON:\n{widget_json}",
+            "Evaluate and output the verdict JSON now.",
+        ]
+    )

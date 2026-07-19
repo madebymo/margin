@@ -100,6 +100,9 @@ function applyTurn(turn) {
   sessionId = turn.session_id;
   for (const item of turn.interactions) {
     add(item.kind === "message" ? "tutor" : item.kind, item.text);
+    if (item.widget) {
+      add("checkin", "[interactive: " + item.widget.widget_type + "]\n" + (item.widget.prompt || ""));
+    }
   }
   phase.textContent = turn.phase;
   if (turn.llm_enabled === false) add("tutor", "(LLM unavailable — using template content.)");
