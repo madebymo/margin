@@ -20,6 +20,7 @@ from tutor.orchestrator.diagnosis import DiagnosisController, ProbeResult
 from tutor.orchestrator.envelope import CheckinOutcome, EpisodeEnvelope, RoutingAction
 from tutor.orchestrator.ports import (
     DiagnosticianPort,
+    ErrorAnalysis,
     LessonWriterPort,
     TemplateDiagnostician,
     TemplateLessonWriter,
@@ -60,6 +61,7 @@ class _Pending(BaseModel):
     key: str
     kind: Literal["probe", "checkin", "capstone"]
     kc_id: str
+    prompt: str
     expected: str
     checker: str
     hints: list[str]
@@ -167,14 +169,21 @@ class SessionOrchestrator:
         pending = self._pending
         self._pending = None
         correct = check_answer(pending.expected, answer, pending.checker)
-        self._record_event(pending, correct)
+        analysis = ErrorAnalysis()
+        if not correct and pending.kind in ("probe", "checkin"):
+            analysis = self._diagnostician.analyze_error(
+                self._nodes[pending.kc_id], pending.prompt, pending.expected, answer
+            )
+        self._record_event(pending, correct, analysis.misconception_id)
         if pending.kind == "probe":
-            return self._after_probe(pending, correct)
+            return self._after_probe(pending, correct, analysis)
         if pending.kind == "checkin":
-            return self._after_checkin(pending, correct)
+            return self._after_checkin(pending, correct, analysis)
         return self._after_capstone(pending, correct)
 
-    def _record_event(self, pending: _Pending, correct: bool) -> None:
+    def _record_event(
+        self, pending: _Pending, correct: bool, misconception_id: str | None = None
+    ) -> None:
         event = EvidenceEvent(
             event_id=uuid4(),
             learner_id=self.learner.learner_id,
@@ -185,6 +194,7 @@ class SessionOrchestrator:
             response_class=ResponseClass.SYMBOLIC_ENTRY,
             hints_used=pending.hints_given,
             assisted=pending.hints_given > 0,
+            misconception_id=misconception_id,
             content_versions={
                 "graph": str(self._graph.graph_version),
                 "generator": "template-v1",
@@ -204,23 +214,25 @@ class SessionOrchestrator:
             "____" if index == probe.blank_index else step
             for index, step in enumerate(probe.scaffold_steps)
         )
+        text = f"Fill in the blank:\n{rendered}"
         self._pending = _Pending(
             key=self._next_key(),
             kind="probe",
             kc_id=kc,
+            prompt=text,
             expected=probe.expected,
             checker=probe.checker,
             hints=list(probe.hint_ladder),
         )
-        text = f"Fill in the blank:\n{rendered}"
         return [Interaction(key=self._pending.key, kind="probe", kc_id=kc, text=text)]
 
-    def _after_probe(self, pending: _Pending, correct: bool) -> list[Interaction]:
+    def _after_probe(
+        self, pending: _Pending, correct: bool, analysis: ErrorAnalysis
+    ) -> list[Interaction]:
         implicated = None
-        if not correct:
-            candidate = self._diagnostician.analyze_error(pending.kc_id)
-            if candidate in self._nodes and candidate != pending.kc_id:
-                implicated = candidate
+        candidate = analysis.implicated_prereq
+        if not correct and candidate in self._nodes and candidate != pending.kc_id:
+            implicated = candidate
         self._diag.record_result(
             ProbeResult(kc_id=pending.kc_id, correct=correct, implicated_prereq=implicated)
         )
@@ -274,6 +286,7 @@ class SessionOrchestrator:
             key=self._next_key(),
             kind="checkin",
             kc_id=kc,
+            prompt=item.prompt,
             expected=item.expected,
             checker=item.checker,
             hints=list(item.hints),
@@ -282,15 +295,15 @@ class SessionOrchestrator:
             Interaction(key=self._pending.key, kind="checkin", kc_id=kc, text=item.prompt)
         ]
 
-    def _after_checkin(self, pending: _Pending, correct: bool) -> list[Interaction]:
+    def _after_checkin(
+        self, pending: _Pending, correct: bool, analysis: ErrorAnalysis
+    ) -> list[Interaction]:
         kc = pending.kc_id
         self._consecutive = self._consecutive + 1 if correct else 0
         ancestors = self._ancestors_of(kc)
         implicated = None
-        if not correct:
-            candidate = self._diagnostician.analyze_error(kc)
-            if candidate in ancestors:
-                implicated = candidate
+        if not correct and analysis.implicated_prereq in ancestors:
+            implicated = analysis.implicated_prereq
         outcome = CheckinOutcome(
             kc_id=kc,
             correct=correct,
@@ -374,10 +387,12 @@ class SessionOrchestrator:
             "____" if index == probe.blank_index else step
             for index, step in enumerate(probe.scaffold_steps)
         )
+        capstone_text = f"Capstone — your original question, no scaffolding:\n{rendered}"
         self._pending = _Pending(
             key=self._next_key(),
             kind="capstone",
             kc_id=self._target,
+            prompt=capstone_text,
             expected=probe.expected,
             checker=probe.checker,
             hints=list(probe.hint_ladder),
@@ -388,7 +403,7 @@ class SessionOrchestrator:
                 key=self._pending.key,
                 kind="capstone",
                 kc_id=self._target,
-                text=f"Capstone — your original question, no scaffolding:\n{rendered}",
+                text=capstone_text,
             ),
         ]
 
@@ -407,6 +422,7 @@ class SessionOrchestrator:
                 key=self._next_key(),
                 kind="capstone",
                 kc_id=pending.kc_id,
+                prompt=pending.prompt,
                 expected=pending.expected,
                 checker=pending.checker,
                 hints=pending.hints,

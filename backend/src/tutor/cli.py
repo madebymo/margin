@@ -28,17 +28,65 @@ def _render(interactions: list[Interaction]) -> None:
         print(f"\n[{_PREFIX[interaction.kind]}] {interaction.text}")
 
 
+def _build_llm_ports(graph, profile, provider: str):
+    """Construct LLM-backed ports, or (None, None) with a warning if unavailable."""
+    try:
+        from tutor.llm.diagnostician import LLMDiagnostician
+        from tutor.llm.lesson_writer import LLMLessonWriter
+
+        if provider == "anthropic":
+            from tutor.llm.client import AnthropicLLMClient as _ClientClass
+        else:
+            from tutor.llm.client import OpenAILLMClient as _ClientClass
+
+        client = _ClientClass()
+    except Exception as exc:  # noqa: BLE001 — degrade to templates with a notice
+        print(f"[warn] LLM ports unavailable ({exc}); using template ports.")
+        return None, None
+
+    from pathlib import Path
+
+    import tutor.packs
+    from tutor.packs.import_csv import parse_pack_csv
+
+    template_csv = Path(tutor.packs.__file__).resolve().parent / "template.csv"
+    packs = {pack.kc_id: pack for pack in parse_pack_csv(template_csv)}
+    diagnostician = LLMDiagnostician(client, graph=graph, packs=packs, profile=profile)
+    lesson_writer = LLMLessonWriter(client, packs=packs, profile=profile)
+    print("[info] LLM-backed diagnostician and lesson writer enabled.")
+    return diagnostician, lesson_writer
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run one interactive session against the seed graph."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", default="kc.int.u_substitution", help="target kc id")
     parser.add_argument("--course", default="AP Calculus AB", help="student course")
     parser.add_argument("--age-band", default="16-18", help="student age band")
+    parser.add_argument(
+        "--llm",
+        action="store_true",
+        help="use LLM-backed diagnostician/lesson writer (needs OPENAI_API_KEY)",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=("openai", "anthropic"),
+        default="openai",
+        help="LLM provider for --llm (default: openai; model via TUTOR_LLM_MODEL)",
+    )
     args = parser.parse_args(argv)
 
     graph = load_graph()
+    profile = LearnerProfile(course=args.course, age_band=args.age_band)
+    diagnostician = lesson_writer = None
+    if args.llm:
+        diagnostician, lesson_writer = _build_llm_ports(graph, profile, args.provider)
     orchestrator = SessionOrchestrator(
-        graph, args.target, LearnerProfile(course=args.course, age_band=args.age_band)
+        graph,
+        args.target,
+        profile,
+        diagnostician=diagnostician,
+        lesson_writer=lesson_writer,
     )
     _render(orchestrator.begin())
 

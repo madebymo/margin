@@ -23,6 +23,13 @@ class PracticeItem(BaseModel):
     hints: list[str]
 
 
+class ErrorAnalysis(BaseModel):
+    """Result of analyzing a wrong answer: named misconception and/or prereq."""
+
+    misconception_id: str | None = None
+    implicated_prereq: str | None = None
+
+
 def item_from_example(example: str) -> tuple[str, str]:
     """Turn a canonical example into (prompt, expected answer).
 
@@ -53,8 +60,10 @@ class DiagnosticianPort(Protocol):
         """Build a probe whose blank is direct evidence for this KC."""
         ...
 
-    def analyze_error(self, kc_id: str) -> str | None:
-        """Return the kc id of an implicated prerequisite, or None."""
+    def analyze_error(
+        self, node: KCNode, prompt: str, expected: str, answer: str
+    ) -> ErrorAnalysis:
+        """Diagnose a wrong answer: misconception and/or implicated prerequisite."""
         ...
 
 
@@ -87,9 +96,11 @@ class TemplateDiagnostician:
             hint_ladder=hints_for(node),
         )
 
-    def analyze_error(self, kc_id: str) -> str | None:
-        """No misconception library yet: defer to binary search."""
-        return None
+    def analyze_error(
+        self, node: KCNode, prompt: str, expected: str, answer: str
+    ) -> ErrorAnalysis:
+        """No misconception library wired: defer to binary search."""
+        return ErrorAnalysis()
 
 
 class TemplateLessonWriter:
