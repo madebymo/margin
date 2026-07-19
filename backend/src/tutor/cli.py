@@ -31,28 +31,12 @@ def _render(interactions: list[Interaction]) -> None:
 def _build_llm_ports(graph, profile, provider: str):
     """Construct LLM-backed ports, or (None, None) with a warning if unavailable."""
     try:
-        from tutor.llm.diagnostician import LLMDiagnostician
-        from tutor.llm.lesson_writer import LLMLessonWriter
+        from tutor.llm.factory import build_llm_ports
 
-        if provider == "anthropic":
-            from tutor.llm.client import AnthropicLLMClient as _ClientClass
-        else:
-            from tutor.llm.client import OpenAILLMClient as _ClientClass
-
-        client = _ClientClass()
+        diagnostician, lesson_writer = build_llm_ports(graph, profile, provider)
     except Exception as exc:  # noqa: BLE001 — degrade to templates with a notice
         print(f"[warn] LLM ports unavailable ({exc}); using template ports.")
         return None, None
-
-    from pathlib import Path
-
-    import tutor.packs
-    from tutor.packs.import_csv import parse_pack_csv
-
-    template_csv = Path(tutor.packs.__file__).resolve().parent / "template.csv"
-    packs = {pack.kc_id: pack for pack in parse_pack_csv(template_csv)}
-    diagnostician = LLMDiagnostician(client, graph=graph, packs=packs, profile=profile)
-    lesson_writer = LLMLessonWriter(client, packs=packs, profile=profile)
     print("[info] LLM-backed diagnostician and lesson writer enabled.")
     return diagnostician, lesson_writer
 

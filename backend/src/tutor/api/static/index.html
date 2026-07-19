@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adaptive Math Tutor</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #0f1115;
+         color: #e8eaed; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 12px 20px; background: #161a22; display: flex; gap: 10px;
+           align-items: center; flex-wrap: wrap; border-bottom: 1px solid #232936; }
+  header strong { margin-right: 6px; }
+  input, select { padding: 7px 9px; border-radius: 7px; border: 1px solid #333a46;
+                  background: #0f1115; color: #e8eaed; font-size: 13px; }
+  #phase { margin-left: auto; font-size: 12px; padding: 4px 12px; border-radius: 999px;
+           background: #26437a; text-transform: uppercase; letter-spacing: .04em; }
+  #log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { max-width: 72%; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap;
+            line-height: 1.45; font-size: 14px; }
+  .tutor    { background: #1d2330; align-self: flex-start; }
+  .lesson   { background: #1c2b23; border: 1px solid #2f4c3a; align-self: flex-start; }
+  .probe, .checkin, .capstone { background: #2a2440; border: 1px solid #4a3f73; align-self: flex-start; }
+  .you      { background: #26437a; align-self: flex-end; }
+  .hint     { background: #3a3320; border: 1px solid #6b5c2a; align-self: flex-start; font-style: italic; }
+  .error    { background: #402428; border: 1px solid #73403f; align-self: center; font-size: 13px; }
+  .kind-tag { display: block; font-size: 10px; opacity: .55; text-transform: uppercase;
+              letter-spacing: .06em; margin-bottom: 4px; }
+  #summary { padding: 12px 20px; background: #12251a; border-top: 1px solid #234432;
+             display: none; font-size: 12.5px; white-space: pre-wrap; max-height: 30vh; overflow-y: auto; }
+  footer { display: flex; gap: 8px; padding: 12px 20px; background: #161a22;
+           border-top: 1px solid #232936; }
+  footer input { flex: 1; padding: 10px 12px; font-size: 14px; }
+  button { padding: 8px 16px; border-radius: 8px; border: none; background: #3b6cd4;
+           color: white; cursor: pointer; font-size: 13px; }
+  button.secondary { background: #333a46; }
+  button:disabled { opacity: .35; cursor: default; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Adaptive Math Tutor</strong>
+  <input id="target" list="targets" value="kc.int.u_substitution" size="26" title="target KC id">
+  <datalist id="targets">
+    <option value="kc.int.u_substitution"></option>
+    <option value="kc.der.chain_rule"></option>
+    <option value="kc.int.ftc"></option>
+    <option value="kc.der.product_quotient"></option>
+    <option value="kc.alg.solve_quadratic"></option>
+  </datalist>
+  <select id="llm">
+    <option value="off">template content</option>
+    <option value="on">LLM content (OpenAI)</option>
+  </select>
+  <button id="start">Start session</button>
+  <span id="phase">idle</span>
+</header>
+<div id="log"></div>
+<div id="summary"></div>
+<footer>
+  <input id="answer" placeholder="Your answer… (Enter to send)" disabled>
+  <button id="hintBtn" class="secondary" disabled>Hint</button>
+  <button id="send" disabled>Send</button>
+</footer>
+<script>
+"use strict";
+let sessionId = null;
+const el = (id) => document.getElementById(id);
+const log = el("log"), answer = el("answer"), send = el("send"),
+      hintBtn = el("hintBtn"), phase = el("phase"), summary = el("summary");
+
+function add(kind, text) {
+  const div = document.createElement("div");
+  div.className = "bubble " + kind;
+  if (!["you", "tutor", "hint", "error"].includes(kind)) {
+    const tag = document.createElement("span");
+    tag.className = "kind-tag";
+    tag.textContent = kind;
+    div.appendChild(tag);
+  }
+  div.appendChild(document.createTextNode(text));
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function api(path, body) {
+  const response = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(detail.detail || "request failed");
+  }
+  return response.json();
+}
+
+function applyTurn(turn) {
+  sessionId = turn.session_id;
+  for (const item of turn.interactions) {
+    add(item.kind === "message" ? "tutor" : item.kind, item.text);
+  }
+  phase.textContent = turn.phase;
+  if (turn.llm_enabled === false) add("tutor", "(LLM unavailable — using template content.)");
+  const active = turn.phase !== "done" && turn.phase !== "stopped";
+  answer.disabled = send.disabled = hintBtn.disabled = !active;
+  if (!active) {
+    summary.style.display = "block";
+    summary.textContent = "Session summary\n" + JSON.stringify(turn.summary, null, 2);
+  } else {
+    answer.focus();
+  }
+}
+
+async function guard(fn) {
+  try { await fn(); } catch (err) { add("error", err.message); }
+}
+
+el("start").onclick = () => guard(async () => {
+  log.innerHTML = "";
+  summary.style.display = "none";
+  phase.textContent = "starting…";
+  applyTurn(await api("/sessions", {
+    target_kc: el("target").value.trim(),
+    llm: el("llm").value === "on",
+  }));
+});
+
+async function submitAnswer() {
+  const value = answer.value.trim();
+  if (!value || !sessionId) return;
+  add("you", value);
+  answer.value = "";
+  await guard(async () => applyTurn(await api(`/sessions/${sessionId}/answer`, { answer: value })));
+}
+
+send.onclick = submitAnswer;
+answer.addEventListener("keydown", (event) => { if (event.key === "Enter") submitAnswer(); });
+
+hintBtn.onclick = () => guard(async () => {
+  const data = await api(`/sessions/${sessionId}/hint`, {});
+  add("hint", data.hint || "No more hints — give it your best try.");
+});
+</script>
+</body>
+</html>
