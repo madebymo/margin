@@ -8,6 +8,7 @@ interactions, phase, pending-item metadata, and the session summary.
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -16,6 +17,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from tutor.api.store import SessionStore
+from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator
 from tutor.schemas.kc import GraphDocument
@@ -99,13 +101,29 @@ def _turn(
     )
 
 
-def create_app(graph: GraphDocument | None = None) -> FastAPI:
-    """Build the API app around one graph version and an in-memory store."""
+def create_app(
+    graph: GraphDocument | None = None, database_url: str | None = None
+) -> FastAPI:
+    """Build the API app around one graph version and an in-memory store.
+
+    Persistence activates when ``database_url`` or the ``DATABASE_URL`` env var
+    is set; otherwise sessions are memory-only (unavailability degrades with a
+    warning rather than failing startup).
+    """
     resolved_graph = graph or load_graph()
     app = FastAPI(title="Adaptive Math Tutor", version="0.1.0")
     store = SessionStore()
+    persistence: PersistenceService | None = None
+    resolved_url = database_url or os.environ.get("DATABASE_URL")
+    if resolved_url:
+        try:
+            persistence = PersistenceService(url=resolved_url)
+            logger.info("persistence enabled")
+        except Exception as exc:  # noqa: BLE001 — degrade to memory-only
+            logger.warning("persistence unavailable (%s); sessions are memory-only", exc)
     app.state.store = store
     app.state.graph = resolved_graph
+    app.state.persistence = persistence
 
     def _get_session(session_id: str) -> SessionOrchestrator:
         try:
@@ -116,7 +134,11 @@ def create_app(graph: GraphDocument | None = None) -> FastAPI:
     @app.get("/healthz")
     def healthz() -> dict:
         """Liveness check."""
-        return {"status": "ok", "sessions": len(store)}
+        return {
+            "status": "ok",
+            "sessions": len(store),
+            "persistence": persistence is not None,
+        }
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
@@ -150,6 +172,7 @@ def create_app(graph: GraphDocument | None = None) -> FastAPI:
                 lesson_writer=lesson_writer,
                 interaction_generator=interaction_generator,
                 evaluator=evaluator,
+                persistence=persistence,
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from None

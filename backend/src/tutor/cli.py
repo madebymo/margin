@@ -9,6 +9,7 @@ Commands during the session: answers as free text, 'hint' for the next hint,
 """
 
 import argparse
+import os
 
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator, SessionPhase
 from tutor.schemas.learner import LearnerProfile
@@ -62,11 +63,27 @@ def main(argv: list[str] | None = None) -> int:
         default="openai",
         help="LLM provider for --llm (default: openai; model via TUTOR_LLM_MODEL)",
     )
+    parser.add_argument(
+        "--db",
+        metavar="URL",
+        default=None,
+        help="database URL for persistence (defaults to DATABASE_URL env var)",
+    )
     args = parser.parse_args(argv)
 
     graph = load_graph()
     profile = LearnerProfile(course=args.course, age_band=args.age_band)
     ports = _build_llm_ports(graph, profile, args.provider) if args.llm else None
+    persistence = None
+    database_url = args.db or os.environ.get("DATABASE_URL")
+    if database_url:
+        try:
+            from tutor.db.persistence import PersistenceService
+
+            persistence = PersistenceService(url=database_url)
+            print("[info] persistence enabled.")
+        except Exception as exc:  # noqa: BLE001 — degrade to memory-only
+            print(f"[warn] persistence unavailable ({exc}); session is memory-only.")
     orchestrator = SessionOrchestrator(
         graph,
         args.target,
@@ -75,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         lesson_writer=ports.lesson_writer if ports else None,
         interaction_generator=ports.interaction_generator if ports else None,
         evaluator=ports.evaluator if ports else None,
+        persistence=persistence,
     )
     _render(orchestrator.begin())
 

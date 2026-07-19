@@ -30,6 +30,7 @@ docker compose up -d db                 # optional: real Postgres
 python -m tutor.seed.load_seed --validate
 ```
 LLM mode: `pip install -e "backend[llm]"`, set `OPENAI_API_KEY` (model override via `TUTOR_LLM_MODEL`), then `python -m tutor.cli --llm` or toggle LLM in the web UI.
+Persistence: set `DATABASE_URL=postgresql+psycopg://tutor:tutor@localhost/tutor` (after `docker compose up -d db`) to durably store learners, the append-only evidence log, episode checkpoints, and derived mastery; learner state is rebuildable by replaying the evidence log.
 
 ## Status
 Done: Phase 0 (data layer), Phase 1 (orchestrator, diagnosis, learner model, CLI), LLM agent integration (OpenAI default, Anthropic optional), session API + web chat, diagnostic-policy simulation harness.

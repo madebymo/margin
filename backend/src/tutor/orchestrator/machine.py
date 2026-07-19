@@ -7,6 +7,7 @@ and belief updates to the learner model service. Routing decisions come from
 the pure ``route`` function over the episode envelope.
 """
 
+import logging
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Literal
@@ -14,6 +15,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
+from tutor.db.persistence import PersistenceService
 from tutor.graph import service as graph_service
 from tutor.learner.service import LearnerModelService
 from tutor.orchestrator.diagnosis import DiagnosisController, ProbeResult
@@ -45,6 +47,8 @@ from tutor.schemas.widgets import (
 from tutor.verify.checker import check_answer
 
 _CALC_ASSUMED_FLOOR = {"Algebra 1", "Algebra 2", "Precalculus"}
+
+logger = logging.getLogger("tutor.orchestrator")
 
 
 class SessionPhase(StrEnum):
@@ -130,6 +134,7 @@ class SessionOrchestrator:
         lesson_writer: LessonWriterPort | None = None,
         interaction_generator: InteractionGeneratorPort | None = None,
         evaluator: EvaluatorPort | None = None,
+        persistence: PersistenceService | None = None,
         probe_budget: int = 8,
         exit_consecutive: int = 2,
         interaction_budget: int = 40,
@@ -168,6 +173,17 @@ class SessionOrchestrator:
         self._mastered_in_session: list[str] = []
         self._fallback_kcs: list[str] = []
         self._frontier_at_diagnosis: list[str] = []
+        self._persistence = persistence
+        self._episode_id: int | None = None
+        if persistence is not None:
+            try:
+                persistence.ensure_learner(self.learner.learner_id, profile)
+                self._episode_id = persistence.start_episode(
+                    self.learner.learner_id, target_kc, self.envelope.model_dump()
+                )
+            except Exception as exc:  # noqa: BLE001 — persistence never blocks a session
+                logger.warning("persistence disabled for this session: %s", exc)
+                self._persistence = None
 
     # -- small helpers ---------------------------------------------------------
 
@@ -219,7 +235,7 @@ class SessionOrchestrator:
         attempts = self._widget_attempts.get(key, 0)
         self._widget_attempts[key] = attempts + 1
         if attempts == 0:
-            self.learner.apply_event(
+            self._apply_event(
                 EvidenceEvent(
                     event_id=uuid4(),
                     learner_id=self.learner.learner_id,
@@ -256,7 +272,9 @@ class SessionOrchestrator:
             f"Let's find the best starting point for {target_name}. "
             "I'll ask a few quick questions — answer what you can, or type 'hint'."
         )
-        return [opener, *self._issue_next_probe()]
+        interactions = [opener, *self._issue_next_probe()]
+        self._checkpoint()
+        return interactions
 
     def submit(self, answer: str) -> list[Interaction]:
         """Score the pending item and advance the state machine."""
@@ -274,10 +292,13 @@ class SessionOrchestrator:
             )
         self._record_event(pending, correct, analysis.misconception_id)
         if pending.kind == "probe":
-            return self._after_probe(pending, correct, analysis)
-        if pending.kind == "checkin":
-            return self._after_checkin(pending, correct, analysis)
-        return self._after_capstone(pending, correct)
+            interactions = self._after_probe(pending, correct, analysis)
+        elif pending.kind == "checkin":
+            interactions = self._after_checkin(pending, correct, analysis)
+        else:
+            interactions = self._after_capstone(pending, correct)
+        self._checkpoint()
+        return interactions
 
     def _record_event(
         self, pending: _Pending, correct: bool, misconception_id: str | None = None
@@ -298,7 +319,32 @@ class SessionOrchestrator:
                 "generator": "template-v1",
             },
         )
+        self._apply_event(event)
+
+    def _apply_event(self, event: EvidenceEvent) -> None:
+        """Update the learner model and durably append the event when enabled."""
         self.learner.apply_event(event)
+        if self._persistence is None:
+            return
+        try:
+            self._persistence.record_event(event)
+        except Exception as exc:  # noqa: BLE001 — persistence never blocks a session
+            logger.warning("event persistence failed; disabling: %s", exc)
+            self._persistence = None
+
+    def _checkpoint(self) -> None:
+        """Persist episode phase + envelope; derived mastery at terminal phases."""
+        if self._persistence is None or self._episode_id is None:
+            return
+        try:
+            self._persistence.update_episode(
+                self._episode_id, self.phase.value, self.envelope.model_dump()
+            )
+            if self.phase in (SessionPhase.DONE, SessionPhase.STOPPED):
+                self._persistence.save_derived(self.learner.snapshot())
+        except Exception as exc:  # noqa: BLE001 — persistence never blocks a session
+            logger.warning("checkpoint persistence failed; disabling: %s", exc)
+            self._persistence = None
 
     # -- diagnosis ---------------------------------------------------------------
 

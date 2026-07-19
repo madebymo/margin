@@ -8,7 +8,7 @@ from tutor.schemas.kc import KCNode
 from tutor.schemas.learner import LearnerProfile
 from tutor.schemas.pedagogy import Metaphor, Misconception, PedagogyPack
 
-PROMPT_VERSION = "p2"
+PROMPT_VERSION = "p3"
 
 MATH_FORMAT_RULES = (
     "All math must be plain ASCII parseable by SymPy: use ^ or ** for powers, "
@@ -222,3 +222,36 @@ def evaluator_user(node: KCNode, narrative: str, widget_json: str) -> str:
             "Evaluate and output the verdict JSON now.",
         ]
     )
+
+
+PACK_SYSTEM = """You are the pedagogy-pack compiler inside an adaptive math tutoring system.
+From the provided source excerpts (and established math-education knowledge),
+compile ONE knowledge component's pedagogy pack.
+Output ONLY JSON:
+{"misconceptions": [{"slug": <snake_case str>, "description": <str>, "error_signature": <what the wrong answer looks like>, "remediation_hint": <str>}, ...2-4 items],
+ "metaphors": [{"slug": <snake_case str>, "description": <str>, "widget_affinity": [subset of "slider", "click_region", "mapping", "live_input"]}, ...1-2 items],
+ "error_patterns": [<str>, ...up to 4 items]}
+Misconceptions must be genuine conceptual student misconceptions for THIS KC
+(not typos or careless slips), each with a distinct, detectable error
+signature. Ground the content in the excerpts when they are relevant;
+otherwise rely on well-established pedagogy. Keep every string to one concise
+sentence. Do not repeat the same misconception with different wording."""
+
+
+def pack_user(node: KCNode, excerpts: list[tuple[str, str]]) -> str:
+    """Build the user message for pedagogy-pack compilation."""
+    lines = [
+        f"KC: {node.id} — {node.name}",
+        f"Description: {node.description}",
+        f"Course level: {node.course_level}",
+        "Canonical examples:",
+        *[f"- {example}" for example in node.canonical_examples],
+    ]
+    if excerpts:
+        lines.append("Source excerpts:")
+        for source, text in excerpts:
+            lines.append(f"[source: {source}]\n{text}")
+    else:
+        lines.append("No source excerpts were retrieved; rely on established pedagogy.")
+    lines.append("Compile the pedagogy pack JSON now.")
+    return "\n".join(lines)
