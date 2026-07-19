@@ -1,0 +1,448 @@
+"""SessionOrchestrator: the deterministic control plane for one tutoring session.
+
+Phases: INTAKE -> DIAGNOSE -> PLAN -> TEACH -> CAPSTONE -> DONE (or STOPPED).
+The machine owns all sequencing; generation and judgment are delegated to
+ports (template implementations in Phase 1), scoring to the math verifier,
+and belief updates to the learner model service. Routing decisions come from
+the pure ``route`` function over the episode envelope.
+"""
+
+from datetime import datetime, timezone
+from enum import StrEnum
+from typing import Literal
+from uuid import uuid4
+
+from pydantic import BaseModel
+
+from tutor.graph import service as graph_service
+from tutor.learner.service import LearnerModelService
+from tutor.orchestrator.diagnosis import DiagnosisController, ProbeResult
+from tutor.orchestrator.envelope import CheckinOutcome, EpisodeEnvelope, RoutingAction
+from tutor.orchestrator.ports import (
+    DiagnosticianPort,
+    LessonWriterPort,
+    TemplateDiagnostician,
+    TemplateLessonWriter,
+)
+from tutor.orchestrator.routing import route
+from tutor.schemas.common import ResponseClass
+from tutor.schemas.kc import GraphDocument
+from tutor.schemas.learner import EvidenceEvent, LearnerProfile
+from tutor.verify.checker import check_answer
+
+_CALC_ASSUMED_FLOOR = {"Algebra 1", "Algebra 2", "Precalculus"}
+
+
+class SessionPhase(StrEnum):
+    """Lifecycle phases of a tutoring session."""
+
+    INTAKE = "intake"
+    DIAGNOSE = "diagnose"
+    PLAN = "plan"
+    TEACH = "teach"
+    CAPSTONE = "capstone"
+    DONE = "done"
+    STOPPED = "stopped"
+
+
+class Interaction(BaseModel):
+    """One unit of tutor output for the UI to render."""
+
+    key: str
+    kind: Literal["message", "probe", "lesson", "checkin", "capstone"]
+    kc_id: str | None = None
+    text: str
+
+
+class _Pending(BaseModel):
+    """The item currently awaiting a student answer (answer stays server-side)."""
+
+    key: str
+    kind: Literal["probe", "checkin", "capstone"]
+    kc_id: str
+    expected: str
+    checker: str
+    hints: list[str]
+    hints_given: int = 0
+
+
+class SessionOrchestrator:
+    """Drives one session from intake to capstone."""
+
+    def __init__(
+        self,
+        graph: GraphDocument,
+        target_kc: str,
+        profile: LearnerProfile,
+        diagnostician: DiagnosticianPort | None = None,
+        lesson_writer: LessonWriterPort | None = None,
+        probe_budget: int = 8,
+        exit_consecutive: int = 2,
+        interaction_budget: int = 40,
+    ) -> None:
+        self._graph = graph
+        self._nodes = {node.id: node for node in graph.nodes}
+        if target_kc not in self._nodes:
+            raise KeyError(f"unknown kc: {target_kc}")
+        self._target = target_kc
+        self._profile = profile
+        floor = _CALC_ASSUMED_FLOOR if "calc" in profile.course.lower() else set()
+        self.learner = LearnerModelService(graph, assumed_floor_levels=floor)
+        self._diagnostician = diagnostician or TemplateDiagnostician()
+        self._writer = lesson_writer or TemplateLessonWriter()
+        self._diag = DiagnosisController(graph, target_kc, self.learner, probe_budget)
+        self._exit_consecutive = exit_consecutive
+        self.envelope = EpisodeEnvelope(
+            target_kc=target_kc, interaction_budget=interaction_budget
+        )
+        self.phase = SessionPhase.INTAKE
+        self.path: list[str] = []
+        self._path_pos = 0
+        self._consecutive = 0
+        self._checkin_attempts: dict[str, int] = {}
+        self._pending: _Pending | None = None
+        self._counter = 0
+        self._capstone_attempts = 0
+        self._mastered_in_session: list[str] = []
+        self._fallback_kcs: list[str] = []
+        self._frontier_at_diagnosis: list[str] = []
+
+    # -- small helpers ---------------------------------------------------------
+
+    def _next_key(self) -> str:
+        self._counter += 1
+        return f"i{self._counter:03d}"
+
+    def _msg(self, text: str) -> Interaction:
+        return Interaction(key=self._next_key(), kind="message", text=text)
+
+    @property
+    def pending_kind(self) -> str | None:
+        """Kind of the item awaiting an answer (for UIs/tests)."""
+        return self._pending.kind if self._pending else None
+
+    @property
+    def pending_kc(self) -> str | None:
+        """KC of the item awaiting an answer (for UIs/tests)."""
+        return self._pending.kc_id if self._pending else None
+
+    @property
+    def pending_expected(self) -> str | None:
+        """Hidden expected answer (for tooling, tests, and 'reveal')."""
+        return self._pending.expected if self._pending else None
+
+    def hint(self) -> str | None:
+        """Serve the next rung of the hint ladder; marks the response assisted."""
+        if self._pending is None:
+            return None
+        if self._pending.hints_given >= len(self._pending.hints):
+            return None
+        text = self._pending.hints[self._pending.hints_given]
+        self._pending.hints_given += 1
+        return text
+
+    def _ancestors_of(self, kc: str) -> set[str]:
+        return graph_service.ancestor_subgraph(self._graph, kc).node_ids() - {kc}
+
+    # -- session flow ------------------------------------------------------------
+
+    def begin(self) -> list[Interaction]:
+        """Start the session: welcome plus the first diagnostic probe."""
+        if self.phase != SessionPhase.INTAKE:
+            raise RuntimeError("session already started")
+        self.phase = SessionPhase.DIAGNOSE
+        target_name = self._nodes[self._target].name
+        opener = self._msg(
+            f"Let's find the best starting point for {target_name}. "
+            "I'll ask a few quick questions — answer what you can, or type 'hint'."
+        )
+        return [opener, *self._issue_next_probe()]
+
+    def submit(self, answer: str) -> list[Interaction]:
+        """Score the pending item and advance the state machine."""
+        if self.phase in (SessionPhase.DONE, SessionPhase.STOPPED):
+            raise RuntimeError("session is over")
+        if self._pending is None:
+            raise RuntimeError("no pending item to answer")
+        pending = self._pending
+        self._pending = None
+        correct = check_answer(pending.expected, answer, pending.checker)
+        self._record_event(pending, correct)
+        if pending.kind == "probe":
+            return self._after_probe(pending, correct)
+        if pending.kind == "checkin":
+            return self._after_checkin(pending, correct)
+        return self._after_capstone(pending, correct)
+
+    def _record_event(self, pending: _Pending, correct: bool) -> None:
+        event = EvidenceEvent(
+            event_id=uuid4(),
+            learner_id=self.learner.learner_id,
+            t=datetime.now(timezone.utc),
+            item_id=pending.key,
+            kc_ids=[pending.kc_id],
+            correct=correct,
+            response_class=ResponseClass.SYMBOLIC_ENTRY,
+            hints_used=pending.hints_given,
+            assisted=pending.hints_given > 0,
+            content_versions={
+                "graph": str(self._graph.graph_version),
+                "generator": "template-v1",
+            },
+        )
+        self.learner.apply_event(event)
+
+    # -- diagnosis ---------------------------------------------------------------
+
+    def _issue_next_probe(self) -> list[Interaction]:
+        kc = self._diag.next_probe_kc()
+        if kc is None:
+            return self._finish_diagnosis()
+        node = self._nodes[kc]
+        probe = self._diagnostician.generate_probe(node)
+        rendered = "\n".join(
+            "____" if index == probe.blank_index else step
+            for index, step in enumerate(probe.scaffold_steps)
+        )
+        self._pending = _Pending(
+            key=self._next_key(),
+            kind="probe",
+            kc_id=kc,
+            expected=probe.expected,
+            checker=probe.checker,
+            hints=list(probe.hint_ladder),
+        )
+        text = f"Fill in the blank:\n{rendered}"
+        return [Interaction(key=self._pending.key, kind="probe", kc_id=kc, text=text)]
+
+    def _after_probe(self, pending: _Pending, correct: bool) -> list[Interaction]:
+        implicated = None
+        if not correct:
+            candidate = self._diagnostician.analyze_error(pending.kc_id)
+            if candidate in self._nodes and candidate != pending.kc_id:
+                implicated = candidate
+        self._diag.record_result(
+            ProbeResult(kc_id=pending.kc_id, correct=correct, implicated_prereq=implicated)
+        )
+        note = (
+            "Nice — that's right."
+            if correct
+            else "No problem — that tells me where to look."
+        )
+        return [self._msg(note), *self._issue_next_probe()]
+
+    def _finish_diagnosis(self) -> list[Interaction]:
+        self.phase = SessionPhase.PLAN
+        frontier = self._diag.frontier()
+        self._frontier_at_diagnosis = list(frontier)
+        self.path = self._diag.plan_path()
+        target_name = self._nodes[self._target].name
+        messages: list[Interaction] = []
+        if frontier:
+            names = ", ".join(self._nodes[kc].name for kc in frontier)
+            messages.append(
+                self._msg(
+                    f"Diagnosis done. The gap starts at: {names}. "
+                    f"We'll build from there up to {target_name}."
+                )
+            )
+        else:
+            messages.append(
+                self._msg(f"Diagnosis done — no gaps found on the way to {target_name}.")
+            )
+        if not self.path:
+            return [*messages, *self._start_capstone()]
+        self.phase = SessionPhase.TEACH
+        self._path_pos = 0
+        return [*messages, *self._issue_lesson(self.path[0])]
+
+    # -- teach loop ----------------------------------------------------------------
+
+    def _issue_lesson(self, kc: str) -> list[Interaction]:
+        self._consecutive = 0
+        node = self._nodes[kc]
+        lesson = Interaction(
+            key=self._next_key(), kind="lesson", kc_id=kc, text=self._writer.lesson_text(node)
+        )
+        return [lesson, *self._issue_checkin(kc)]
+
+    def _issue_checkin(self, kc: str) -> list[Interaction]:
+        attempt = self._checkin_attempts.get(kc, 0)
+        self._checkin_attempts[kc] = attempt + 1
+        item = self._writer.checkin_item(self._nodes[kc], attempt)
+        self._pending = _Pending(
+            key=self._next_key(),
+            kind="checkin",
+            kc_id=kc,
+            expected=item.expected,
+            checker=item.checker,
+            hints=list(item.hints),
+        )
+        return [
+            Interaction(key=self._pending.key, kind="checkin", kc_id=kc, text=item.prompt)
+        ]
+
+    def _after_checkin(self, pending: _Pending, correct: bool) -> list[Interaction]:
+        kc = pending.kc_id
+        self._consecutive = self._consecutive + 1 if correct else 0
+        ancestors = self._ancestors_of(kc)
+        implicated = None
+        if not correct:
+            candidate = self._diagnostician.analyze_error(kc)
+            if candidate in ancestors:
+                implicated = candidate
+        outcome = CheckinOutcome(
+            kc_id=kc,
+            correct=correct,
+            interaction_key=pending.key,
+            consecutive_correct=self._consecutive,
+            implicated_prereq=implicated,
+        )
+        decision, self.envelope = route(
+            self.envelope, outcome, ancestors, self._exit_consecutive
+        )
+        action = decision.action
+        if action == RoutingAction.DUPLICATE:
+            return [self._msg("Already handled that one.")]
+        if action == RoutingAction.STOP:
+            return self._stop(
+                "We've used our practice budget for today. Rest up — and consider "
+                "walking the tricky spots through with a teacher. Great effort!"
+            )
+        if action == RoutingAction.CONTINUE:
+            return [
+                self._msg("Correct! One more to make it stick."),
+                *self._issue_checkin(kc),
+            ]
+        if action == RoutingAction.RETRY:
+            node = self._nodes[kc]
+            return [
+                self._msg(f"Not quite. Remember: {node.description}"),
+                *self._issue_checkin(kc),
+            ]
+        if action == RoutingAction.DESCEND and decision.descend_to is not None:
+            prereq = decision.descend_to
+            return [
+                self._msg(
+                    f"That miss points at a building block: {self._nodes[prereq].name}. "
+                    "Let's shore that up first, then come back."
+                ),
+                *self._issue_lesson(prereq),
+            ]
+        if action == RoutingAction.FALLBACK:
+            self._fallback_kcs.append(kc)
+            worked = self._nodes[kc].canonical_examples[0]
+            return [
+                self._msg("Let's study it worked out, then keep moving:"),
+                self._msg(worked),
+                *self._advance_from(kc),
+            ]
+        self._mastered_in_session.append(kc)
+        return [
+            self._msg(f"{self._nodes[kc].name}: locked in."),
+            *self._advance_from(kc),
+        ]
+
+    def _advance_from(self, kc: str) -> list[Interaction]:
+        if self.envelope.resume_stack:
+            env = self.envelope.model_copy(deep=True)
+            resume = env.resume_stack.pop()
+            self.envelope = env
+            return [
+                self._msg(f"Back to {self._nodes[resume].name}."),
+                *self._issue_lesson(resume),
+            ]
+        if self._path_pos < len(self.path) and self.path[self._path_pos] == kc:
+            self._path_pos += 1
+        elif kc in self.path:
+            self._path_pos = self.path.index(kc) + 1
+        while self._path_pos < len(self.path) and self.learner.is_mastered(
+            self.path[self._path_pos]
+        ):
+            self._path_pos += 1
+        if self._path_pos < len(self.path):
+            return self._issue_lesson(self.path[self._path_pos])
+        return self._start_capstone()
+
+    # -- capstone -------------------------------------------------------------------
+
+    def _start_capstone(self) -> list[Interaction]:
+        self.phase = SessionPhase.CAPSTONE
+        node = self._nodes[self._target]
+        probe = self._diagnostician.generate_probe(node)
+        rendered = "\n".join(
+            "____" if index == probe.blank_index else step
+            for index, step in enumerate(probe.scaffold_steps)
+        )
+        self._pending = _Pending(
+            key=self._next_key(),
+            kind="capstone",
+            kc_id=self._target,
+            expected=probe.expected,
+            checker=probe.checker,
+            hints=list(probe.hint_ladder),
+        )
+        return [
+            self._msg("You've got all the pieces — time to close the loop."),
+            Interaction(
+                key=self._pending.key,
+                kind="capstone",
+                kc_id=self._target,
+                text=f"Capstone — your original question, no scaffolding:\n{rendered}",
+            ),
+        ]
+
+    def _after_capstone(self, pending: _Pending, correct: bool) -> list[Interaction]:
+        if correct:
+            self.phase = SessionPhase.DONE
+            name = self._nodes[self._target].name
+            return [
+                self._msg(
+                    f"That's it — you just solved {name} on your own. Session complete."
+                )
+            ]
+        self._capstone_attempts += 1
+        if self._capstone_attempts < 2:
+            self._pending = _Pending(
+                key=self._next_key(),
+                kind="capstone",
+                kc_id=pending.kc_id,
+                expected=pending.expected,
+                checker=pending.checker,
+                hints=pending.hints,
+            )
+            return [
+                self._msg(f"Close — try once more. {pending.hints[0]}"),
+                Interaction(
+                    key=self._pending.key,
+                    kind="capstone",
+                    kc_id=pending.kc_id,
+                    text="One more attempt:",
+                ),
+            ]
+        return self._stop(
+            "So close. Review today's lessons and try again soon — "
+            "or walk this one through with a teacher."
+        )
+
+    def _stop(self, text: str) -> list[Interaction]:
+        self.phase = SessionPhase.STOPPED
+        self._pending = None
+        return [self._msg(text)]
+
+    # -- reporting --------------------------------------------------------------------
+
+    def summary(self) -> dict:
+        """Machine-readable session summary."""
+        return {
+            "phase": self.phase.value,
+            "target": self._target,
+            "probes_used": self._diag.probes_issued,
+            "frontier": list(self._frontier_at_diagnosis),
+            "remaining_gaps": self._diag.frontier(),
+            "path": list(self.path),
+            "mastered_in_session": list(self._mastered_in_session),
+            "fallback_kcs": list(self._fallback_kcs),
+            "interactions_used": self.envelope.interactions_used,
+            "events_recorded": len(self.learner.events),
+        }
