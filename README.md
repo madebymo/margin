@@ -24,12 +24,13 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e "backend[dev,api]"
 pytest backend/tests
 python -m tutor.cli                     # terminal chat demo
-uvicorn tutor.api.app:app --reload      # web chat at http://127.0.0.1:8000
+uvicorn tutor.api.app:app --reload      # web chat at http://*********:8000
+python -m tutor.sim.harness             # diagnostic-policy metrics (budgets 5/8/10)
 docker compose up -d db                 # optional: real Postgres
 python -m tutor.seed.load_seed --validate
 ```
 LLM mode: `pip install -e "backend[llm]"`, set `OPENAI_API_KEY` (model override via `TUTOR_LLM_MODEL`), then `python -m tutor.cli --llm` or toggle LLM in the web UI.
 
 ## Status
-Done: Phase 0 (data layer), Phase 1 (orchestrator, diagnosis, learner model, CLI), LLM agent integration (OpenAI default, Anthropic optional), session API + web chat.
-Next: widget runtime (Phase 2), diagnostic-policy simulation harness (Phase 4).
+Done: Phase 0 (data layer), Phase 1 (orchestrator, diagnosis, learner model, CLI), LLM agent integration (OpenAI default, Anthropic optional), session API + web chat, diagnostic-policy simulation harness.
+Next: diagnosis-policy tuning against harness metrics, widget runtime (Phase 2), pedagogy packs for the remaining KCs.
