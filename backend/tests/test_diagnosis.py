@@ -1,5 +1,6 @@
 """Diagnosis controller: gap localization, budgets, and path planning."""
 
+from collections import Counter
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -48,7 +49,8 @@ def _drive(graph: GraphDocument, weak: set[str], budget: int = 8):
 def test_localizes_chain_rule_gap(graph):
     controller, _, probed = _drive(graph, weak={"kc.der.chain_rule", TARGET})
     assert controller.probes_issued <= 8
-    assert len(probed) == len(set(probed))  # never re-probes a node
+    # confirmations may re-probe a node, but never more than once
+    assert max(Counter(probed).values()) <= 2
     assert controller.frontier() == ["kc.der.chain_rule"]
 
     path = controller.plan_path()
@@ -71,3 +73,19 @@ def test_budget_respected_when_everything_is_weak(graph):
     assert controller.probes_issued <= 8
     assert controller.finished
     assert TARGET in controller.frontier() or controller.frontier()
+
+
+def test_single_slip_recovers_via_confirmation(graph):
+    """A lone wrong answer (slip) must not leave a phantom gap behind."""
+    learner = LearnerModelService(graph, assumed_floor_levels=FLOOR)
+    controller = DiagnosisController(graph, TARGET, learner, probe_budget=8)
+    first = True
+    while (kc := controller.next_probe_kc()) is not None:
+        correct = not first  # slip only on the very first probe (the target)
+        first = False
+        learner.apply_event(_event(learner, kc, correct))
+        controller.record_result(ProbeResult(kc_id=kc, correct=correct))
+    # confirmation re-probe recovered the slip: no gaps, nothing to teach
+    assert controller.frontier() == []
+    assert controller.plan_path() == []
+    assert controller.probes_issued <= 4  # slip localization stays cheap

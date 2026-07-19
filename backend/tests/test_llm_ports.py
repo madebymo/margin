@@ -195,9 +195,11 @@ def test_machine_with_llm_ports_descend_misconception_and_done(graph, chain_rule
         diagnostician=LLMDiagnostician(fake, graph=graph, packs=chain_rule_pack),
         lesson_writer=LLMLessonWriter(fake, packs=chain_rule_pack),
     )
-    # answer wrong exactly once per (kind, kc) listed here; else answer correctly
+    # answer wrong N times per (kind, kc); else answer correctly. The probe must
+    # be missed twice: policy v1.1 re-probes a lone miss (confirmation), and a
+    # correct confirmation would recover the node as a slip.
     wrong_budget = {
-        ("probe", "kc.der.chain_rule"): 1,
+        ("probe", "kc.der.chain_rule"): 2,
         ("checkin", "kc.der.chain_rule"): 1,
     }
     orchestrator.begin()

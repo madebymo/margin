@@ -1,12 +1,18 @@
 """Adaptive diagnosis: confidence-bounded selection of where to start teaching.
 
-Not exact frontier reconstruction. Policy (v1, deterministic):
+Not exact frontier reconstruction. Policy (v1.1, deterministic):
 - First probe is the target concept itself.
 - On a miss: probe the implicated prerequisite if the error analysis names
   one; otherwise binary-search the unresolved hard-ancestor chain of the
   missed node (midpoint by depth).
-- On a hit: narrow toward the deepest known-bad node's unresolved ancestors.
-- Stop when no unresolved candidates remain or the probe budget is spent.
+- On a hit: FIRST confirm any single-observation bad node by re-probing it
+  once (slip recovery — a lone wrong answer is weak evidence), then narrow
+  toward the deepest known-bad node's unresolved ancestors.
+- Leftover budget is spent on verification: probe the shallowest unprobed
+  node that would otherwise be taught on prior alone. Gated on at least one
+  observed gap, so a passing student still short-circuits after one probe.
+- Stop when nothing actionable remains or the probe budget is spent. No node
+  is ever probed more than twice.
 
 Output: a frontier (deepest observed-bad nodes with no bad hard ancestor) and
 a teaching path (topological order of unmastered nodes in the hard-ancestor
@@ -118,27 +124,73 @@ class DiagnosisController:
         if self._last is None:
             return self._target
         if not self._last.correct:
-            missed = self._last.kc_id
-            implicated = self._last.implicated_prereq
-            if (
-                implicated is not None
-                and implicated in self._hard.node_ids()
-                and self._learner.observations(implicated) == 0
-                and not self._learner.is_mastered(implicated)
-            ):
-                return implicated
-            chain = self._unresolved_ancestors(missed)
-            if not chain:
-                return None  # gap localized at the missed node
-            return chain[len(chain) // 2]
+            candidate = self._miss_candidate()
+        else:
+            candidate = self._confirmation_candidate() or self._drill_candidate()
+        if candidate is None:
+            candidate = self._confirmation_candidate() or self._verification_candidate()
+        return candidate
+
+    def _miss_candidate(self) -> str | None:
+        """After a miss: implicated prerequisite, else midpoint of the missed chain."""
+        missed = self._last.kc_id if self._last else self._target
+        implicated = self._last.implicated_prereq if self._last else None
+        if (
+            implicated is not None
+            and implicated in self._hard.node_ids()
+            and self._learner.observations(implicated) == 0
+            and not self._learner.is_mastered(implicated)
+        ):
+            return implicated
+        chain = self._unresolved_ancestors(missed)
+        if not chain:
+            return None  # gap localized at the missed node
+        return chain[len(chain) // 2]
+
+    def _drill_candidate(self) -> str | None:
+        """After a hit: narrow toward the deepest known-bad node's ancestors."""
         known_bad = self._known_bad()
         if not known_bad:
-            return None  # nothing bad observed; done
+            return None  # nothing bad observed
         deepest_bad = max(known_bad, key=lambda k: (self._depth[k], k))
         chain = self._unresolved_ancestors(deepest_bad)
         if not chain:
-            return None  # frontier confirmed
+            return None  # localization exhausted
         return chain[len(chain) // 2]
+
+    def _confirmation_candidate(self) -> str | None:
+        """Re-probe single-observation bad nodes once before trusting them.
+
+        A lone wrong answer may be a slip; a confirmation probe either recovers
+        the node (Bayes update pushes it back above threshold) or cements it.
+        Shallowest first, since shallow bad nodes define the frontier.
+        """
+        singles = [
+            kc
+            for kc in self._hard.node_ids()
+            if self._learner.observations(kc) == 1 and not self._learner.is_mastered(kc)
+        ]
+        if not singles:
+            return None
+        return min(singles, key=lambda k: (self._depth[k], k))
+
+    def _verification_candidate(self) -> str | None:
+        """Spend leftover budget on the shallowest unprobed would-be lesson node.
+
+        Converts prior-only uncertainty at the front of the teaching path into
+        direct evidence (better next-KC accuracy, less overteaching). Gated on
+        an observed gap so passing students are not burdened.
+        """
+        if not self._known_bad():
+            return None
+        unverified = [
+            kc
+            for kc in self._hard.node_ids()
+            if self._learner.observations(kc) == 0 and not self._learner.is_mastered(kc)
+        ]
+        if not unverified:
+            return None
+        return min(unverified, key=lambda k: (self._depth[k], k))
 
     # -- outputs ---------------------------------------------------------------
 
