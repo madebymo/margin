@@ -1,0 +1,345 @@
+{
+  "graph_version": 1,
+  "nodes": [
+    {
+      "id": "kc.alg.arith_fractions",
+      "name": "Fraction arithmetic",
+      "description": "Add, subtract, multiply, and divide numeric fractions, including finding common denominators and simplifying results.",
+      "course_level": "Algebra 1",
+      "canonical_examples": ["2/3 + 1/6 = 5/6", "(3/4) / (2/5) = 15/8"]
+    },
+    {
+      "id": "kc.alg.exponent_rules",
+      "name": "Exponent rules",
+      "description": "Apply product, quotient, power, zero, and negative exponent rules to simplify expressions.",
+      "course_level": "Algebra 1",
+      "canonical_examples": ["x^3 * x^2 = x^5", "(x^2)^3 / x^4 = x^2"]
+    },
+    {
+      "id": "kc.alg.polynomial_ops",
+      "name": "Polynomial operations",
+      "description": "Add, subtract, and multiply polynomials; expand products and collect like terms.",
+      "course_level": "Algebra 1",
+      "canonical_examples": ["(x + 2)(x - 3) = x^2 - x - 6"]
+    },
+    {
+      "id": "kc.alg.factoring",
+      "name": "Factoring polynomials",
+      "description": "Factor polynomials using common factors, difference of squares, and quadratic trinomial patterns.",
+      "course_level": "Algebra 1",
+      "canonical_examples": ["x^2 - 5x + 6 = (x - 2)(x - 3)", "x^2 - 9 = (x - 3)(x + 3)"]
+    },
+    {
+      "id": "kc.alg.solve_linear",
+      "name": "Solving linear equations",
+      "description": "Solve one-variable linear equations by isolating the unknown with inverse operations.",
+      "course_level": "Algebra 1",
+      "canonical_examples": ["3x + 5 = 17 gives x = 4"]
+    },
+    {
+      "id": "kc.alg.solve_quadratic",
+      "name": "Solving quadratic equations",
+      "description": "Solve quadratic equations by factoring, completing the square, or the quadratic formula.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["x^2 - 5x + 6 = 0 gives x = 2 or x = 3"]
+    },
+    {
+      "id": "kc.alg.radicals_rational_exponents",
+      "name": "Radicals and rational exponents",
+      "description": "Convert between radical and rational-exponent notation and simplify radical expressions.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["sqrt(x) = x^(1/2)", "x^(3/2) = x * sqrt(x)"]
+    },
+    {
+      "id": "kc.alg.algebraic_simplification",
+      "name": "Simplifying rational expressions",
+      "description": "Simplify rational and compound algebraic expressions by factoring and canceling common factors.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["(x^2 - 9)/(x - 3) = x + 3 for x != 3"]
+    },
+    {
+      "id": "kc.fun.function_notation",
+      "name": "Function notation and evaluation",
+      "description": "Interpret and evaluate functions written as f(x), including evaluation at expressions.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["If f(x) = x^2 + 1 then f(3) = 10", "f(a + h) = (a + h)^2 + 1"]
+    },
+    {
+      "id": "kc.fun.domain_range",
+      "name": "Domain and range",
+      "description": "Determine the set of valid inputs and possible outputs of a function.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["f(x) = 1/(x - 2) has domain x != 2"]
+    },
+    {
+      "id": "kc.fun.graph_reading",
+      "name": "Reading function graphs",
+      "description": "Read values, intercepts, slopes, and qualitative behavior from the graph of a function.",
+      "course_level": "Algebra 2",
+      "canonical_examples": ["From a graph, f(2) = 4 and f is increasing on (0, 3)"]
+    },
+    {
+      "id": "kc.fun.composition",
+      "name": "Function composition",
+      "description": "Build and evaluate composite functions f(g(x)) and decompose a function into inner and outer parts.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["If f(x) = x^2 and g(x) = 3x + 1 then f(g(x)) = (3x + 1)^2", "h(x) = sin(x^2) has outer sin(u) and inner u = x^2"]
+    },
+    {
+      "id": "kc.fun.inverse_functions",
+      "name": "Inverse functions",
+      "description": "Find and verify inverse functions and understand their graphs as reflections over y = x.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["f(x) = 2x + 3 has inverse (x - 3)/2"]
+    },
+    {
+      "id": "kc.fun.transformations",
+      "name": "Graph transformations",
+      "description": "Predict how shifts, stretches, and reflections transform the graph of a function.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["g(x) = (x - 2)^2 + 1 shifts x^2 right 2 and up 1"]
+    },
+    {
+      "id": "kc.fun.exp_log",
+      "name": "Exponential and logarithmic functions",
+      "description": "Work with exponential and logarithmic functions, including the inverse relationship between them.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["ln(e^x) = x", "2^x = 8 gives x = 3"]
+    },
+    {
+      "id": "kc.fun.trig_basics",
+      "name": "Trigonometric functions and the unit circle",
+      "description": "Evaluate sine, cosine, and tangent at standard angles using the unit circle.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["sin(pi/2) = 1", "cos(pi/3) = 1/2"]
+    },
+    {
+      "id": "kc.fun.trig_identities_basic",
+      "name": "Basic trig identities",
+      "description": "Use fundamental identities such as sin^2(x) + cos^2(x) = 1 to rewrite expressions.",
+      "course_level": "Precalculus",
+      "canonical_examples": ["1 - sin^2(x) = cos^2(x)"]
+    },
+    {
+      "id": "kc.lim.intuitive_limits",
+      "name": "Limit intuition and notation",
+      "description": "Describe the limiting value of a function as inputs approach a point, from graphs and tables.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["lim as x approaches 2 of x^2 is 4"]
+    },
+    {
+      "id": "kc.lim.limit_laws",
+      "name": "Computing limits with limit laws",
+      "description": "Compute limits algebraically using limit laws and by simplifying indeterminate forms.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["lim as x approaches 3 of (x^2 - 9)/(x - 3) = 6"]
+    },
+    {
+      "id": "kc.lim.continuity",
+      "name": "Continuity",
+      "description": "Determine where a function is continuous and classify discontinuities.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["(x^2 - 9)/(x - 3) has a removable discontinuity at x = 3"]
+    },
+    {
+      "id": "kc.der.rate_of_change",
+      "name": "Average vs. instantaneous rate of change",
+      "description": "Distinguish average rate of change (secant slope) from instantaneous rate of change (tangent slope).",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["Average rate of x^2 on [1, 3] is (9 - 1)/(3 - 1) = 4"]
+    },
+    {
+      "id": "kc.der.derivative_definition",
+      "name": "Derivative as a limit",
+      "description": "Define the derivative as the limit of difference quotients.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["f'(x) = lim as h approaches 0 of (f(x + h) - f(x))/h", "For f(x) = x^2 the definition gives f'(x) = 2x"]
+    },
+    {
+      "id": "kc.der.power_rule",
+      "name": "Power rule",
+      "description": "Differentiate power functions using d/dx x^n = n x^(n-1).",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx x^5 = 5x^4", "d/dx sqrt(x) = 1/(2 sqrt(x))"]
+    },
+    {
+      "id": "kc.der.sum_constant_rules",
+      "name": "Linearity of differentiation",
+      "description": "Differentiate sums, differences, and constant multiples term by term.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx (3x^2 + 5x - 7) = 6x + 5"]
+    },
+    {
+      "id": "kc.der.product_quotient",
+      "name": "Product and quotient rules",
+      "description": "Differentiate products and quotients using the product and quotient rules.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx (x^2 sin(x)) = 2x sin(x) + x^2 cos(x)"]
+    },
+    {
+      "id": "kc.der.trig_derivatives",
+      "name": "Derivatives of trig functions",
+      "description": "Differentiate sine, cosine, and tangent.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx sin(x) = cos(x)", "d/dx tan(x) = sec^2(x)"]
+    },
+    {
+      "id": "kc.der.exp_log_derivatives",
+      "name": "Derivatives of exponential and log functions",
+      "description": "Differentiate exponential and logarithmic functions.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx e^x = e^x", "d/dx ln(x) = 1/x"]
+    },
+    {
+      "id": "kc.der.chain_rule",
+      "name": "Chain rule",
+      "description": "Differentiate composite functions: the derivative of f(g(x)) is f'(g(x)) times g'(x).",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["d/dx sin(x^2) = 2x cos(x^2)", "d/dx (3x + 1)^4 = 12(3x + 1)^3"]
+    },
+    {
+      "id": "kc.der.differentials",
+      "name": "Differentials and Leibniz notation",
+      "description": "Relate du and dx through du = u'(x) dx and use Leibniz notation fluently.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["If u = x^2 then du = 2x dx"]
+    },
+    {
+      "id": "kc.der.implicit_differentiation",
+      "name": "Implicit differentiation",
+      "description": "Differentiate relations that define y implicitly, applying the chain rule to y-terms.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["x^2 + y^2 = 25 gives dy/dx = -x/y"]
+    },
+    {
+      "id": "kc.int.area_under_curve",
+      "name": "Area under a curve as accumulation",
+      "description": "Interpret the area between a curve and the x-axis as an accumulated quantity.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["Area under v(t) on [0, 4] gives distance traveled"]
+    },
+    {
+      "id": "kc.int.riemann_sums",
+      "name": "Riemann sums",
+      "description": "Approximate area under a curve with sums of rectangle areas that improve with finer partitions.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["Left sum of x^2 on [0, 1] with 4 rectangles: (0 + 1/16 + 4/16 + 9/16) * (1/4)"]
+    },
+    {
+      "id": "kc.int.definite_integral",
+      "name": "The definite integral",
+      "description": "Define the definite integral as the limit of Riemann sums; interpret its sign and notation.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral from 0 to 1 of x^2 dx = 1/3"]
+    },
+    {
+      "id": "kc.int.antiderivatives",
+      "name": "Antiderivatives",
+      "description": "Find functions whose derivative is a given function, reversing differentiation rules.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["An antiderivative of 3x^2 is x^3"]
+    },
+    {
+      "id": "kc.int.indefinite_notation",
+      "name": "Indefinite integrals and +C",
+      "description": "Use indefinite integral notation and include the constant of integration.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral of 2x dx = x^2 + C"]
+    },
+    {
+      "id": "kc.int.ftc",
+      "name": "Fundamental Theorem of Calculus",
+      "description": "Connect derivatives and definite integrals: evaluate definite integrals using antiderivatives.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral from 1 to 3 of 2x dx = 9 - 1 = 8"]
+    },
+    {
+      "id": "kc.int.integral_basic_rules",
+      "name": "Basic integration rules and table",
+      "description": "Integrate term by term using the reverse power rule and the basic table of trig and exponential integrals.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral of (3x^2 + cos(x)) dx = x^3 + sin(x) + C"]
+    },
+    {
+      "id": "kc.int.recognizing_composite",
+      "name": "Recognizing composite structure in integrands",
+      "description": "Spot when an integrand contains a composite function together with a multiple of its inner derivative.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["In integral of 2x cos(x^2) dx, the factor 2x is the derivative of the inner x^2"]
+    },
+    {
+      "id": "kc.int.u_substitution",
+      "name": "U-substitution (indefinite integrals)",
+      "description": "Evaluate integrals by substituting u for an inner function and converting dx to du, reversing the chain rule.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral of 2x cos(x^2) dx = sin(x^2) + C via u = x^2"]
+    },
+    {
+      "id": "kc.int.u_sub_definite",
+      "name": "U-substitution with definite integrals",
+      "description": "Apply u-substitution to definite integrals, converting the bounds to u-values or back-substituting before evaluating.",
+      "course_level": "Calc I / AP Calc AB",
+      "canonical_examples": ["integral from 0 to 1 of 2x e^(x^2) dx = e - 1 via u = x^2 with bounds 0 to 1"]
+    }
+  ],
+  "edges": [
+    {"from_kc": "kc.alg.arith_fractions", "to_kc": "kc.alg.algebraic_simplification", "type": "hard", "rationale": "Simplifying rational expressions reuses fraction arithmetic with variables."},
+    {"from_kc": "kc.alg.exponent_rules", "to_kc": "kc.alg.algebraic_simplification", "type": "hard", "rationale": "Canceling and combining terms requires exponent manipulation."},
+    {"from_kc": "kc.alg.exponent_rules", "to_kc": "kc.alg.radicals_rational_exponents", "type": "hard", "rationale": "Rational exponents generalize integer exponent rules."},
+    {"from_kc": "kc.alg.polynomial_ops", "to_kc": "kc.alg.factoring", "type": "hard", "rationale": "Factoring reverses polynomial multiplication."},
+    {"from_kc": "kc.alg.factoring", "to_kc": "kc.alg.solve_quadratic", "type": "hard", "rationale": "Factoring is the primary method for solving quadratics."},
+    {"from_kc": "kc.alg.solve_linear", "to_kc": "kc.alg.solve_quadratic", "type": "hard", "rationale": "Each factored root reduces to a linear equation."},
+    {"from_kc": "kc.alg.factoring", "to_kc": "kc.alg.algebraic_simplification", "type": "hard", "rationale": "Canceling common factors requires factoring numerator and denominator."},
+    {"from_kc": "kc.fun.function_notation", "to_kc": "kc.fun.domain_range", "type": "hard", "rationale": "Domain and range are properties of functions expressed in function notation."},
+    {"from_kc": "kc.fun.function_notation", "to_kc": "kc.fun.graph_reading", "type": "hard", "rationale": "Graphs are read as values of f(x) at inputs x."},
+    {"from_kc": "kc.fun.function_notation", "to_kc": "kc.fun.composition", "type": "hard", "rationale": "Composition substitutes one function's output into another's notation."},
+    {"from_kc": "kc.fun.composition", "to_kc": "kc.fun.inverse_functions", "type": "hard", "rationale": "Inverses are verified through composition: f(f^-1(x)) = x."},
+    {"from_kc": "kc.fun.graph_reading", "to_kc": "kc.fun.transformations", "type": "hard", "rationale": "Transformations are described relative to a readable base graph."},
+    {"from_kc": "kc.fun.function_notation", "to_kc": "kc.fun.exp_log", "type": "hard", "rationale": "Exponential and log functions are used and evaluated as functions."},
+    {"from_kc": "kc.alg.exponent_rules", "to_kc": "kc.fun.exp_log", "type": "hard", "rationale": "Exponential functions build directly on exponent arithmetic."},
+    {"from_kc": "kc.fun.function_notation", "to_kc": "kc.fun.trig_basics", "type": "hard", "rationale": "Trig functions are evaluated with function notation on angle inputs."},
+    {"from_kc": "kc.fun.trig_basics", "to_kc": "kc.fun.trig_identities_basic", "type": "hard", "rationale": "Identities relate the values of the basic trig functions."},
+    {"from_kc": "kc.fun.graph_reading", "to_kc": "kc.lim.intuitive_limits", "type": "hard", "rationale": "Limit intuition is built by reading function behavior from graphs."},
+    {"from_kc": "kc.lim.intuitive_limits", "to_kc": "kc.lim.limit_laws", "type": "hard", "rationale": "Limit laws formalize the intuitive notion of a limit."},
+    {"from_kc": "kc.alg.algebraic_simplification", "to_kc": "kc.lim.limit_laws", "type": "hard", "rationale": "Indeterminate forms are resolved by algebraic simplification."},
+    {"from_kc": "kc.lim.intuitive_limits", "to_kc": "kc.lim.continuity", "type": "hard", "rationale": "Continuity is defined by comparing limits with function values."},
+    {"from_kc": "kc.fun.graph_reading", "to_kc": "kc.der.rate_of_change", "type": "hard", "rationale": "Rates of change are seen as slopes on graphs."},
+    {"from_kc": "kc.alg.solve_linear", "to_kc": "kc.der.rate_of_change", "type": "soft", "rationale": "Slope computations use linear-equation arithmetic."},
+    {"from_kc": "kc.der.rate_of_change", "to_kc": "kc.der.derivative_definition", "type": "hard", "rationale": "The derivative formalizes instantaneous rate of change."},
+    {"from_kc": "kc.lim.limit_laws", "to_kc": "kc.der.derivative_definition", "type": "hard", "rationale": "The derivative is defined as a limit of difference quotients."},
+    {"from_kc": "kc.alg.exponent_rules", "to_kc": "kc.der.power_rule", "type": "hard", "rationale": "The power rule manipulates exponents, including negative and fractional ones."},
+    {"from_kc": "kc.der.derivative_definition", "to_kc": "kc.der.power_rule", "type": "soft", "rationale": "The power rule is justified by the limit definition, though often used without it."},
+    {"from_kc": "kc.der.power_rule", "to_kc": "kc.der.sum_constant_rules", "type": "hard", "rationale": "Term-by-term differentiation applies the power rule to each term."},
+    {"from_kc": "kc.der.sum_constant_rules", "to_kc": "kc.der.product_quotient", "type": "hard", "rationale": "Product and quotient rules extend basic differentiation fluency."},
+    {"from_kc": "kc.fun.trig_basics", "to_kc": "kc.der.trig_derivatives", "type": "hard", "rationale": "Differentiating trig functions requires knowing the functions themselves."},
+    {"from_kc": "kc.der.sum_constant_rules", "to_kc": "kc.der.trig_derivatives", "type": "hard", "rationale": "Trig derivatives appear inside sums and constant multiples."},
+    {"from_kc": "kc.fun.exp_log", "to_kc": "kc.der.exp_log_derivatives", "type": "hard", "rationale": "Differentiating e^x and ln(x) requires the functions and their properties."},
+    {"from_kc": "kc.der.sum_constant_rules", "to_kc": "kc.der.exp_log_derivatives", "type": "hard", "rationale": "Exponential and log derivatives are used within linear combinations."},
+    {"from_kc": "kc.fun.composition", "to_kc": "kc.der.chain_rule", "type": "hard", "rationale": "The chain rule differentiates composite functions; you must see the composition first."},
+    {"from_kc": "kc.der.power_rule", "to_kc": "kc.der.chain_rule", "type": "hard", "rationale": "Chain rule practice leans on differentiating the outer power or basic function."},
+    {"from_kc": "kc.der.product_quotient", "to_kc": "kc.der.chain_rule", "type": "soft", "rationale": "Mixed problems combine chain rule with product and quotient rules."},
+    {"from_kc": "kc.der.power_rule", "to_kc": "kc.der.differentials", "type": "hard", "rationale": "Computing du = u'(x) dx requires differentiating u."},
+    {"from_kc": "kc.der.derivative_definition", "to_kc": "kc.der.differentials", "type": "soft", "rationale": "Differentials inherit meaning from the limit definition of the derivative."},
+    {"from_kc": "kc.der.chain_rule", "to_kc": "kc.der.implicit_differentiation", "type": "hard", "rationale": "Implicit differentiation applies the chain rule to y-terms."},
+    {"from_kc": "kc.fun.graph_reading", "to_kc": "kc.int.area_under_curve", "type": "hard", "rationale": "Accumulated area is interpreted from the graph of the function."},
+    {"from_kc": "kc.int.area_under_curve", "to_kc": "kc.int.riemann_sums", "type": "hard", "rationale": "Riemann sums approximate the area concept with rectangles."},
+    {"from_kc": "kc.alg.polynomial_ops", "to_kc": "kc.int.riemann_sums", "type": "soft", "rationale": "Evaluating sums of rectangle areas uses polynomial arithmetic."},
+    {"from_kc": "kc.int.riemann_sums", "to_kc": "kc.int.definite_integral", "type": "hard", "rationale": "The definite integral is the limit of Riemann sums."},
+    {"from_kc": "kc.der.power_rule", "to_kc": "kc.int.antiderivatives", "type": "hard", "rationale": "Antiderivatives reverse the power rule."},
+    {"from_kc": "kc.der.sum_constant_rules", "to_kc": "kc.int.antiderivatives", "type": "hard", "rationale": "Antidifferentiation is applied term by term."},
+    {"from_kc": "kc.int.antiderivatives", "to_kc": "kc.int.indefinite_notation", "type": "hard", "rationale": "Indefinite integral notation names the family of antiderivatives."},
+    {"from_kc": "kc.int.definite_integral", "to_kc": "kc.int.ftc", "type": "hard", "rationale": "The FTC evaluates definite integrals."},
+    {"from_kc": "kc.int.antiderivatives", "to_kc": "kc.int.ftc", "type": "hard", "rationale": "The FTC uses antiderivatives to evaluate integrals."},
+    {"from_kc": "kc.int.indefinite_notation", "to_kc": "kc.int.integral_basic_rules", "type": "hard", "rationale": "Table integration is expressed in indefinite integral notation."},
+    {"from_kc": "kc.der.trig_derivatives", "to_kc": "kc.int.integral_basic_rules", "type": "soft", "rationale": "The trig part of the integral table reverses trig derivatives."},
+    {"from_kc": "kc.der.exp_log_derivatives", "to_kc": "kc.int.integral_basic_rules", "type": "soft", "rationale": "The exponential part of the integral table reverses those derivatives."},
+    {"from_kc": "kc.fun.composition", "to_kc": "kc.int.recognizing_composite", "type": "hard", "rationale": "Recognizing inner and outer functions is a composition skill."},
+    {"from_kc": "kc.der.chain_rule", "to_kc": "kc.int.recognizing_composite", "type": "hard", "rationale": "Spotting an inner derivative in the integrand mirrors the chain rule."},
+    {"from_kc": "kc.int.recognizing_composite", "to_kc": "kc.int.u_substitution", "type": "hard", "rationale": "Choosing u requires seeing the composite structure."},
+    {"from_kc": "kc.der.differentials", "to_kc": "kc.int.u_substitution", "type": "hard", "rationale": "Converting dx to du uses du = u'(x) dx."},
+    {"from_kc": "kc.int.integral_basic_rules", "to_kc": "kc.int.u_substitution", "type": "hard", "rationale": "After substitution the remaining integral is evaluated from the basic table."},
+    {"from_kc": "kc.der.chain_rule", "to_kc": "kc.int.u_substitution", "type": "hard", "rationale": "U-substitution reverses the chain rule."},
+    {"from_kc": "kc.int.u_substitution", "to_kc": "kc.int.u_sub_definite", "type": "hard", "rationale": "Definite u-substitution builds on the indefinite technique."},
+    {"from_kc": "kc.int.ftc", "to_kc": "kc.int.u_sub_definite", "type": "hard", "rationale": "Evaluating with new bounds uses the FTC."}
+  ]
+}

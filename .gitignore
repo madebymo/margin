@@ -1,0 +1,14 @@
+.ai/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+dist/
+build/
+.env
+node_modules/
+.DS_Store
+schemas/json/
