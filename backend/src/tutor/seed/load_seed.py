@@ -12,6 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from tutor.content.compiler import compile_default_blueprints
 from tutor.content.item_bank import load_item_bank, validate_item_bank
 from tutor.graph import service
 from tutor.schemas.common import WidgetType
@@ -102,6 +103,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"item bank INVALID: {exc}", file=sys.stderr)
         return 1
     errors.extend(f"item bank: {error}" for error in validate_item_bank(bank, doc))
+    try:
+        prototype_bank = compile_default_blueprints(doc)
+    except Exception as exc:  # noqa: BLE001 - authoring validation boundary
+        print(f"item blueprints INVALID: {exc}", file=sys.stderr)
+        return 1
+    errors.extend(
+        f"item blueprints: {error}"
+        for error in validate_item_bank(prototype_bank, doc)
+    )
     if errors:
         for error in errors:
             print(f"coverage INVALID: {error}", file=sys.stderr)
@@ -110,7 +120,9 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"seed OK: {len(doc.nodes)} nodes, {len(doc.edges)} edges, "
         f"{len(service.roots(doc))} roots, max prerequisite depth {topo_depth(doc)}, "
-        f"item bank {bank.bank_version} ({len(bank.items)} items)"
+        f"item bank {bank.bank_version} ({len(bank.items)} items), "
+        f"authoring prototypes {prototype_bank.bank_version} "
+        f"({len(prototype_bank.items)} items)"
     )
 
     if args.db:

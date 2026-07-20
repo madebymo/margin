@@ -19,7 +19,11 @@ def approved_power_rule_bank() -> ItemBankDocument:
     payload = load_item_bank().model_dump(mode="json")
     payload["bank_version"] = "test-approved-power-v2"
     payload["released_kcs"] = [POWER_RULE_KC]
+    next_order: dict[str, int] = {}
     for item in payload["items"]:
+        surface = item["eligible_surfaces"][0]
+        next_order[surface] = next_order.get(surface, 0) + 10
+        item["allocation_order"] = next_order[surface]
         item["review_status"] = "human_approved"
         item["provenance"] = {
             "source": "test-only-approved-fixture",

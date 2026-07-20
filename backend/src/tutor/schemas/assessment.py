@@ -36,25 +36,73 @@ class AssessmentSurface(StrEnum):
     WORKED_EXAMPLE = "worked_example"
 
 
+class AssessmentTaskKind(StrEnum):
+    """Whether the learner derives a result or rewrites a supplied expression."""
+
+    SOLVE = "solve"
+    TRANSFORM = "transform"
+
+
+class PromptSemanticRole(StrEnum):
+    """Why a structured prompt segment is visible to the learner."""
+
+    INSTRUCTION = "instruction"
+    CONTEXT = "context"
+    GIVEN = "given"
+    RESPONSE = "response"
+    WORKED_STEP = "worked_step"
+    WORKED_ANSWER = "worked_answer"
+
+
 class TextPromptSegment(StrictFrozenModel):
     """Learner-visible prose."""
 
     kind: Literal["text"] = "text"
+    # Defaults preserve checkpoints written before semantic roles were added.
+    role: PromptSemanticRole = PromptSemanticRole.INSTRUCTION
     text: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _valid_role(self) -> "TextPromptSegment":
+        if self.role not in {
+            PromptSemanticRole.INSTRUCTION,
+            PromptSemanticRole.CONTEXT,
+            PromptSemanticRole.WORKED_STEP,
+        }:
+            raise ValueError(f"text segments cannot have role {self.role.value!r}")
+        return self
 
 
 class MathPromptSegment(StrictFrozenModel):
     """Learner-visible ASCII math, kept distinct from prose."""
 
     kind: Literal["math"] = "math"
+    role: PromptSemanticRole = PromptSemanticRole.GIVEN
     expression: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _valid_role(self) -> "MathPromptSegment":
+        if self.role not in {
+            PromptSemanticRole.GIVEN,
+            PromptSemanticRole.WORKED_STEP,
+            PromptSemanticRole.WORKED_ANSWER,
+        }:
+            raise ValueError(f"math segments cannot have role {self.role.value!r}")
+        return self
 
 
 class BlankPromptSegment(StrictFrozenModel):
     """One answer location in an assessment prompt."""
 
     kind: Literal["blank"] = "blank"
+    role: PromptSemanticRole = PromptSemanticRole.RESPONSE
     label: str | None = None
+
+    @model_validator(mode="after")
+    def _valid_role(self) -> "BlankPromptSegment":
+        if self.role != PromptSemanticRole.RESPONSE:
+            raise ValueError("blank segments must have role 'response'")
+        return self
 
 
 PromptSegment = Annotated[
@@ -221,7 +269,13 @@ class AssessmentItem(StrictFrozenModel):
     family_id: str = Field(max_length=128, pattern=_CONTENT_ID_PATTERN)
     kc_id: str = Field(pattern=KC_ID_PATTERN)
     difficulty: Literal["foundation", "core", "stretch"] = "core"
+    # Legacy items are ordinary solve tasks. A transform declaration is the
+    # narrow exception that permits an equivalent, non-answer ``given``.
+    task_kind: AssessmentTaskKind = AssessmentTaskKind.SOLVE
     eligible_surfaces: list[AssessmentSurface] = Field(min_length=1)
+    # Kept optional so legacy banks/checkpoints remain parseable. Release
+    # validation requires an authored order for every released family.
+    allocation_order: int | None = Field(default=None, ge=0)
     prompt: list[PromptSegment] = Field(min_length=1)
     hints: list[AssessmentHint] = Field(min_length=3, max_length=3)
     answer: AnswerSpec
@@ -243,6 +297,14 @@ class AssessmentItem(StrictFrozenModel):
             raise ValueError("the first two hints must be non-revealing")
         if not self.hints[2].revealing:
             raise ValueError("the final hint must be revealing")
+        if self.task_kind == AssessmentTaskKind.TRANSFORM:
+            givens = sum(
+                isinstance(segment, MathPromptSegment)
+                and segment.role == PromptSemanticRole.GIVEN
+                for segment in self.prompt
+            )
+            if givens != 1:
+                raise ValueError("a transform task must contain exactly one math given")
         return self
 
 
@@ -268,7 +330,16 @@ class ItemBankDocument(StrictFrozenModel):
         family_kcs: dict[str, str] = {}
         item_lineages: dict[
             str,
-            tuple[str, str, frozenset[AssessmentSurface]],
+            tuple[
+                str,
+                str,
+                AssessmentTaskKind,
+                frozenset[AssessmentSurface],
+                int | None,
+            ],
+        ] = {}
+        family_orders: dict[
+            tuple[str, frozenset[AssessmentSurface]], int | None
         ] = {}
         for item in self.items:
             previous = family_kcs.setdefault(item.family_id, item.kc_id)
@@ -279,14 +350,28 @@ class ItemBankDocument(StrictFrozenModel):
             lineage = (
                 item.kc_id,
                 item.family_id,
+                item.task_kind,
                 frozenset(item.eligible_surfaces),
+                item.allocation_order,
             )
             previous_lineage = item_lineages.setdefault(item.item_id, lineage)
             if previous_lineage != lineage:
                 raise ValueError(
                     f"revisions of item {item.item_id!r} must retain the same "
-                    "KC, family, and eligible surfaces"
+                    "KC, family, task kind, eligible surfaces, and allocation order"
                 )
+            family_surface = (
+                item.family_id,
+                frozenset(item.eligible_surfaces),
+            )
+            if family_surface in family_orders:
+                if family_orders[family_surface] != item.allocation_order:
+                    raise ValueError(
+                        f"variants in family {item.family_id!r} must retain the same "
+                        "allocation order"
+                    )
+            else:
+                family_orders[family_surface] = item.allocation_order
         return self
 
 

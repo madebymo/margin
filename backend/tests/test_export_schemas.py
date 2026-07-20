@@ -13,7 +13,11 @@ _spec.loader.exec_module(_module)
 
 def test_export_writes_valid_schema_files(tmp_path):
     written = _module.export_schemas(tmp_path)
-    assert len(written) == 8
+    assert len(written) == 10
+    assert {path.name for path in written} >= {
+        "item_blueprint_document.json",
+        "content_review_manifest.json",
+    }
     for path in written:
         data = json.loads(path.read_text())
         assert any(key in data for key in ("properties", "$defs", "oneOf")), path.name

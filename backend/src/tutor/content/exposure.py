@@ -83,6 +83,8 @@ class ItemAllocator:
         candidates = sorted(
             eligible,
             key=lambda item: (
+                item.allocation_order is None,
+                item.allocation_order if item.allocation_order is not None else 0,
                 isinstance(item.answer, ChoiceAnswerSpec),
                 item.family_id,
                 item.item_id,

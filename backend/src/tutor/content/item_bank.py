@@ -15,6 +15,7 @@ from tutor.schemas.assessment import (
     AntiderivativeAnswerSpec,
     AssessmentItem,
     AssessmentSurface,
+    AssessmentTaskKind,
     BlankPromptSegment,
     ChoiceAnswerSpec,
     FiniteSetAnswerSpec,
@@ -23,6 +24,7 @@ from tutor.schemas.assessment import (
     MathPromptSegment,
     NumericAnswerSpec,
     OrderedTupleAnswerSpec,
+    PromptSemanticRole,
     SymbolicAnswerSpec,
     TextPromptSegment,
 )
@@ -523,6 +525,16 @@ def _leakage_problems(item: AssessmentItem) -> list[str]:
                     supervised=True,
                 )
                 if verdict.status == VerificationStatus.CORRECT:
+                    canonical = _compact(_canonical_submission(item)).replace("**", "^")
+                    normalized_given = _compact(segment.expression).replace("**", "^")
+                    is_distinct_transform_given = (
+                        item.task_kind == AssessmentTaskKind.TRANSFORM
+                        and segment.role == PromptSemanticRole.GIVEN
+                        and candidate == segment.expression
+                        and normalized_given != canonical
+                    )
+                    if is_distinct_transform_given:
+                        continue
                     errors.append(
                         "a visible math segment is equivalent to the expected answer"
                     )
@@ -577,6 +589,9 @@ def _validate_item_bank_uncached(
     production_family_surfaces: dict[
         tuple[str, AssessmentSurface], set[str]
     ] = defaultdict(set)
+    release_order_families: dict[
+        tuple[str, AssessmentSurface, int], set[str]
+    ] = defaultdict(set)
     scored_items: list[AssessmentItem] = []
     visible_items: list[AssessmentItem] = []
     item_kcs = {item.kc_id for item in bank.items}
@@ -610,6 +625,13 @@ def _validate_item_bank_uncached(
                 )
         if is_release_item and item.review_status != ReviewStatus.HUMAN_APPROVED:
             errors.append(f"{prefix}: item is not human_approved")
+        if is_release_item and item.allocation_order is None:
+            errors.append(f"{prefix}: released item lacks allocation_order")
+        elif is_release_item:
+            for surface in item.eligible_surfaces:
+                release_order_families[
+                    (item.kc_id, surface, item.allocation_order)
+                ].add(item.family_id)
         if (
             is_release_item
             and (
@@ -654,6 +676,16 @@ def _validate_item_bank_uncached(
                     f"{prefix}: error signature prerequisite "
                     f"{signature.implicated_prereq} is not a direct hard predecessor"
                 )
+
+    for (kc_id, surface, order), families in sorted(
+        release_order_families.items(),
+        key=lambda entry: (entry[0][0], entry[0][1].value, entry[0][2]),
+    ):
+        if len(families) > 1:
+            errors.append(
+                f"{kc_id}/{surface.value}: allocation_order {order} is reused "
+                f"across families {sorted(families)}"
+            )
 
     reported_family_pairs: set[tuple[str, str]] = set()
     ordered_scored = sorted(
