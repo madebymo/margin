@@ -12,6 +12,8 @@ const SAMPLE_INTERVALS = 400;
 const BASE_SUBDIVISION_DEPTH = 2;
 const MAX_ADAPTIVE_DEPTH = 6;
 const FALLBACK_MESSAGE = "Rich visualization unavailable; use the slider control.";
+const LIVE_INPUT_FALLBACK =
+  "Live graph unavailable; enter a finite numeric expression and submit normally.";
 
 function fallback() {
   return {
@@ -265,6 +267,53 @@ function isResponsive(compiled, parameter, minimum, maximum) {
   return false;
 }
 
+function normalizePlot(compiled, parameter, value, shade = null) {
+  const curveSamples = sample(
+    compiled,
+    parameter,
+    value,
+    VIEWPORT.xMin,
+    VIEWPORT.xMax,
+  );
+  const curveSegments = curveSegmentsFromSamples(curveSamples, VIEWPORT);
+  if (!curveSegments.length) return fallback();
+
+  let marker = null;
+  let shadeSegments = [];
+  let status = "";
+  if (shade != null) {
+    const overlay = parseShade(shade);
+    if (overlay.kind === "point") {
+      marker = overlay.marker;
+    } else {
+      const shadeSamples = sample(
+        compiled,
+        parameter,
+        value,
+        overlay.xMin,
+        overlay.xMax,
+      );
+      shadeSegments = shadeSegmentsFromSamples(shadeSamples, VIEWPORT);
+      if (!shadeSegments.length) {
+        status = curveSegmentsFromSamples(shadeSamples, VIEWPORT).length
+          ? "The shaded area is zero at this value."
+          : "No drawable curve lies in the shaded interval at this value.";
+      }
+    }
+  }
+
+  return {
+    scene: {
+      kind: "plot",
+      viewport: VIEWPORT,
+      curveSegments,
+      shadeSegments,
+      marker,
+    },
+    status,
+  };
+}
+
 export function normalizeSlider(config, state) {
   try {
     const params = config?.params;
@@ -285,52 +334,32 @@ export function normalizeSlider(config, state) {
 
     const { compiled, parameter } = compilePlotEquation(params.plot);
     if (!isResponsive(compiled, parameter, minimum, maximum)) return fallback();
-
-    const curveSamples = sample(
-      compiled,
-      parameter,
-      value,
-      VIEWPORT.xMin,
-      VIEWPORT.xMax,
-    );
-    const curveSegments = curveSegmentsFromSamples(curveSamples, VIEWPORT);
-    if (!curveSegments.length) return fallback();
-
-    let marker = null;
-    let shadeSegments = [];
-    let status = "";
-    if (params.shade != null) {
-      const overlay = parseShade(params.shade);
-      if (overlay.kind === "point") {
-        marker = overlay.marker;
-      } else {
-        const shadeSamples = sample(
-          compiled,
-          parameter,
-          value,
-          overlay.xMin,
-          overlay.xMax,
-        );
-        shadeSegments = shadeSegmentsFromSamples(shadeSamples, VIEWPORT);
-        if (!shadeSegments.length) {
-          status = curveSegmentsFromSamples(shadeSamples, VIEWPORT).length
-            ? "The shaded area is zero at this slider value."
-            : "No drawable curve lies in the shaded interval at this slider value.";
-        }
-      }
-    }
-
-    return {
-      scene: {
-        kind: "plot",
-        viewport: VIEWPORT,
-        curveSegments,
-        shadeSegments,
-        marker,
-      },
-      status,
-    };
+    return normalizePlot(compiled, parameter, value, params.shade);
   } catch {
     return fallback();
+  }
+}
+
+export function normalizeLiveInput(config, state) {
+  const render = config?.render;
+  if (!render?.plot) return null;
+  const raw = state?.text?.trim();
+  if (!raw) {
+    return { scene: null, status: "Enter a value to update the graph." };
+  }
+  try {
+    const input = compileExpression(raw);
+    if (input.symbols.length) throw new ExpressionError("input must be constant");
+    const value = input.evaluate();
+    if (!Number.isFinite(value)) throw new ExpressionError("input is not finite");
+    const { compiled, parameter } = compilePlotEquation(render.plot);
+    if (typeof render.var !== "string" || render.var !== parameter) {
+      throw new ExpressionError("live plot variable does not match its equation");
+    }
+    const result = normalizePlot(compiled, parameter, value);
+    if (result.scene == null) return { scene: null, status: LIVE_INPUT_FALLBACK };
+    return result;
+  } catch {
+    return { scene: null, status: LIVE_INPUT_FALLBACK };
   }
 }

@@ -1,20 +1,39 @@
 <script>
   import { onDestroy } from "svelte";
 
-  import { api } from "../api.js";
   import "../scene/TutorSceneElement.js";
+  import { widgetCapability } from "./capabilities.js";
 
   export let item;
-  export let sessionId;
   export let recipe;
+  export let disabled = false;
+  export let onAttempt = async () => {};
+  export let onTextFallback = async () => {};
   export let onError = () => {};
 
   const config = item.widget;
-  let state = recipe ? recipe.init(config) : null;
-  let disabled = false;
+  const capability = widgetCapability(config.widget_type);
+  const terminalStatuses = new Set([
+    "correct",
+    "solved",
+    "remediated",
+    "text_fallback",
+  ]);
+  let recipeFailure = "";
+  let state = null;
+  if (recipe) {
+    try {
+      state = recipe.init(config);
+    } catch {
+      recipeFailure =
+        "This guided visual could not be initialized. Use its text alternative.";
+    }
+  }
+  $: activeRecipe = recipeFailure ? null : recipe;
+  let completed = terminalStatuses.has(item.widget_status);
   let checking = false;
-  let feedback = "";
-  let correct = false;
+  let feedback = item.feedback ?? "";
+  let correct = completed;
   let sceneElement;
   let activeController = null;
   let destroyed = false;
@@ -58,26 +77,28 @@
   }
 
   async function check() {
-    if (!recipe || disabled || checking) {
+    if (!activeRecipe || disabled || completed || checking) {
       return;
     }
     checking = true;
     const controller = new AbortController();
     activeController = controller;
     try {
-      const data = await api(
-        `/sessions/${sessionId}/widget`,
-        {
-          key: item.key,
-          response: recipe.responseFrom(state),
-        },
-        { signal: controller.signal },
-      );
+      const data = await onAttempt({
+        key: item.key,
+        response: activeRecipe.responseFrom(state),
+        signal: controller.signal,
+      });
       if (destroyed) return;
-      feedback = data.message;
-      correct = Boolean(data.correct);
+      const result = data?.action_result ?? data?.result ?? data?.last_action ?? data ?? {};
+      feedback = result.authoritative
+        ? ""
+        : result.message ??
+          result.feedback ??
+          (result.correct ? "That works." : "Try adjusting your response.");
+      correct = Boolean(result.correct);
       if (correct) {
-        disabled = true;
+        completed = true;
       }
     } catch (error) {
       if (!destroyed && error.name !== "AbortError") {
@@ -93,17 +114,46 @@
     }
   }
 
-  $: sceneState = normalizeScene(recipe, config, state);
+  async function useFallback() {
+    if (disabled || checking) return;
+    checking = true;
+    try {
+      await onTextFallback({ key: item.key });
+    } catch (error) {
+      onError(error);
+    } finally {
+      checking = false;
+    }
+  }
+
+  $: sceneState = normalizeScene(activeRecipe, config, state);
+  $: if (terminalStatuses.has(item.widget_status)) {
+    completed = true;
+  }
+  $: archiveLabel =
+    item.widget_status === "remediated"
+      ? "remediated practice"
+      : item.widget_status === "text_fallback"
+        ? "text alternative selected"
+        : item.widget_status === "solved" || completed
+          ? "solved practice"
+          : disabled
+            ? "archived practice"
+            : "guided practice";
   $: if (sceneElement && sceneState) {
     sceneElement.sceneState = sceneState;
   }
 </script>
 
-<div class="widgetbox">
-  <span class="kind-tag">interactive: {config.widget_type}</span>
-  <div>{config.prompt || ""}</div>
+<section
+  class="widgetbox"
+  class:archived={disabled || completed}
+  aria-label={archiveLabel}
+>
+  <span class="kind-tag">{archiveLabel}</span>
+  <div class="widget-prompt">{config.prompt || ""}</div>
 
-  {#if recipe}
+  {#if activeRecipe}
     {#if sceneState}
       <div class="widget-scene">
         <tutor-scene
@@ -114,16 +164,26 @@
     {/if}
 
     <svelte:component
-      this={recipe.control}
+      this={activeRecipe.control}
       {config}
       {state}
-      disabled={disabled || checking}
+      disabled={disabled || completed || checking}
       onChange={updateState}
     />
 
-    <button type="button" disabled={disabled || checking} on:click={check}>
-      {checking ? "Checking…" : "Check"}
-    </button>
+    {#if !disabled && !completed}
+      <div class="widget-actions">
+        <button type="button" disabled={checking} on:click={check}>
+          {checking ? "Checking…" : "Check practice"}
+        </button>
+        <button
+          type="button"
+          class="secondary"
+          disabled={checking}
+          on:click={useFallback}
+        >Use text alternative</button>
+      </div>
+    {/if}
     <div
       class:ok={feedback && correct}
       class:no={feedback && !correct}
@@ -132,7 +192,16 @@
     >{feedback}</div>
   {:else}
     <div class="unsupported-widget" role="status">
-      This interaction type is not supported yet.
+      <strong>Accessible alternative needed</strong>
+      <span>{recipeFailure || capability.reason || "This visual is unavailable."}</span>
     </div>
+    {#if !disabled}
+      <button
+        type="button"
+        class="secondary"
+        disabled={checking}
+        on:click={useFallback}
+      >Continue with a text alternative</button>
+    {/if}
   {/if}
-</div>
+</section>

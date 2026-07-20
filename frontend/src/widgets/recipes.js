@@ -1,8 +1,7 @@
-import ClickRegionControl from "./controls/ClickRegionControl.svelte";
-import LiveInputControl from "./controls/LiveInputControl.svelte";
 import MappingControl from "./controls/MappingControl.svelte";
 import SliderControl from "./controls/SliderControl.svelte";
 import { normalizeSlider } from "../scene/normalize.js";
+import { widgetCapability } from "./capabilities.js";
 
 function shuffled(values) {
   const result = [...values];
@@ -29,23 +28,6 @@ export const recipes = Object.freeze({
     },
     control: SliderControl,
   }),
-  click_region: Object.freeze({
-    init(config) {
-      return {
-        selected: [],
-        regionOrder: config.regions.map((region) => region.id),
-      };
-    },
-    normalize() {
-      return null;
-    },
-    responseFrom(state) {
-      return {
-        selected: state.regionOrder.filter((id) => state.selected.includes(id)),
-      };
-    },
-    control: ClickRegionControl,
-  }),
   mapping: Object.freeze({
     init(config) {
       return {
@@ -65,21 +47,12 @@ export const recipes = Object.freeze({
     },
     control: MappingControl,
   }),
-  live_input: Object.freeze({
-    init() {
-      return { text: "" };
-    },
-    normalize() {
-      return null;
-    },
-    responseFrom(state) {
-      return { text: state.text };
-    },
-    control: LiveInputControl,
-  }),
 });
 
 export function recipeFor(widgetType) {
+  if (!widgetCapability(widgetType).supported) {
+    return null;
+  }
   if (!Object.prototype.hasOwnProperty.call(recipes, widgetType)) {
     return null;
   }

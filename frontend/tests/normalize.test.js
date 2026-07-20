@@ -4,7 +4,12 @@ import {
   clearExpressionCacheForTests,
   expressionCacheSizeForTests,
 } from "../src/scene/expression.js";
-import { normalizeSlider, parseShade, VIEWPORT } from "../src/scene/normalize.js";
+import {
+  normalizeLiveInput,
+  normalizeSlider,
+  parseShade,
+  VIEWPORT,
+} from "../src/scene/normalize.js";
 
 function slider(plot, shade = null, minimum = -2, maximum = 4) {
   return { params: { min: minimum, max: maximum, step: 0.1, plot, shade } };
@@ -161,5 +166,33 @@ describe("slider normalization", () => {
     expect(result.scene.curveSegments.length).toBeGreaterThan(0);
     expect(result.scene.shadeSegments).toEqual([]);
     expect(result.status).toMatch(/No drawable curve/);
+  });
+});
+
+describe("live-input normalization", () => {
+  const config = {
+    input_kind: "number",
+    render: { plot: "y = k*x", var: "k" },
+  };
+
+  it("updates plot geometry as the typed numeric expression changes", () => {
+    const first = normalizeLiveInput(config, { text: "1/2" });
+    const second = normalizeLiveInput(config, { text: "2" });
+    expect(first.scene.kind).toBe("plot");
+    expect(second.scene.curveSegments).not.toEqual(first.scene.curveSegments);
+  });
+
+  it("fails safely for symbolic, non-finite, or mismatched inputs", () => {
+    for (const candidate of ["x", "1/0", "unknown(2)"]) {
+      const result = normalizeLiveInput(config, { text: candidate });
+      expect(result.scene).toBeNull();
+      expect(result.status).toMatch(/submit normally/);
+    }
+    expect(
+      normalizeLiveInput(
+        { ...config, render: { plot: "y = k*x", var: "m" } },
+        { text: "2" },
+      ).scene,
+    ).toBeNull();
   });
 });

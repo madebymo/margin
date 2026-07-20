@@ -13,5 +13,7 @@ build/
 .env
 node_modules/
 elm-stuff/
+playwright-report/
+test-results/
 .DS_Store
 schemas/json/
