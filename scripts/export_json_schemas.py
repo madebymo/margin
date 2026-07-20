@@ -8,6 +8,7 @@ import argparse
 import json
 from pathlib import Path
 
+from tutor.schemas.assessment import ItemBankDocument, answer_spec_adapter
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import EvidenceEvent
 from tutor.schemas.lesson import MiniLessonPackage
@@ -29,6 +30,8 @@ def export_schemas(out_dir: Path) -> list[Path]:
         "pedagogy_pack": PedagogyPack.model_json_schema(),
         "graph_document": GraphDocument.model_json_schema(),
         "evidence_event": EvidenceEvent.model_json_schema(),
+        "answer_spec": answer_spec_adapter.json_schema(),
+        "item_bank_document": ItemBankDocument.model_json_schema(),
     }
     written: list[Path] = []
     for name, schema in schemas.items():

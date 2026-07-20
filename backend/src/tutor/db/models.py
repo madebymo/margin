@@ -107,12 +107,18 @@ class LearnerRow(Base):
 
 
 class ResumeTokenRow(Base):
-    """A hashed, revocable, expiring token that resolves to a learner."""
+    """A hashed, revocable, expiring token bound to one learner episode."""
 
     __tablename__ = "resume_tokens"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     learner_id: Mapped[str] = mapped_column(ForeignKey("learners.learner_id"), nullable=False)
+    # Nullable only so pre-v2 legacy rows can be preserved by the additive
+    # migration. Every token created by the v2 session service is bound to an
+    # exact checkpoint and restore never guesses from "latest for learner".
+    session_id: Mapped[str | None] = mapped_column(
+        ForeignKey("session_checkpoints.session_id"), nullable=True
+    )
     token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -138,6 +144,24 @@ class EvidenceEventRow(Base):
     assisted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     misconception_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     content_versions: Mapped[dict] = mapped_column(JSONVariant, nullable=False, default=dict)
+    # v2 provenance is additive so legacy evidence remains valid and replayable.
+    episode_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    family_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    surface: Mapped[str] = mapped_column(String(32), nullable=False, default="legacy")
+    item_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    policy_version: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="legacy"
+    )
+    learner_params_version: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="v1"
+    )
+    content_provenance: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="legacy"
+    )
+    learning_opportunity: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
 
 class DerivedMasteryRow(Base):
@@ -212,6 +236,118 @@ class MiniLessonRow(Base):
     versions: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
     package: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
     telemetry_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )
+
+
+class SessionCheckpointRow(Base):
+    """Latest authoritative v2 session checkpoint."""
+
+    __tablename__ = "session_checkpoints"
+
+    session_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    learner_id: Mapped[str] = mapped_column(
+        ForeignKey("learners.learner_id"), nullable=False
+    )
+    goal_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    target_kc: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    requested_content_mode: Mapped[str] = mapped_column(String(32), nullable=False)
+    effective_content_mode: Mapped[str] = mapped_column(String(32), nullable=False)
+    fallback_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    phase: Mapped[str] = mapped_column(String(32), nullable=False)
+    checkpoint: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
+    )
+
+
+class SessionMutationReceiptRow(Base):
+    """Durable idempotency receipt for one v2 mutation."""
+
+    __tablename__ = "session_mutation_receipts"
+    __table_args__ = (UniqueConstraint("session_id", "request_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("session_checkpoints.session_id"), nullable=False
+    )
+    request_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    response_payload: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )
+
+
+class TranscriptEntryRow(Base):
+    """One ordered, student-safe transcript entry."""
+
+    __tablename__ = "transcript_entries"
+    __table_args__ = (UniqueConstraint("session_id", "sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("session_checkpoints.session_id"), nullable=False
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    entry: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )
+
+
+class ItemExposureRow(Base):
+    """Append-only record of content exposed during one v2 episode."""
+
+    __tablename__ = "item_exposures"
+    __table_args__ = (
+        UniqueConstraint("session_id", "exposure_sequence"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("session_checkpoints.session_id"), nullable=False
+    )
+    item_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    item_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    variant_id: Mapped[str] = mapped_column(String(128), nullable=False, default="base")
+    family_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    surface: Mapped[str] = mapped_column(String(32), nullable=False)
+    exposure_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    solution_exposed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    hint_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    answer_revealed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )
+
+
+class WidgetAttemptRow(Base):
+    """Every guided-widget attempt, retained in order."""
+
+    __tablename__ = "widget_attempts"
+    __table_args__ = (
+        UniqueConstraint("session_id", "interaction_key", "attempt_number"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("session_checkpoints.session_id"), nullable=False
+    )
+    interaction_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    response: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
+    correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    verification_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="incorrect"
+    )
+    counted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utcnow
     )

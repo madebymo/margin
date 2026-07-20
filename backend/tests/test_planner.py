@@ -236,6 +236,38 @@ def test_abstention_and_low_soft_scores_reject(graph):
     assert "unavailable" in verdict.feedback
 
 
+@pytest.mark.parametrize(
+    "bad_payload",
+    [
+        {**ACCEPT_VERDICT, "soft": {"clarity": 999}},
+        {**ACCEPT_VERDICT, "soft": {"clarity": [[5]], "scaffolding": 5,
+                                   "cognitive_load": 5, "engagement": 5, "age_fit": 5}},
+        {**ACCEPT_VERDICT, "soft": {**ACCEPT_VERDICT["soft"], "invented": 5}},
+        {**ACCEPT_VERDICT, "hard": {**ACCEPT_VERDICT["hard"], "invented": True}},
+        {**ACCEPT_VERDICT, "invented": "field"},
+    ],
+)
+def test_llm_evaluator_strictly_rejects_malformed_or_partial_payload(graph, bad_payload):
+    node = _node(graph, "kc.der.power_rule")
+    widget = LiveInputWidget.model_validate(VALID_WIDGET)
+    verdict = LLMEvaluator(FakeLLM({"evaluate:": bad_payload})).evaluate(
+        node, "narrative", widget
+    )
+    assert verdict.accepted is False
+    assert "strict schema" in verdict.feedback
+
+
+def test_planner_contains_unexpected_evaluator_exception(graph):
+    class CrashingEvaluator:
+        def evaluate(self, node, narrative, widget):
+            raise RuntimeError("judge exploded")
+
+    planner = LessonPlanner(evaluator=CrashingEvaluator(), max_iterations=1)
+    planned = planner.plan_lesson(_node(graph, "kc.der.power_rule"))
+    assert planned.fallback_used
+    assert any("evaluator error" in feedback for feedback in planned.evaluator_feedback)
+
+
 def test_machine_lessons_carry_widgets_in_template_mode(graph):
     orchestrator = SessionOrchestrator(graph, "kc.der.chain_rule", PROFILE)
     outputs = list(orchestrator.begin())

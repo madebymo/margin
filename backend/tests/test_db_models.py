@@ -69,17 +69,24 @@ def test_round_trip_every_table(engine):
                 expires_at=now + timedelta(days=7),
             )
         )
-        session.add(
-            m.EvidenceEventRow(
-                event_id=str(uuid4()),
-                learner_id=learner.learner_id,
-                t=now,
-                item_id="item",
-                kc_ids=["kc.alg.factoring"],
-                correct=True,
-                response_class="widget",
-            )
+        evidence = m.EvidenceEventRow(
+            event_id=str(uuid4()),
+            learner_id=learner.learner_id,
+            t=now,
+            item_id="item",
+            kc_ids=["kc.alg.factoring"],
+            correct=True,
+            response_class="widget",
+            episode_id="session-v2",
+            family_id="family-1",
+            surface="guided_widget",
+            item_revision=2,
+            attempt_number=3,
+            policy_version="diagnosis-v2.0",
+            learner_params_version="v2",
+            content_provenance="reviewed-item-bank",
         )
+        session.add(evidence)
         session.add(
             m.DerivedMasteryRow(
                 learner_id=learner.learner_id,
@@ -115,12 +122,75 @@ def test_round_trip_every_table(engine):
                 telemetry_id="tl",
             )
         )
+        checkpoint = m.SessionCheckpointRow(
+            session_id="session-v2",
+            learner_id=learner.learner_id,
+            goal_id="goal.alg.factoring",
+            target_kc="kc.alg.factoring",
+            profile={"course": "Algebra 2", "age_band": "16-18"},
+            requested_content_mode="curated",
+            effective_content_mode="curated",
+            revision=1,
+            phase="diagnose",
+            checkpoint={"schema_version": 2},
+            started_at=now,
+        )
+        session.add(checkpoint)
+        session.flush()
+        session.scalars(select(m.ResumeTokenRow)).one().session_id = (
+            checkpoint.session_id
+        )
+        session.add_all(
+            [
+                m.SessionMutationReceiptRow(
+                    session_id=checkpoint.session_id,
+                    request_id=str(uuid4()),
+                    revision=1,
+                    payload_hash="a" * 64,
+                    request_payload={"type": "request_hint"},
+                    response_payload={"schema_version": 2},
+                ),
+                m.TranscriptEntryRow(
+                    session_id=checkpoint.session_id,
+                    sequence=0,
+                    entry={"role": "tutor", "text": "Welcome"},
+                ),
+                m.ItemExposureRow(
+                    session_id=checkpoint.session_id,
+                    item_id="item",
+                    item_revision=2,
+                    family_id="family-1",
+                    surface="guided_widget",
+                    exposure_sequence=0,
+                ),
+                m.WidgetAttemptRow(
+                    session_id=checkpoint.session_id,
+                    interaction_key="interaction-1",
+                    attempt_number=1,
+                    response={"text": "x"},
+                    correct=False,
+                    verification_status="invalid",
+                    counted=False,
+                ),
+            ]
+        )
         session.commit()
 
         assert session.scalars(select(m.KCNodeRow)).one().kc_id == "kc.alg.factoring"
-        assert session.scalars(select(m.EvidenceEventRow)).one().correct is True
+        stored_evidence = session.scalars(select(m.EvidenceEventRow)).one()
+        assert stored_evidence.correct is True
+        assert stored_evidence.family_id == "family-1"
+        assert stored_evidence.attempt_number == 3
         assert session.scalars(select(m.DerivedMasteryRow)).one().observations == 2
         assert session.scalars(select(m.GenerationJobRow)).one().status == "pending"
+        assert session.scalars(select(m.SessionCheckpointRow)).one().revision == 1
+        assert session.scalars(select(m.ResumeTokenRow)).one().session_id == "session-v2"
+        assert session.scalars(select(m.TranscriptEntryRow)).one().sequence == 0
+        assert session.scalars(select(m.ItemExposureRow)).one().item_revision == 2
+        stored_widget_attempt = session.scalars(select(m.WidgetAttemptRow)).one()
+        assert stored_widget_attempt.correct is False
+        assert stored_widget_attempt.verification_status == "invalid"
+        assert stored_widget_attempt.counted is False
 
 
 def test_generation_job_idempotency_key_unique(engine):

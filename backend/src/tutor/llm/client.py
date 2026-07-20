@@ -48,11 +48,15 @@ def extract_json(text: str) -> dict[str, Any]:
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end <= start:
-        raise LLMError(f"no JSON object in model output: {text[:200]!r}")
+        raise LLMError(
+            f"no JSON object in model output (output_chars={len(text)})"
+        )
     try:
         data = json.loads(text[start : end + 1])
     except json.JSONDecodeError as exc:
-        raise LLMError(f"invalid JSON in model output: {exc}") from exc
+        raise LLMError(
+            f"invalid JSON in model output at character {exc.pos}"
+        ) from exc
     if not isinstance(data, dict):
         raise LLMError("model output JSON is not an object")
     return data

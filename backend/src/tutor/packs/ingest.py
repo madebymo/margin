@@ -28,6 +28,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from tutor.llm import prompts
@@ -37,6 +38,8 @@ from tutor.schemas.common import ReviewStatus, WidgetType
 from tutor.schemas.kc import GraphDocument, KCNode
 from tutor.schemas.pedagogy import Metaphor, Misconception, PedagogyPack
 from tutor.seed.load_seed import load_graph
+
+load_dotenv()
 
 logger = logging.getLogger("tutor.packs")
 

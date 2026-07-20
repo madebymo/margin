@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from tutor.orchestrator.ports import (
     LessonWriterPort,
@@ -31,6 +31,8 @@ from tutor.verify.checker import MathVerificationError, parse_restricted
 
 class EvaluationVerdict(BaseModel):
     """Evaluator outcome for one widget candidate."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     accepted: bool
     feedback: str = ""
@@ -270,7 +272,11 @@ class LessonPlanner:
                 if problems:
                     feedback.extend(problems)
                     continue
-                verdict = self._evaluator.evaluate(node, narrative, candidate)
+                try:
+                    verdict = self._evaluator.evaluate(node, narrative, candidate)
+                except Exception as exc:  # noqa: BLE001 — evaluator must never block
+                    feedback.append(f"evaluator error: {exc}")
+                    continue
                 if verdict.accepted:
                     return PlannedLesson(
                         kc_id=node.id,

@@ -540,7 +540,7 @@ def test_slider_feedback_requires_a_finite_submitted_value(graph, value):
 
 
 def test_widget_endpoint_returns_submit_only_slider_feedback(graph):
-    app = create_app(graph)
+    app = create_app(graph, allow_v1_session_creation=True)
     client = TestClient(app)
     orchestrator = SessionOrchestrator(graph, "kc.der.chain_rule", PROFILE)
     orchestrator.begin()
@@ -569,7 +569,7 @@ def test_widget_endpoint_returns_submit_only_slider_feedback(graph):
     }
 
 
-def test_machine_widget_records_single_evidence_event(graph):
+def test_machine_widget_records_complete_formative_attempt_trajectory(graph):
     orchestrator = SessionOrchestrator(graph, "kc.der.chain_rule", PROFILE)
     outputs = _drive_to_teach(orchestrator)
     lesson = next(i for i in outputs if i.kind == "lesson" and i.widget)
@@ -588,17 +588,20 @@ def test_machine_widget_records_single_evidence_event(graph):
     assert event.response_class == ResponseClass.WIDGET
     assert event.correct is True
 
-    # retries are scored but never re-recorded (no mastery pumping)
+    # Every formative attempt is retained; v2 learner models exclude widget
+    # events from mastery rather than discarding the trajectory.
     correct_again, _ = orchestrator.answer_widget(lesson.key, {"text": "garbage"})
     assert correct_again is False
-    assert len(orchestrator.learner.events) == events_before + 1
+    assert len(orchestrator.learner.events) == events_before + 2
+    assert orchestrator.learner.events[-1].attempt_number == 2
+    assert orchestrator.learner.events[-1].surface == "guided_widget"
 
     with pytest.raises(KeyError):
         orchestrator.answer_widget("nonexistent-key", {})
 
 
 def test_widget_endpoint_over_http(graph):
-    client = TestClient(create_app(graph))
+    client = TestClient(create_app(graph, allow_v1_session_creation=True))
     created = client.post("/sessions", json={"target_kc": "kc.der.chain_rule"}).json()
     session_id = created["session_id"]
     orchestrator = client.app.state.store.get(session_id)

@@ -2,13 +2,30 @@
 
 import pytest
 
-from tutor.verify.checker import MathVerificationError, check_answer, parse_restricted
+from tutor.schemas.assessment import (
+    AntiderivativeAnswerSpec,
+    ChoiceAnswerSpec,
+    FiniteSetAnswerSpec,
+    IntervalSetAnswerSpec,
+    NumericAnswerSpec,
+    OrderedTupleAnswerSpec,
+    SymbolicAnswerSpec,
+)
+from tutor.verify.checker import (
+    MathVerificationError,
+    _SupervisedWorker,
+    VerificationStatus,
+    check_answer,
+    parse_restricted,
+    verify_answer,
+)
 
 
 def test_symbolic_equivalence_with_caret_and_implicit_multiplication():
     assert check_answer("5x^4", "5*x**4")
     assert check_answer("2x cos(x^2)", "2*x*cos(x^2)")
     assert check_answer("1/2", "0.5")
+    assert check_answer("sec^2(x)", "1/cos(x)^2")
 
 
 def test_non_equivalent_rejected():
@@ -41,3 +58,263 @@ def test_unparseable_text_falls_back_to_string_compare():
     assert check_answer(text, text)
     assert check_answer(text, "  area under v(t) on [0, 4] gives DISTANCE traveled ")
     assert not check_answer(text, "something else entirely")
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "factorial(5)",
+        "gamma(2)",
+        "Integer(2)",
+        "integrate(x)",
+        "__import__(os)",
+    ],
+)
+def test_sympy_globals_and_unknown_calls_are_not_exposed(payload):
+    with pytest.raises(MathVerificationError):
+        parse_restricted(payload)
+
+
+def test_comparison_is_not_misread_as_assignment():
+    with pytest.raises(MathVerificationError):
+        parse_restricted("f(x) != 2")
+    assert not check_answer("f(x) != 2", "2")
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "x^21",
+        "1e21",
+        "1e-21",
+        "1e" + "9" * 200,
+        "x" * 257,
+        "+".join(["x"] * 130),
+    ],
+)
+def test_parser_resource_limits(payload):
+    with pytest.raises(MathVerificationError):
+        parse_restricted(payload)
+
+
+def test_typed_symbolic_result_and_exact_assignment_contract():
+    spec = SymbolicAnswerSpec(
+        expected="2*x",
+        variables=["x"],
+        assignment_lhs="f(x)",
+    )
+    assert verify_answer(spec, "f(x) = x+x", supervised=False).status == "correct"
+    wrong_lhs = verify_answer(spec, "g(x) = 2*x", supervised=False)
+    assert wrong_lhs.status == VerificationStatus.INVALID
+    assert wrong_lhs.code == "invalid_syntax"
+
+
+def test_typed_answer_specs():
+    cases = [
+        (NumericAnswerSpec(expected="3/2"), "1.5"),
+        (FiniteSetAnswerSpec(expected=["2", "3"]), "{3, 2}"),
+        (
+            IntervalSetAnswerSpec(
+                expected=[
+                    {
+                        "lower": "-inf",
+                        "upper": "2",
+                        "lower_closed": False,
+                        "upper_closed": False,
+                    }
+                ]
+            ),
+            "(-inf, 2)",
+        ),
+        (
+            OrderedTupleAnswerSpec(expected=["1", "sqrt(2)"], functions=["sqrt"]),
+            "(1, sqrt(2))",
+        ),
+        (
+            AntiderivativeAnswerSpec(
+                expected="x^3",
+                variable="x",
+                variables=[],
+            ),
+            "x^3 + C",
+        ),
+        (
+            ChoiceAnswerSpec(option_ids=["r1", "r2"], expected_choice_id="r2"),
+            "r2",
+        ),
+    ]
+    for spec, answer in cases:
+        verdict = verify_answer(spec, answer, supervised=False)
+        assert verdict.status == VerificationStatus.CORRECT, (spec, verdict)
+
+
+def test_finite_set_uses_mathematical_set_semantics_for_duplicates():
+    singleton = FiniteSetAnswerSpec(expected=["1"])
+    duplicated_expected = FiniteSetAnswerSpec(
+        expected=["x", "2*x/2"],
+        variables=["x"],
+    )
+
+    duplicate_submission = verify_answer(singleton, "{1, 1}", supervised=False)
+    deduplicated_submission = verify_answer(
+        duplicated_expected,
+        "{x}",
+        supervised=False,
+    )
+
+    assert duplicate_submission.status == VerificationStatus.CORRECT
+    assert duplicate_submission.normalized_form == "{1}"
+    assert deduplicated_submission.status == VerificationStatus.CORRECT
+
+
+def test_interval_answers_compare_the_represented_set():
+    spec = IntervalSetAnswerSpec(
+        expected=[
+            {
+                "lower": "0",
+                "upper": "2",
+                "lower_closed": False,
+                "upper_closed": False,
+            }
+        ]
+    )
+
+    assert (
+        verify_answer(spec, "(0,1) U [1,2)", supervised=False).status
+        == VerificationStatus.CORRECT
+    )
+    assert (
+        verify_answer(spec, "(0,2) U (0,2)", supervised=False).status
+        == VerificationStatus.CORRECT
+    )
+    assert (
+        verify_answer(spec, "(2,0)", supervised=False).status
+        == VerificationStatus.INVALID
+    )
+
+
+def test_numeric_and_interval_specs_reject_functions_they_cannot_declare():
+    numeric = verify_answer(
+        NumericAnswerSpec(expected="2"),
+        "sqrt(4)",
+        supervised=False,
+    )
+    interval = verify_answer(
+        IntervalSetAnswerSpec(
+            expected=[
+                {
+                    "lower": "0",
+                    "upper": "2",
+                    "lower_closed": False,
+                    "upper_closed": False,
+                }
+            ]
+        ),
+        "(0, sqrt(4))",
+        supervised=False,
+    )
+
+    assert numeric.status == VerificationStatus.INVALID
+    assert interval.status == VerificationStatus.INVALID
+
+
+def test_typed_invalid_is_not_an_incorrect_mastery_observation():
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    verdict = verify_answer(spec, "x[0]", supervised=False)
+    assert verdict.status == VerificationStatus.INVALID
+    assert verdict.correct is False
+
+
+def test_undefined_symbolic_form_is_invalid_not_merely_incorrect():
+    spec = SymbolicAnswerSpec(expected="x", variables=["x"])
+    verdict = verify_answer(spec, "1/0", supervised=False)
+
+    assert verdict.status == VerificationStatus.INVALID
+
+
+def test_undefined_constant_cannot_make_antiderivative_pass():
+    spec = AntiderivativeAnswerSpec(
+        expected="x^2",
+        variable="x",
+        variables=[],
+    )
+    verdict = verify_answer(spec, "x^2 + 1/0", supervised=False)
+
+    assert verdict.status == VerificationStatus.INVALID
+
+
+def test_supervised_verifier_process_round_trip():
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    assert verify_answer(spec, "x*x").status == VerificationStatus.CORRECT
+
+
+def test_rejected_scientific_exponent_does_not_poison_the_worker():
+    spec = NumericAnswerSpec(expected="1")
+    rejected = verify_answer(spec, "1e" + "9" * 200)
+    recovered = verify_answer(spec, "1")
+
+    assert rejected.status == VerificationStatus.INVALID
+    assert recovered.status == VerificationStatus.CORRECT
+
+
+def test_input_length_limit_applies_to_choice_answers_too():
+    spec = ChoiceAnswerSpec(option_ids=["a", "b"], expected_choice_id="a")
+    verdict = verify_answer(spec, "a" * 257, supervised=False)
+
+    assert verdict.status == VerificationStatus.INVALID
+    assert verdict.code == "input_too_long"
+
+
+def test_supervisor_returns_timeout_and_discards_stuck_worker():
+    class NeverReplies:
+        def send(self, payload):
+            self.payload = payload
+
+        def poll(self, timeout):
+            return False
+
+        def close(self):
+            self.closed = True
+
+    class RunningProcess:
+        alive = True
+
+        def is_alive(self):
+            return self.alive
+
+        def terminate(self):
+            self.alive = False
+
+        def join(self, timeout):
+            return None
+
+        def kill(self):
+            self.alive = False
+
+    worker = _SupervisedWorker()
+    worker._connection = NeverReplies()
+    worker._process = RunningProcess()
+    verdict = worker.verify(
+        SymbolicAnswerSpec(expected="x^2", variables=["x"]),
+        "x*x",
+        timeout_seconds=0.001,
+    )
+    assert verdict.status == VerificationStatus.TIMEOUT
+    assert worker._connection is None
+    assert worker._process is None
+
+
+def test_supervisor_bounds_time_waiting_for_a_busy_worker():
+    worker = _SupervisedWorker()
+    worker._lock.acquire()
+    try:
+        verdict = worker.verify(
+            SymbolicAnswerSpec(expected="x^2", variables=["x"]),
+            "x*x",
+            timeout_seconds=0.001,
+        )
+    finally:
+        worker._lock.release()
+
+    assert verdict.status == VerificationStatus.TIMEOUT
+    assert verdict.code == "verifier_queue_timeout"

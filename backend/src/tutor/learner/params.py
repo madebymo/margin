@@ -44,3 +44,20 @@ class BKTParams(BaseModel):
 
 
 DEFAULT_PARAMS_V1 = BKTParams()
+
+def _v2_response_class_params() -> dict[ResponseClass, ResponseClassParams]:
+    """Shadow-calibrated response noise used by diagnostic policy v2."""
+    return {
+        ResponseClass.MULTIPLE_CHOICE: ResponseClassParams(guess=0.25, slip=0.10),
+        ResponseClass.SYMBOLIC_ENTRY: ResponseClassParams(guess=0.15, slip=0.10),
+        ResponseClass.WIDGET: ResponseClassParams(guess=0.15, slip=0.10),
+    }
+
+
+# V2 treats 0.90 as the probability gate, while the independent-family
+# requirement is enforced by LearnerModelServiceV2 rather than hidden in BKT.
+DEFAULT_PARAMS_V2 = BKTParams(
+    params_version=2,
+    mastery_threshold=0.90,
+    response_class=_v2_response_class_params(),
+)

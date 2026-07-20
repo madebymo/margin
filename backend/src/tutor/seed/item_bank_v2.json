@@ -1,0 +1,292 @@
+{
+  "schema_version": 2,
+  "bank_version": "draft-v2.0.0",
+  "graph_version": 1,
+  "released_kcs": [],
+  "items": [
+    {
+      "item_id": "item.power.diagnostic.cube",
+      "revision": 1,
+      "family_id": "family.power.diagnostic.cube",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "eligible_surfaces": ["diagnostic"],
+      "prompt": [
+        {"kind": "text", "text": "Differentiate with respect to x:"},
+        {"kind": "math", "expression": "x^3"},
+        {"kind": "blank", "label": "f'(x) ="}
+      ],
+      "hints": [
+        {"text": "Use the exponent as a multiplier.", "revealing": false},
+        {"text": "Then reduce the exponent by one.", "revealing": false},
+        {"text": "The derivative is 3*x^2.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "3*x^2", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.diagnostic.quartic",
+      "revision": 1,
+      "family_id": "family.power.diagnostic.quartic",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "eligible_surfaces": ["diagnostic"],
+      "prompt": [
+        {"kind": "text", "text": "Find the derivative:"},
+        {"kind": "math", "expression": "x^4"},
+        {"kind": "blank", "label": "d/dx ="}
+      ],
+      "hints": [
+        {"text": "The original exponent becomes the coefficient.", "revealing": false},
+        {"text": "The new exponent is one less than the original.", "revealing": false},
+        {"text": "The derivative is 4*x^3.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "4*x^3", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.diagnostic.sixth",
+      "revision": 1,
+      "family_id": "family.power.diagnostic.sixth",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "eligible_surfaces": ["diagnostic"],
+      "prompt": [
+        {"kind": "text", "text": "Differentiate the monomial:"},
+        {"kind": "math", "expression": "x^6"},
+        {"kind": "blank", "label": "result:"}
+      ],
+      "hints": [
+        {"text": "Apply the power rule once.", "revealing": false},
+        {"text": "Use 6 as the coefficient and reduce the power.", "revealing": false},
+        {"text": "The derivative is 6*x^5.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "6*x^5", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.checkin.scaled-quintic",
+      "revision": 1,
+      "family_id": "family.power.checkin.scaled-quintic",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "eligible_surfaces": ["checkin"],
+      "prompt": [
+        {"kind": "text", "text": "Differentiate:"},
+        {"kind": "math", "expression": "2*x^5"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "Keep the constant factor.", "revealing": false},
+        {"text": "Multiply 2 by the exponent, then reduce the exponent.", "revealing": false},
+        {"text": "The derivative is 10*x^4.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "10*x^4", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.checkin.scaled-square",
+      "revision": 1,
+      "family_id": "family.power.checkin.scaled-square",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "eligible_surfaces": ["checkin"],
+      "prompt": [
+        {"kind": "text", "text": "Find d/dx of"},
+        {"kind": "math", "expression": "7*x^2"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "The coefficient stays attached.", "revealing": false},
+        {"text": "Multiply the coefficient by 2.", "revealing": false},
+        {"text": "The derivative is 14*x.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "14*x", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.checkin.negative-power",
+      "revision": 1,
+      "family_id": "family.power.checkin.negative-power",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "eligible_surfaces": ["checkin"],
+      "prompt": [
+        {"kind": "text", "text": "Differentiate:"},
+        {"kind": "math", "expression": "x^(-2)"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "The rule also works for negative exponents.", "revealing": false},
+        {"text": "Bring down -2 and subtract one from -2.", "revealing": false},
+        {"text": "The derivative is -2*x^(-3).", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "-2*x^(-3)", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.checkin.half-power",
+      "revision": 1,
+      "family_id": "family.power.checkin.half-power",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "eligible_surfaces": ["checkin"],
+      "prompt": [
+        {"kind": "text", "text": "Use rational-exponent form to differentiate:"},
+        {"kind": "math", "expression": "x^(1/2)"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "Treat 1/2 exactly like any other exponent.", "revealing": false},
+        {"text": "The new exponent is -1/2.", "revealing": false},
+        {"text": "The derivative is (1/2)*x^(-1/2).", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "(1/2)*x^(-1/2)", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.widget.scaled-quartic",
+      "revision": 1,
+      "family_id": "family.power.widget.scaled-quartic",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "eligible_surfaces": ["guided_widget"],
+      "prompt": [
+        {"kind": "text", "text": "Build the derivative coefficient and power for"},
+        {"kind": "math", "expression": "3*x^4"},
+        {"kind": "blank", "label": "result:"}
+      ],
+      "hints": [
+        {"text": "First choose the coefficient produced by the power rule.", "revealing": false},
+        {"text": "Then reduce the exponent by one.", "revealing": false},
+        {"text": "The derivative is 12*x^3.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "12*x^3", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.capstone.polynomial-a",
+      "revision": 1,
+      "family_id": "family.power.capstone.polynomial-a",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "eligible_surfaces": ["capstone"],
+      "prompt": [
+        {"kind": "text", "text": "Differentiate the whole expression:"},
+        {"kind": "math", "expression": "5*x^7 - 2*x^3"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "Differentiate each term independently.", "revealing": false},
+        {"text": "Apply the coefficient-times-exponent rule to both terms.", "revealing": false},
+        {"text": "The derivative is 35*x^6 - 6*x^2.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "35*x^6 - 6*x^2", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.capstone.polynomial-b",
+      "revision": 1,
+      "family_id": "family.power.capstone.polynomial-b",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "eligible_surfaces": ["capstone"],
+      "prompt": [
+        {"kind": "text", "text": "Find the derivative:"},
+        {"kind": "math", "expression": "4*x^(-1) + x^5"},
+        {"kind": "blank", "label": "answer:"}
+      ],
+      "hints": [
+        {"text": "Handle the two powers one at a time.", "revealing": false},
+        {"text": "For x^(-1), the new exponent is -2.", "revealing": false},
+        {"text": "The derivative is -4*x^(-2) + 5*x^4.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "-4*x^(-2) + 5*x^4", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    },
+    {
+      "item_id": "item.power.worked.eighth",
+      "revision": 1,
+      "family_id": "family.power.worked.eighth",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "eligible_surfaces": ["worked_example"],
+      "prompt": [
+        {"kind": "text", "text": "Worked example: for x^8, bring down 8 and reduce the exponent to 7, giving 8*x^7."}
+      ],
+      "hints": [
+        {"text": "Identify the exponent.", "revealing": false},
+        {"text": "Use it as the new coefficient.", "revealing": false},
+        {"text": "The derivative is 8*x^7.", "revealing": true}
+      ],
+      "answer": {"kind": "symbolic", "expected": "8*x^7", "variables": ["x"], "functions": []},
+      "review_status": "draft",
+      "provenance": {
+        "source": "unreviewed-v2-implementation-draft",
+        "author": "AI-assisted implementation draft",
+        "reviewed_by": null,
+        "reviewed_at": null
+      }
+    }
+  ]
+}

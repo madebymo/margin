@@ -63,7 +63,11 @@ class LLMDiagnostician:
                 )
                 return self._validated_probe(node, data)
             except (LLMError, ValidationError, MathVerificationError) as exc:
-                logger.warning("probe generation failed for %s: %s", node.id, exc)
+                logger.warning(
+                    "probe generation failed for %s (%s)",
+                    node.id,
+                    type(exc).__name__,
+                )
         return self._fallback.generate_probe(node)
 
     def _validated_probe(self, node: KCNode, data: dict) -> DiagnosticProbe:
@@ -97,7 +101,11 @@ class LLMDiagnostician:
                 tag=f"error:{node.id}",
             )
         except LLMError as exc:
-            logger.warning("error analysis failed for %s: %s", node.id, exc)
+            logger.warning(
+                "error analysis failed for %s (%s)",
+                node.id,
+                type(exc).__name__,
+            )
             return self._fallback.analyze_error(node, prompt, expected, answer)
         misconception = data.get("misconception_id")
         if misconception not in {m.id for m in misconceptions}:

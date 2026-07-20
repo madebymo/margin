@@ -60,7 +60,11 @@ class LLMLessonWriter:
                     return narrative.strip()
                 raise LLMError("narrative missing or empty")
             except LLMError as exc:
-                logger.warning("lesson generation failed for %s: %s", node.id, exc)
+                logger.warning(
+                    "lesson generation failed for %s (%s)",
+                    node.id,
+                    type(exc).__name__,
+                )
         return self._fallback.lesson_text(node)
 
     def checkin_item(self, node: KCNode, attempt: int) -> PracticeItem:
@@ -75,7 +79,11 @@ class LLMLessonWriter:
                 )
                 return self._validated_item(data)
             except (LLMError, ValidationError, MathVerificationError) as exc:
-                logger.warning("check-in generation failed for %s: %s", node.id, exc)
+                logger.warning(
+                    "check-in generation failed for %s (%s)",
+                    node.id,
+                    type(exc).__name__,
+                )
         return self._fallback.checkin_item(node, attempt)
 
     def _validated_item(self, data: dict) -> PracticeItem:

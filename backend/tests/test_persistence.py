@@ -69,6 +69,31 @@ def test_evidence_roundtrip_and_replay_from_db(graph, persistence):
     assert rebuilt.snapshot().model_dump() == service.snapshot().model_dump()
 
 
+def test_v2_evidence_provenance_roundtrip(graph, persistence):
+    service = LearnerModelService(graph, assumed_floor_levels=FLOOR)
+    persistence.ensure_learner(service.learner_id, PROFILE)
+    event = EvidenceEvent(
+        event_id=uuid4(),
+        learner_id=service.learner_id,
+        t=datetime.now(timezone.utc),
+        item_id="item.power.checkin.square",
+        kc_ids=["kc.der.power_rule"],
+        correct=True,
+        response_class=ResponseClass.SYMBOLIC_ENTRY,
+        episode_id="episode-v2",
+        family_id="family.power.checkin.square",
+        surface="checkin",
+        item_revision=2,
+        attempt_number=3,
+        policy_version="diagnosis-v2.0",
+        learner_params_version="v2",
+        content_provenance="reviewed-item-bank",
+        learning_opportunity=True,
+    )
+    persistence.record_event(event)
+    assert persistence.load_events(service.learner_id) == [event]
+
+
 def test_save_derived_upserts_without_duplication(graph, persistence):
     service = LearnerModelService(graph, assumed_floor_levels=FLOOR)
     persistence.ensure_learner(service.learner_id, PROFILE)
@@ -164,3 +189,13 @@ def test_api_healthz_reports_persistence_flag(graph, monkeypatch):
     assert memory_only.get("/healthz").json()["persistence"] is False
     persistent = TestClient(create_app(graph, database_url="sqlite+pysqlite:///:memory:"))
     assert persistent.get("/healthz").json()["persistence"] is True
+
+
+def test_pilot_production_requires_postgres(graph, monkeypatch):
+    monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    with pytest.raises(RuntimeError, match="PostgreSQL"):
+        create_app(graph)
+    with pytest.raises(RuntimeError, match="PostgreSQL"):
+        create_app(graph, database_url="sqlite+pysqlite:///:memory:")

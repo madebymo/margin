@@ -12,18 +12,28 @@ import os
 from pathlib import Path
 from typing import Literal
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from tutor.api.diagnosis_shadow import (
+    DiagnosisV2ShadowObserver,
+    diagnosis_shadow_enabled_from_environment,
+)
 from tutor.api.store import SessionStore
+from tutor.api.v2 import install_v2_routes
+from tutor.api.v2_features import V2FeatureFlags
+from tutor.api.v2_persistence import V2PersistenceService
 from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import LearnerProfile
 from tutor.seed.load_seed import load_graph
+
+load_dotenv()
 
 logger = logging.getLogger("tutor.api")
 
@@ -104,7 +114,11 @@ def _turn(
 
 
 def create_app(
-    graph: GraphDocument | None = None, database_url: str | None = None
+    graph: GraphDocument | None = None,
+    database_url: str | None = None,
+    *,
+    allow_v1_session_creation: bool | None = None,
+    enable_diagnosis_v2_shadow: bool | None = None,
 ) -> FastAPI:
     """Build the API app around one graph version and an in-memory store.
 
@@ -113,19 +127,71 @@ def create_app(
     warning rather than failing startup).
     """
     resolved_graph = graph or load_graph()
+    pilot_production = os.environ.get("TUTOR_PILOT_PRODUCTION", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    legacy_creation_enabled = (
+        allow_v1_session_creation
+        if allow_v1_session_creation is not None
+        else os.environ.get("TUTOR_ALLOW_V1_SESSION_CREATION", "").lower()
+        in {"1", "true", "yes"}
+    )
+    if pilot_production and legacy_creation_enabled:
+        raise RuntimeError(
+            "TUTOR_PILOT_PRODUCTION forbids new legacy v1 session creation"
+        )
+    if pilot_production and os.environ.get("TUTOR_ALLOW_MISSING_ORIGIN") == "1":
+        raise RuntimeError(
+            "TUTOR_PILOT_PRODUCTION forbids the missing-origin escape hatch"
+        )
     app = FastAPI(title="Adaptive Math Tutor", version="0.1.0")
     store = SessionStore()
     persistence: PersistenceService | None = None
     resolved_url = database_url or os.environ.get("DATABASE_URL")
+    if pilot_production and (
+        not resolved_url or not resolved_url.lower().startswith("postgresql")
+    ):
+        raise RuntimeError(
+            "TUTOR_PILOT_PRODUCTION requires a PostgreSQL DATABASE_URL"
+        )
     if resolved_url:
         try:
             persistence = PersistenceService(url=resolved_url)
             logger.info("persistence enabled")
         except Exception as exc:  # noqa: BLE001 — degrade to memory-only
+            if pilot_production:
+                raise RuntimeError(
+                    "pilot production persistence could not be initialized"
+                ) from exc
             logger.warning("persistence unavailable (%s); sessions are memory-only", exc)
     app.state.store = store
     app.state.graph = resolved_graph
     app.state.persistence = persistence
+    v2_flags = V2FeatureFlags.from_environment()
+    app.state.v2_feature_flags = v2_flags
+    diagnosis_shadow = DiagnosisV2ShadowObserver(
+        resolved_graph,
+        enabled=(
+            enable_diagnosis_v2_shadow
+            if enable_diagnosis_v2_shadow is not None
+            else diagnosis_shadow_enabled_from_environment()
+        ),
+    )
+    app.state.diagnosis_v2_shadow = diagnosis_shadow
+
+    def _observe_shadow(boundary: str, callback, *args) -> None:
+        """Keep optional metrics observation outside the v1 serving path."""
+        try:
+            callback(*args)
+        except Exception as exc:  # noqa: BLE001 - shadow failures never affect v1
+            diagnosis_shadow.note_boundary_failure(boundary)
+            logger.warning(
+                "diagnosis-v2 shadow wrapper failed boundary=%s error_type=%s",
+                boundary,
+                type(exc).__name__,
+            )
 
     def _get_session(session_id: str) -> SessionOrchestrator:
         try:
@@ -140,6 +206,28 @@ def create_app(
             "status": "ok",
             "sessions": len(store),
             "persistence": persistence is not None,
+            "v2_sessions": len(getattr(app.state, "v2_store", ())),
+            "v2_goals": len(
+                getattr(getattr(app.state, "v2_goal_catalog", None), "goals", ())
+            ),
+            "v1_session_creation": legacy_creation_enabled,
+            "diagnosis_v2_shadow": diagnosis_shadow.metrics_snapshot(),
+            "v2_features": v2_flags.as_dict(),
+            "v2_metrics": (
+                app.state.v2_store.metrics_snapshot()
+                if hasattr(app.state, "v2_store")
+                else {
+                    "counters": {},
+                    "actions_by_item_id": {},
+                    "rollout_gates": {
+                        "resume_success_rate": None,
+                        "action_5xx_rate": None,
+                        "duplicate_advances_detected": 0,
+                        "missing_evidence_detected": 0,
+                        "commit_integrity_failures": 0,
+                    },
+                }
+            ),
         }
 
     @app.get("/", response_class=FileResponse)
@@ -150,6 +238,14 @@ def create_app(
     @app.post("/sessions", response_model=TurnResponse)
     def create_session(request: CreateSessionRequest) -> TurnResponse:
         """Start a session: intake -> first diagnostic probe."""
+        if not legacy_creation_enabled:
+            raise HTTPException(
+                status_code=410,
+                detail=(
+                    "new legacy sessions are disabled; use the reviewed "
+                    "/api/v2 session catalog"
+                ),
+            )
         profile = LearnerProfile(course=request.course, age_band=request.age_band)
         diagnostician = lesson_writer = interaction_generator = evaluator = None
         llm_enabled = False
@@ -180,16 +276,31 @@ def create_app(
             raise HTTPException(status_code=404, detail=str(exc)) from None
         interactions = orchestrator.begin()
         session_id = store.create(orchestrator)
+        _observe_shadow("start_wrapper", diagnosis_shadow.start, session_id, orchestrator)
         return _turn(session_id, orchestrator, interactions, llm_enabled)
 
     @app.post("/sessions/{session_id}/answer", response_model=TurnResponse)
     def answer(session_id: str, request: AnswerRequest) -> TurnResponse:
         """Submit an answer to the pending item."""
         orchestrator = _get_session(session_id)
+        event_count = len(orchestrator.learner.events)
         try:
             interactions = orchestrator.submit(request.answer)
         except RuntimeError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from None
+        new_events = orchestrator.learner.events[event_count:]
+        if len(new_events) == 1:
+            _observe_shadow(
+                "answer_wrapper",
+                diagnosis_shadow.observe_answer,
+                session_id,
+                new_events[0],
+                orchestrator,
+            )
+        elif not new_events:
+            diagnosis_shadow.note_unscored_submission()
+        elif diagnosis_shadow.enabled:
+            diagnosis_shadow.note_boundary_failure("answer_event")
         return _turn(session_id, orchestrator, interactions)
 
     @app.post("/sessions/{session_id}/hint", response_model=HintResponse)
@@ -215,6 +326,18 @@ def create_app(
         """Current state without advancing the session."""
         orchestrator = _get_session(session_id)
         return _turn(session_id, orchestrator, [])
+
+    if v2_flags.api_session_v2:
+        install_v2_routes(
+            app,
+            resolved_graph,
+            persistence=(
+                V2PersistenceService(persistence.engine)
+                if persistence is not None
+                else None
+            ),
+            feature_flags=v2_flags,
+        )
 
     # Keep the mount last so API routes retain precedence. ``check_dir=False``
     # lets backend modules import before the frontend's first production build.

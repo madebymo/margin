@@ -13,7 +13,7 @@ _spec.loader.exec_module(_module)
 
 def test_export_writes_valid_schema_files(tmp_path):
     written = _module.export_schemas(tmp_path)
-    assert len(written) == 6
+    assert len(written) == 8
     for path in written:
         data = json.loads(path.read_text())
         assert any(key in data for key in ("properties", "$defs", "oneOf")), path.name

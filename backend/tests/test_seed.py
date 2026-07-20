@@ -5,6 +5,7 @@ import re
 import pytest
 
 from tutor.graph import service
+from tutor.content.item_bank import load_item_bank, validate_item_bank
 from tutor.schemas.kc import KC_ID_PATTERN, GraphDocument
 from tutor.seed.load_seed import load_coverage, load_graph, validate_coverage
 
@@ -57,3 +58,12 @@ def test_roots_include_expected_foundations(seed):
         "kc.fun.function_notation",
     }
     assert expected <= set(service.roots(seed))
+
+
+def test_packaged_item_bank_is_valid_unreleased_draft(seed):
+    bank = load_item_bank()
+
+    assert bank.released_kcs == []
+    assert {item.review_status.value for item in bank.items} == {"draft"}
+    assert all(item.provenance.reviewed_by is None for item in bank.items)
+    assert validate_item_bank(bank, seed) == []

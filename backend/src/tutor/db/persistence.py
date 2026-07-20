@@ -87,6 +87,15 @@ class PersistenceService:
                     assisted=event.assisted,
                     misconception_id=event.misconception_id,
                     content_versions=dict(event.content_versions),
+                    episode_id=event.episode_id,
+                    family_id=event.family_id,
+                    surface=event.surface,
+                    item_revision=event.item_revision,
+                    attempt_number=event.attempt_number,
+                    policy_version=event.policy_version,
+                    learner_params_version=event.learner_params_version,
+                    content_provenance=event.content_provenance,
+                    learning_opportunity=event.learning_opportunity,
                 )
             )
             session.commit()
@@ -121,6 +130,15 @@ class PersistenceService:
                     assisted=row.assisted,
                     misconception_id=row.misconception_id,
                     content_versions=dict(row.content_versions or {}),
+                    episode_id=row.episode_id,
+                    family_id=row.family_id,
+                    surface=row.surface or "legacy",
+                    item_revision=row.item_revision or 1,
+                    attempt_number=row.attempt_number or 1,
+                    policy_version=row.policy_version or "legacy",
+                    learner_params_version=row.learner_params_version or "v1",
+                    content_provenance=row.content_provenance or "legacy",
+                    learning_opportunity=bool(row.learning_opportunity),
                 )
             )
         return events

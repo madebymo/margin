@@ -54,7 +54,11 @@ class LLMInteractionGenerator:
                 tag=f"interaction:{node.id}",
             )
         except LLMError as exc:
-            logger.warning("interaction generation failed for %s: %s", node.id, exc)
+            logger.warning(
+                "interaction generation failed for %s (%s)",
+                node.id,
+                type(exc).__name__,
+            )
             return []
         raw_candidates = data.get("candidates", [])
         if not isinstance(raw_candidates, list):
@@ -64,5 +68,9 @@ class LLMInteractionGenerator:
             try:
                 results.append(parse_widget_config(raw))
             except ValidationError as exc:
-                logger.warning("dropping invalid widget candidate for %s: %s", node.id, exc)
+                logger.warning(
+                    "dropping invalid widget candidate for %s (errors=%d)",
+                    node.id,
+                    exc.error_count(),
+                )
         return results

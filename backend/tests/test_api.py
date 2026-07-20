@@ -24,7 +24,58 @@ _STATIC_REFERENCE = re.compile(r"""(?:src|href)=["'](/static/[^"']+)["']""")
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    return TestClient(create_app())
+    return TestClient(create_app(allow_v1_session_creation=True))
+
+
+def test_new_v1_sessions_are_disabled_by_default():
+    guarded = TestClient(create_app())
+    response = guarded.post(
+        "/sessions", json={"target_kc": "kc.der.chain_rule"}
+    )
+
+    assert response.status_code == 410
+
+
+def test_pilot_production_fails_closed_when_postgres_is_unavailable(monkeypatch):
+    class UnavailablePersistence:
+        def __init__(self, *args, **kwargs):
+            raise OSError("database unavailable")
+
+    monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
+    monkeypatch.setattr("tutor.api.app.PersistenceService", UnavailablePersistence)
+
+    with pytest.raises(RuntimeError, match="persistence could not be initialized"):
+        create_app(database_url="postgresql://pilot.invalid/tutor")
+
+
+def test_pilot_production_forbids_legacy_session_escape_hatch(monkeypatch):
+    monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
+    monkeypatch.setenv("TUTOR_ALLOW_V1_SESSION_CREATION", "1")
+
+    with pytest.raises(RuntimeError, match="forbids new legacy v1"):
+        create_app(database_url="postgresql://pilot.invalid/tutor")
+
+    with pytest.raises(RuntimeError, match="forbids new legacy v1"):
+        create_app(
+            database_url="postgresql://pilot.invalid/tutor",
+            allow_v1_session_creation=True,
+        )
+
+
+def test_pilot_production_forbids_missing_origin_escape_hatch(monkeypatch):
+    monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
+    monkeypatch.setenv("TUTOR_ALLOW_MISSING_ORIGIN", "1")
+
+    with pytest.raises(RuntimeError, match="forbids the missing-origin"):
+        create_app(database_url="postgresql://pilot.invalid/tutor")
+
+
+def test_api_v2_can_be_disabled_independently(monkeypatch):
+    monkeypatch.setenv("TUTOR_ENABLE_API_SESSION_V2", "0")
+    guarded = TestClient(create_app())
+
+    assert guarded.get("/api/v2/goals").status_code == 404
+    assert guarded.get("/healthz").json()["v2_features"]["api_session_v2"] is False
 
 
 def _orchestrator(client: TestClient, session_id: str):
@@ -35,6 +86,8 @@ def test_healthz(client):
     response = client.get("/healthz")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.json()["v2_sessions"] == 0
+    assert response.json()["v2_goals"] >= 0
 
 
 def test_index_serves_production_bundle_and_all_referenced_assets(client):

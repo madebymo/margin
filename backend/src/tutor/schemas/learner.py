@@ -6,6 +6,7 @@ keeps direct evidence separate from graph-inferred evidence.
 """
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,14 +29,31 @@ class EvidenceEvent(BaseModel):
     event_id: UUID
     learner_id: UUID
     t: datetime
-    item_id: str = Field(min_length=1)
+    item_id: str = Field(min_length=1, max_length=128)
     kc_ids: list[str] = Field(min_length=1)
     correct: bool
     response_class: ResponseClass
     hints_used: int = Field(ge=0, default=0)
     assisted: bool = False
-    misconception_id: str | None = None
+    misconception_id: str | None = Field(default=None, max_length=128)
     content_versions: dict[str, str] = Field(default_factory=dict)
+    episode_id: str | None = Field(default=None, max_length=36)
+    family_id: str | None = Field(default=None, max_length=128)
+    surface: Literal[
+        "diagnostic",
+        "guided_widget",
+        "checkin",
+        "capstone",
+        "worked_example",
+        "instructional_practice",
+        "legacy",
+    ] = "legacy"
+    item_revision: int = Field(ge=1, default=1)
+    attempt_number: int = Field(ge=1, default=1)
+    policy_version: str = Field(default="legacy", min_length=1, max_length=64)
+    learner_params_version: str = Field(default="v1", min_length=1, max_length=64)
+    content_provenance: str = Field(default="legacy", min_length=1, max_length=128)
+    learning_opportunity: bool = False
 
 
 class MasteryEstimate(BaseModel):

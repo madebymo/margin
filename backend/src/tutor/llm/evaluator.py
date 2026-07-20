@@ -9,6 +9,8 @@ the session moving.
 import json
 import logging
 
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
 from tutor.llm import prompts
 from tutor.llm.client import LLMClient, LLMError
 from tutor.orchestrator.planner import EvaluationVerdict
@@ -17,7 +19,36 @@ from tutor.schemas.widgets import WidgetConfig
 
 logger = logging.getLogger("tutor.llm")
 
-_HARD_GATES = ("correctness", "alignment", "consistency", "safety")
+class _StrictEvaluationModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class EvaluationHardGates(_StrictEvaluationModel):
+    """The exact conjunctive evaluator hard gates."""
+
+    correctness: bool
+    alignment: bool
+    consistency: bool
+    safety: bool
+
+
+class EvaluationSoftAxes(_StrictEvaluationModel):
+    """The exact integer-valued evaluator rubric axes."""
+
+    clarity: int = Field(ge=1, le=5)
+    scaffolding: int = Field(ge=1, le=5)
+    cognitive_load: int = Field(ge=1, le=5)
+    engagement: int = Field(ge=1, le=5)
+    age_fit: int = Field(ge=1, le=5)
+
+
+class EvaluationPayload(_StrictEvaluationModel):
+    """Schema for untrusted JSON returned by the LLM evaluator."""
+
+    hard: EvaluationHardGates
+    soft: EvaluationSoftAxes
+    abstain: bool
+    feedback: str = ""
 
 
 class LLMEvaluator:
@@ -46,28 +77,49 @@ class LLMEvaluator:
                 tag=f"evaluate:{node.id}",
             )
         except LLMError as exc:
-            logger.warning("evaluation failed for %s: %s", node.id, exc)
-            return EvaluationVerdict(accepted=False, feedback=f"evaluator unavailable: {exc}")
+            logger.warning(
+                "evaluation failed for %s (%s)", node.id, type(exc).__name__
+            )
+            return EvaluationVerdict(
+                accepted=False, feedback="evaluator unavailable"
+            )
+        except Exception as exc:  # noqa: BLE001 - client failure cannot escape the planner
+            logger.warning(
+                "evaluation crashed for %s (%s)", node.id, type(exc).__name__
+            )
+            return EvaluationVerdict(
+                accepted=False, feedback="evaluator unavailable"
+            )
 
-        feedback = str(data.get("feedback", "")).strip()
-        if data.get("abstain") is True:
+        try:
+            payload = EvaluationPayload.model_validate(data)
+        except ValidationError as exc:
+            logger.warning(
+                "invalid evaluator payload for %s (errors=%d)",
+                node.id,
+                exc.error_count(),
+            )
+            return EvaluationVerdict(
+                accepted=False,
+                feedback="evaluator payload failed strict schema validation",
+            )
+
+        feedback = payload.feedback.strip()
+        if payload.abstain:
             return EvaluationVerdict(
                 accepted=False, feedback=feedback or "evaluator abstained"
             )
-        hard = data.get("hard", {})
-        failed_gates = [gate for gate in _HARD_GATES if hard.get(gate) is not True]
+        failed_gates = [
+            field
+            for field, passed in payload.hard.model_dump().items()
+            if passed is not True
+        ]
         if failed_gates:
             return EvaluationVerdict(
                 accepted=False,
                 feedback=f"hard gate failed: {', '.join(failed_gates)}. {feedback}".strip(),
             )
-        soft = data.get("soft", {})
-        try:
-            scores = [float(value) for value in soft.values()]
-        except (TypeError, ValueError):
-            return EvaluationVerdict(accepted=False, feedback="soft scores unreadable")
-        if not scores:
-            return EvaluationVerdict(accepted=False, feedback="soft scores missing")
+        scores = list(payload.soft.model_dump().values())
         if min(scores) < self._min_soft or sum(scores) / len(scores) < self._mean_soft:
             return EvaluationVerdict(
                 accepted=False, feedback=feedback or "soft-axis scores below threshold"

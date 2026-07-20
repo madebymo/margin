@@ -91,6 +91,7 @@ class Interaction(BaseModel):
     kind: Literal["message", "probe", "lesson", "checkin", "capstone"]
     kc_id: str | None = None
     text: str
+    prompt_segments: list[dict] | None = None
     widget: dict | None = None
 
 
@@ -388,8 +389,8 @@ class SessionOrchestrator:
         """Score a widget attempt (authoritative, server-side).
 
         Widget practice is formative: it never advances the state machine or
-        consumes routing budget, and only the first attempt per key becomes
-        an evidence event (repeats are scored but not re-recorded).
+        consumes routing budget. Every attempt is retained so the trajectory is
+        auditable; v2 learner models exclude widget events from mastery.
         """
         if self.phase in (SessionPhase.DONE, SessionPhase.STOPPED):
             raise RuntimeError("session is over")
@@ -399,22 +400,23 @@ class SessionOrchestrator:
         correct = _score_widget(widget, response)
         attempts = self._widget_attempts.get(key, 0)
         self._widget_attempts[key] = attempts + 1
-        if attempts == 0:
-            self._apply_event(
-                EvidenceEvent(
-                    event_id=uuid4(),
-                    learner_id=self.learner.learner_id,
-                    t=datetime.now(timezone.utc),
-                    item_id=key,
-                    kc_ids=[kc],
-                    correct=correct,
-                    response_class=ResponseClass.WIDGET,
-                    content_versions={
-                        "graph": str(self._graph.graph_version),
-                        "generator": "template-v1",
-                    },
-                )
+        self._apply_event(
+            EvidenceEvent(
+                event_id=uuid4(),
+                learner_id=self.learner.learner_id,
+                t=datetime.now(timezone.utc),
+                item_id=key,
+                kc_ids=[kc],
+                correct=correct,
+                response_class=ResponseClass.WIDGET,
+                surface="guided_widget",
+                attempt_number=attempts + 1,
+                content_versions={
+                    "graph": str(self._graph.graph_version),
+                    "generator": "template-v1",
+                },
             )
+        )
         message = (
             "Nice — that's it."
             if correct
@@ -427,7 +429,10 @@ class SessionOrchestrator:
         return correct, message
 
     def _ancestors_of(self, kc: str) -> set[str]:
-        return graph_service.ancestor_subgraph(self._graph, kc).node_ids() - {kc}
+        return (
+            graph_service.ancestor_subgraph(self._graph, kc, hard_only=True).node_ids()
+            - {kc}
+        )
 
     # -- session flow ------------------------------------------------------------
 
@@ -439,7 +444,7 @@ class SessionOrchestrator:
         target_name = self._nodes[self._target].name
         opener = self._msg(
             f"Let's find the best starting point for {target_name}. "
-            "I'll ask a few quick questions — answer what you can, or type 'hint'."
+            "I'll ask a few quick questions. Use the dedicated hint control if needed."
         )
         interactions = [opener, *self._issue_next_probe()]
         self._checkpoint()
@@ -713,7 +718,7 @@ class SessionOrchestrator:
             "____" if index == probe.blank_index else step
             for index, step in enumerate(probe.scaffold_steps)
         )
-        capstone_text = f"Capstone — your original question, no scaffolding:\n{rendered}"
+        capstone_text = f"Goal problem — no scaffolding:\n{rendered}"
         self._pending = _Pending(
             key=self._next_key(),
             kind="capstone",

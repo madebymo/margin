@@ -11,9 +11,13 @@ Commands during the session: answers as free text, 'hint' for the next hint,
 import argparse
 import os
 
+from dotenv import load_dotenv
+
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator, SessionPhase
 from tutor.schemas.learner import LearnerProfile
 from tutor.seed.load_seed import load_graph
+
+load_dotenv()
 
 _PREFIX = {
     "message": "tutor",
