@@ -1,8 +1,9 @@
-"""Pack loading: merge human-authored CSV packs with generated JSON drafts.
+"""Pedagogy authoring inputs and immutable catalog release loading.
 
-Precedence: human-authored template packs always win over LLM-generated
-drafts for the same KC. Invalid generated files are skipped with a warning —
-a bad draft can never break port construction.
+``load_packs`` is the legacy-v1/offline authoring merge: human-authored CSV
+drafts win over LLM-generated drafts. It must not be used as a v2 release
+gate. ``load_pedagogy_catalog`` instead parses one exact, versioned document;
+it never merges or promotes ambient draft content.
 """
 
 import logging
@@ -12,13 +13,27 @@ from pydantic import ValidationError
 
 import tutor.packs
 from tutor.packs.import_csv import parse_pack_csv
-from tutor.schemas.pedagogy import PedagogyPack
+from tutor.schemas.pedagogy import PedagogyPack, PedagogyPackCatalog
 
 logger = logging.getLogger("tutor.packs")
 
 PACKAGE_DIR = Path(tutor.packs.__file__).resolve().parent
 TEMPLATE_CSV = PACKAGE_DIR / "template.csv"
 GENERATED_DIR = PACKAGE_DIR / "generated"
+DEFAULT_PEDAGOGY_CATALOG_PATH = (
+    PACKAGE_DIR.parent / "seed" / "pedagogy_catalog_v1.json"
+)
+
+
+def load_pedagogy_catalog(
+    path: Path | str | None = None,
+) -> PedagogyPackCatalog:
+    """Parse one exact reviewed catalog document or raise on any defect."""
+
+    source = Path(path) if path is not None else DEFAULT_PEDAGOGY_CATALOG_PATH
+    return PedagogyPackCatalog.model_validate_json(
+        source.read_text(encoding="utf-8")
+    )
 
 
 def load_template_packs() -> dict[str, PedagogyPack]:
@@ -47,7 +62,11 @@ def load_generated_packs(
 
 
 def load_packs(generated_dir: Path | str | None = None) -> dict[str, PedagogyPack]:
-    """All available packs: generated drafts, overridden by human template packs."""
+    """Legacy/offline drafts, with generated content overridden by the CSV.
+
+    This merge is intentionally not a reviewed catalog and must not be used to
+    admit v2 content or restore a catalog-pinned session.
+    """
     packs = load_generated_packs(generated_dir)
     packs.update(load_template_packs())
     return packs

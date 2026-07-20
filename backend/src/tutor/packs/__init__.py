@@ -1,1 +1,1 @@
-"""Pedagogy pack import surface (CSV -> validated PedagogyPack)."""
+"""Pedagogy draft authoring and reviewed catalog release surfaces."""
