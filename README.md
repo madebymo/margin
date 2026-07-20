@@ -245,13 +245,14 @@ export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
 export TUTOR_ENABLE_DIAGNOSIS_V2=1
 export TUTOR_ENABLE_LESSON_FLOW_V2=1
 export TUTOR_ENABLE_RICH_WIDGETS_V2=0
+export TUTOR_PAUSE_V2_MUTATIONS=0
 export TUTOR_V2_STUDENT_ROLLOUT_PERCENT=0
 uvicorn tutor.api.app:app
 ```
 
 Pilot mode fails startup if `DATABASE_URL` is not PostgreSQL, persistence
 cannot initialize, the v2 schema has not been migrated, or the resume secret is
-missing/too short. It also requires all five feature flags and the rollout
+missing/too short. It also requires all six feature flags and the rollout
 percentage explicitly; the example starts closed before the reviewed 5/25/100
 canary progression. Non-pilot development reports `memory_only` durability
 when no database is configured.
@@ -323,12 +324,22 @@ them to enabled; `TUTOR_PILOT_PRODUCTION=1` requires each value explicitly:
 - `TUTOR_ENABLE_DIAGNOSIS_V2`
 - `TUTOR_ENABLE_LESSON_FLOW_V2`
 - `TUTOR_ENABLE_RICH_WIDGETS_V2`
+- `TUTOR_PAUSE_V2_MUTATIONS`
 
 Disabling the API flag removes the v2 routes. Disabling content allocation,
 diagnosis, or lesson flow returns an empty catalog with a `paused` rollout
 status for selected browsers. Rich widgets are separate: disabling them keeps
 the student flow available and serves required guided practice through the
 keyboard text equivalent.
+
+`TUTOR_PAUSE_V2_MUTATIONS=1` is the separate emergency write stop. It keeps
+goal/capability reads, current-session reads, cookie refresh, and receipt-only
+recovery available. It also preserves exact replays of already committed
+create, action, and reset request IDs. Any genuinely new create, action, or
+reset returns `503` with code `v2_mutations_paused` and `retryable: true`
+before invoking the orchestrator or writing revision, transcript, evidence,
+exposure, widget-attempt, or receipt state. Clients must retry the identical
+payload and request ID after the operator clears the pause.
 
 New-session admission uses one explicit percentage:
 
@@ -379,10 +390,30 @@ it with the runtime switch, so an emergency rich-widget rollback converts an
 already pending visual practice to text and prevents new rich generation.
 
 `GET /healthz` reports effective flags, persistence availability, catalog and
-session counts, privacy-safe v2 counters keyed by stable item IDs, resume
-success rate, middleware-counted action 5xx rate, duplicate-advance and
-missing-evidence detections, and commit-integrity failures. Raw answers,
-expected answers, and student context are excluded from operational metrics.
+session counts, active graph/item-bank/policy/learner-parameter/capability
+versions, privacy-safe v2 counters keyed by stable item IDs, resume success
+rate, middleware-counted action 5xx rate, duplicate-advance and
+missing-evidence detections, and commit-integrity failures. The resume-rate
+denominator contains only eligible attempts whose token is known active and
+recoverable. Active-token restoration and ledger failures count as eligible
+failures, as does a rolling-expiry refresh failure after authorization.
+Success is recorded only after the read returns a refreshed cookie. Both
+`GET /api/v2/sessions/current` and `GET /api/v2/sessions/{id}` are measured
+read/resume journeys; authorization performed for create, action, reset, and
+recovery paths is deliberately excluded. Raw cookie attempts remain
+informational; no-cookie,
+malformed/unknown/revoked, observable expired, and session-id-mismatch requests
+remain separate and do not dilute the reliability rate. An expiry already
+removed by retention is classified as invalid because no durable row remains.
+
+The process-local snapshot remains useful for tests and one-worker
+development, but is not a fleet aggregator. A deployment can pass a
+`MetricsSink` to `create_app(v2_metrics_sink=...)`; every exported increment is
+tagged only with active release versions and, where applicable, a reviewed
+stable item ID. Sink failures increment the local `metrics_export_failures`
+counter and never fail a tutoring request. Raw answers, expected answers,
+session/learner IDs, prompts, and student context are excluded from the sink
+contract.
 
 ## Diagnosis simulation
 
@@ -466,6 +497,9 @@ headed visual review in the target deployment environment.
 - Configure and verify a shared edge/API request-rate limiter. Application
   action and episode quotas bound one anonymous learner, but a client that
   deliberately discards cookies must also be bounded before worker admission.
+- Configure a fleet-wide `MetricsSink`, verify active-version dimensions in
+  the target telemetry backend, and alert on `metrics_export_failures`; the
+  built-in health snapshot is intentionally process-local.
 - Keep `click_region` disabled until geometric hit testing and equivalent
   keyboard semantics are complete.
 

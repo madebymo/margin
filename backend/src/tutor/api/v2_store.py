@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
+from tutor.api.v2_metrics import MetricsSink, V2MetricDimensions
 from tutor.api.v2_schemas import (
     AnswerAction,
     ContentModeView,
@@ -85,6 +86,10 @@ class DurableResetReplay(RuntimeError):
     def __init__(self, response: ResetResponse) -> None:
         super().__init__("reset already committed")
         self.response = response
+
+
+class ResumeTokenExpired(KeyError):
+    """A process-local resume token was known but passed its rolling expiry."""
 
 
 class V2PersistencePort(Protocol):
@@ -212,6 +217,8 @@ class V2SessionStore:
         *,
         graph_nodes: dict[str, Any],
         persistence: V2PersistencePort | None = None,
+        metrics_sink: MetricsSink | None = None,
+        metric_dimensions: V2MetricDimensions | None = None,
         max_sessions: int = 500,
         max_receipts_per_session: int = 256,
         max_episodes_per_learner: int = 32,
@@ -224,6 +231,14 @@ class V2SessionStore:
         self._lock = threading.RLock()
         self._graph_nodes = graph_nodes
         self._persistence = persistence
+        self._metrics_sink = metrics_sink
+        self._metric_dimensions = metric_dimensions or V2MetricDimensions(
+            graph_version="unknown",
+            item_bank_version="unknown",
+            policy_versions=(),
+            learner_parameter_version="unknown",
+            capability_manifest_version="unknown",
+        )
         self._max_sessions = max_sessions
         self._max_receipts = max_receipts_per_session
         self._max_episodes_per_learner = max_episodes_per_learner
@@ -316,13 +331,13 @@ class V2SessionStore:
                 except SessionConflict:
                     raise
                 except SessionRateLimited:
-                    with self._lock:
-                        self._metrics["episode_resets_rate_limited"] += 1
+                    self.record_metric("episode_resets_rate_limited")
                     raise
                 except Exception as exc:
                     raise SessionUnavailable("could not durably create session") from exc
                 if persisted is not None:
                     raise DurableReceiptReplay(SessionView.model_validate(persisted))
+            terminal_rollover = replace_handle is not None
             with self._lock:
                 if replace_handle is not None and replace_token_hash is not None:
                     self._tokens.pop(replace_token_hash, None)
@@ -338,9 +353,9 @@ class V2SessionStore:
                     handle.session_id,
                     utcnow() + _RESUME_WINDOW,
                 )
-                self._metrics["sessions_created"] += 1
-                if replace_handle is not None:
-                    self._metrics["terminal_rollovers_committed"] += 1
+            self.record_metric("sessions_created")
+            if terminal_rollover:
+                self.record_metric("terminal_rollovers_committed")
             return handle
 
     def get(self, session_id: str) -> V2SessionHandle:
@@ -351,11 +366,15 @@ class V2SessionStore:
                 raise KeyError(f"unknown session: {session_id}") from None
 
     def resolve_token(self, token_hash: str) -> V2SessionHandle:
+        expired = False
         with self._lock:
             token = self._tokens.get(token_hash)
             if token is not None and token[1] <= utcnow():
                 del self._tokens[token_hash]
+                expired = True
                 token = None
+        if expired:
+            raise ResumeTokenExpired("expired resume token")
         if token is None:
             raise KeyError("unknown resume token")
         return self.get(token[0])
@@ -374,8 +393,7 @@ class V2SessionStore:
                     "request_id was already used with a different payload",
                     self.view(handle),
                 )
-            with self._lock:
-                self._metrics["create_replays"] += 1
+            self.record_metric("create_replays")
             return receipt.response.model_copy(deep=True)
 
     def repeat_create_without_token(
@@ -403,8 +421,7 @@ class V2SessionStore:
                         "request_id was already used for another mutation",
                         self.view(handle),
                     )
-                with self._lock:
-                    self._metrics["create_replays"] += 1
+                self.record_metric("create_replays")
                 return handle, receipt.response.model_copy(deep=True)
         return None
 
@@ -412,11 +429,27 @@ class V2SessionStore:
         """Privacy-safe counters for rollout gates and operational alerts."""
         with self._lock:
             counters = dict(self._metrics)
-            resume_attempts = counters.get("resume_attempts", 0)
+            resume_attempts = counters.get("resume_eligible_attempts", 0)
             action_requests = counters.get("action_requests", 0)
             return {
                 "counters": counters,
                 "actions_by_item_id": dict(self._item_metrics),
+                "resume_outcomes": {
+                    "cookie_attempts": counters.get("resume_cookie_attempts", 0),
+                    "eligible_attempts": resume_attempts,
+                    "eligible_failures": counters.get(
+                        "resume_eligible_failures", 0
+                    ),
+                    "no_cookie": counters.get("resume_no_cookie", 0),
+                    "invalid": counters.get("resume_invalid", 0),
+                    "expired": counters.get("resume_expired", 0),
+                    "session_mismatch": counters.get(
+                        "resume_session_mismatch", 0
+                    ),
+                    "restore_failures": counters.get("resume_restore_failures", 0),
+                    "refresh_failures": counters.get("resume_refresh_failures", 0),
+                    "successes": counters.get("resume_successes", 0),
+                },
                 "rollout_gates": {
                     "resume_success_rate": (
                         counters.get("resume_successes", 0) / resume_attempts
@@ -440,10 +473,39 @@ class V2SessionStore:
                 },
             }
 
-    def record_metric(self, name: str, amount: int = 1) -> None:
-        """Record one privacy-safe operational counter."""
+    def record_metric(
+        self,
+        name: str,
+        amount: int = 1,
+        *,
+        item_id: str | None = None,
+    ) -> None:
+        """Record locally and best-effort export one privacy-safe counter."""
+        if amount < 1:
+            raise ValueError("metric increments must be positive")
         with self._lock:
             self._metrics[name] += amount
+            if item_id is not None:
+                self._item_metrics[item_id] += amount
+        if self._metrics_sink is None:
+            return
+        dimensions = self._metric_dimensions.as_labels()
+        if item_id is not None:
+            dimensions["item_id"] = item_id
+        try:
+            self._metrics_sink.increment(
+                name,
+                amount,
+                dimensions=dimensions,
+            )
+        except Exception as exc:  # noqa: BLE001 - telemetry cannot break tutoring
+            with self._lock:
+                self._metrics["metrics_export_failures"] += 1
+            logger.warning(
+                "v2 metric export failed metric=%s error_type=%s",
+                name,
+                type(exc).__name__,
+            )
 
     def restore(
         self,
@@ -535,7 +597,7 @@ class V2SessionStore:
                 token[0],
                 utcnow() + _RESUME_WINDOW,
             )
-            self._metrics["resume_refreshes"] += 1
+        self.record_metric("resume_refreshes")
         return True
 
     def revoke(self, token_hash: str) -> bool:
@@ -568,8 +630,7 @@ class V2SessionStore:
                     "idempotency_conflict",
                     "request_id was already used with a different reset payload",
                 )
-            with self._lock:
-                self._metrics["reset_replays"] += 1
+            self.record_metric("reset_replays")
             return receipt.response.model_copy(deep=True)
         if self._persistence is None:
             return None
@@ -591,7 +652,7 @@ class V2SessionStore:
                 payload_hash=payload_hash,
                 response=response,
             )
-            self._metrics["reset_replays"] += 1
+        self.record_metric("reset_replays")
         return response.model_copy(deep=True)
 
     def recover_create(self, request_id: UUID) -> str | None:
@@ -721,8 +782,7 @@ class V2SessionStore:
                 except SessionConflict:
                     raise
                 except SessionRateLimited:
-                    with self._lock:
-                        self._metrics["episode_resets_rate_limited"] += 1
+                    self.record_metric("episode_resets_rate_limited")
                     raise
                 except Exception as exc:
                     raise SessionUnavailable("could not durably commit reset") from exc
@@ -752,8 +812,8 @@ class V2SessionStore:
                     replacement.session_id,
                     utcnow() + _RESUME_WINDOW,
                 )
-                self._metrics["resets_committed"] += 1
-                self._metrics["sessions_created_by_reset"] += 1
+            self.record_metric("resets_committed")
+            self.record_metric("sessions_created_by_reset")
             return response.model_copy(deep=True)
 
     def _enforce_episode_quota(
@@ -765,12 +825,11 @@ class V2SessionStore:
         """Bound anonymous episode churn in the rolling resume window."""
         cutoff = (now or utcnow()) - _RESUME_WINDOW
         recent = sum(started_at >= cutoff for started_at in handle.episode_starts)
-        with self._lock:
-            if recent >= self._max_episodes_per_learner:
-                self._metrics["episode_resets_rate_limited"] += 1
-                raise SessionRateLimited(
-                    "this anonymous learner reached the rolling episode limit"
-                )
+        if recent >= self._max_episodes_per_learner:
+            self.record_metric("episode_resets_rate_limited")
+            raise SessionRateLimited(
+                "this anonymous learner reached the rolling episode limit"
+            )
 
     @staticmethod
     def _next_episode_starts(
@@ -801,6 +860,55 @@ class V2SessionStore:
                 self._reset_receipts[token_hash] = current
             else:
                 del self._reset_receipts[token_hash]
+
+    def replay_action(
+        self,
+        handle: V2SessionHandle,
+        action: SessionAction,
+        *,
+        token_hash: str,
+    ) -> SessionView | None:
+        """Return only an already-committed action; never invoke the orchestrator.
+
+        This is the safe idempotency path used while new v2 mutations are
+        paused. A reused request id with a different payload remains a conflict,
+        while an unseen request returns ``None`` for the API control plane to
+        reject with its retryable pause response.
+        """
+        payload = action.model_dump(mode="json")
+        payload_hash = self._payload_hash(payload)
+        request_id = str(action.request_id)
+        with handle.lock:
+            if not self.owns(handle.session_id, token_hash):
+                raise SessionConflict(
+                    "session_revoked",
+                    "the anonymous session token is no longer active",
+                    self.view(handle),
+                )
+            receipt = handle.receipts.get(request_id)
+            if receipt is None:
+                return None
+            if receipt.payload_hash != payload_hash:
+                raise SessionConflict(
+                    "idempotency_conflict",
+                    "request_id was already used with a different payload",
+                    self.view(handle),
+                )
+            revision_before_replay = handle.revision
+            if not self.refresh_token(token_hash):
+                raise SessionConflict(
+                    "session_revoked",
+                    "the anonymous session token is no longer active",
+                    self.view(handle),
+                )
+            if handle.revision != revision_before_replay:
+                self._integrity_failure("duplicate_advances_detected")
+                raise SessionIntegrityError(
+                    "idempotent replay changed the authoritative revision"
+                )
+            response = receipt.response.model_copy(deep=True)
+        self.record_metric("action_replays")
+        return response
 
     def apply(
         self,
@@ -841,8 +949,7 @@ class V2SessionStore:
                     raise SessionIntegrityError(
                         "idempotent replay changed the authoritative revision"
                     )
-                with self._lock:
-                    self._metrics["action_replays"] += 1
+                self.record_metric("action_replays")
                 return previous_receipt.response.model_copy(deep=True)
 
             committed_actions = sum(
@@ -850,8 +957,7 @@ class V2SessionStore:
                 for receipt in handle.receipts.values()
             )
             if committed_actions >= self._max_receipts:
-                with self._lock:
-                    self._metrics["actions_rate_limited"] += 1
+                self.record_metric("actions_rate_limited")
                 raise SessionRateLimited(
                     "this episode reached its safe action-storage limit"
                 )
@@ -961,8 +1067,7 @@ class V2SessionStore:
                 except Exception as exc:
                     raise SessionUnavailable("could not durably commit action") from exc
                 if persisted is not None:
-                    with self._lock:
-                        self._metrics["action_replays"] += 1
+                    self.record_metric("action_replays")
                     raise DurableReceiptReplay(SessionView.model_validate(persisted))
 
             handle.orchestrator = next_handle.orchestrator
@@ -970,16 +1075,15 @@ class V2SessionStore:
             handle.revision = next_handle.revision
             handle.transcript = next_handle.transcript
             handle.receipts = next_handle.receipts
+            item_id = str(getattr(pending_before, "item_id", "unknown"))
             with self._lock:
-                self._metrics["actions_committed"] += 1
-                item_id = str(getattr(pending_before, "item_id", "unknown"))
-                self._item_metrics[item_id] += 1
                 for token_hash in handle.token_hashes:
                     if token_hash in self._tokens:
                         self._tokens[token_hash] = (
                             handle.session_id,
                             utcnow() + _RESUME_WINDOW,
                         )
+            self.record_metric("actions_committed", item_id=item_id)
             logger.info(
                 json.dumps(
                     {
@@ -1004,9 +1108,8 @@ class V2SessionStore:
 
     def _integrity_failure(self, metric: str) -> None:
         """Record an actionable invariant failure without learner content."""
-        with self._lock:
-            self._metrics[metric] += 1
-            self._metrics["commit_integrity_failures"] += 1
+        self.record_metric(metric)
+        self.record_metric("commit_integrity_failures")
 
     @staticmethod
     def _has_prior_advance(handle: V2SessionHandle, pending_key: str) -> bool:

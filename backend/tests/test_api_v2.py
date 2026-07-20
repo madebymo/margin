@@ -401,6 +401,7 @@ def test_pilot_production_requires_every_rollout_switch_to_be_explicit(monkeypat
         "TUTOR_ENABLE_DIAGNOSIS_V2",
         "TUTOR_ENABLE_LESSON_FLOW_V2",
         "TUTOR_ENABLE_RICH_WIDGETS_V2",
+        "TUTOR_PAUSE_V2_MUTATIONS",
         "TUTOR_V2_STUDENT_ROLLOUT_PERCENT",
     )
     monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
@@ -411,7 +412,10 @@ def test_pilot_production_requires_every_rollout_switch_to_be_explicit(monkeypat
         V2FeatureFlags.from_environment()
 
     for name in names[:-1]:
-        monkeypatch.setenv(name, "1")
+        monkeypatch.setenv(
+            name,
+            "0" if name == "TUTOR_PAUSE_V2_MUTATIONS" else "1",
+        )
     monkeypatch.setenv(names[-1], "5")
     flags = V2FeatureFlags.from_environment()
     assert flags.student_rollout_percent == 5
@@ -1171,7 +1175,8 @@ def test_operational_metrics_use_stable_ids_without_raw_student_text(client, cap
     assert "item.power" in logs
     metrics = client.app.state.v2_store.metrics_snapshot()
     assert metrics["counters"]["actions_committed"] >= 1
-    assert metrics["rollout_gates"]["resume_success_rate"] == 1
+    assert metrics["resume_outcomes"]["eligible_attempts"] == 0
+    assert metrics["rollout_gates"]["resume_success_rate"] is None
     assert metrics["rollout_gates"]["action_5xx_rate"] == 0
     assert metrics["rollout_gates"]["duplicate_advances_detected"] == 0
     assert metrics["rollout_gates"]["missing_evidence_detected"] == 0
@@ -1911,6 +1916,9 @@ def test_reset_wins_against_an_action_waiting_to_commit_in_another_process():
 
         def resolve_resume(self, *args, **kwargs):
             return durable.resolve_resume(*args, **kwargs)
+
+        def resume_token_status(self, *args, **kwargs):
+            return durable.resume_token_status(*args, **kwargs)
 
         def touch_resume(self, *args, **kwargs):
             return durable.touch_resume(*args, **kwargs)

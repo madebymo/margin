@@ -25,6 +25,7 @@ from tutor.api.diagnosis_shadow import (
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_features import V2FeatureFlags
+from tutor.api.v2_metrics import MetricsSink
 from tutor.api.v2_persistence import V2PersistenceService
 from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
@@ -119,6 +120,7 @@ def create_app(
     *,
     allow_v1_session_creation: bool | None = None,
     enable_diagnosis_v2_shadow: bool | None = None,
+    v2_metrics_sink: MetricsSink | None = None,
 ) -> FastAPI:
     """Build the API app around one graph version and an in-memory store.
 
@@ -213,12 +215,41 @@ def create_app(
             "v1_session_creation": legacy_creation_enabled,
             "diagnosis_v2_shadow": diagnosis_shadow.metrics_snapshot(),
             "v2_features": v2_flags.as_dict(),
+            "v2_readiness": getattr(
+                app.state,
+                "v2_readiness",
+                {
+                    "student_stack_enabled": False,
+                    "accepting_mutations": False,
+                    "durable_persistence": False,
+                    "reviewed_goal_count": 0,
+                    "active_versions": {
+                        "graph": resolved_graph.graph_version,
+                        "item_bank": None,
+                        "policies": {},
+                        "learner_parameters": None,
+                        "capability_manifest": None,
+                    },
+                },
+            ),
             "v2_metrics": (
                 app.state.v2_store.metrics_snapshot()
                 if hasattr(app.state, "v2_store")
                 else {
                     "counters": {},
                     "actions_by_item_id": {},
+                    "resume_outcomes": {
+                        "cookie_attempts": 0,
+                        "eligible_attempts": 0,
+                        "eligible_failures": 0,
+                        "no_cookie": 0,
+                        "invalid": 0,
+                        "expired": 0,
+                        "session_mismatch": 0,
+                        "restore_failures": 0,
+                        "refresh_failures": 0,
+                        "successes": 0,
+                    },
                     "rollout_gates": {
                         "resume_success_rate": None,
                         "action_5xx_rate": None,
@@ -337,6 +368,7 @@ def create_app(
                 else None
             ),
             feature_flags=v2_flags,
+            metrics_sink=v2_metrics_sink,
         )
 
     # Keep the mount last so API routes retain precedence. ``check_dir=False``

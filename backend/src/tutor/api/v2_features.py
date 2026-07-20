@@ -12,6 +12,7 @@ _FLAG_ENV_NAMES = {
     "diagnosis_v2": "TUTOR_ENABLE_DIAGNOSIS_V2",
     "lesson_flow_v2": "TUTOR_ENABLE_LESSON_FLOW_V2",
     "rich_widgets": "TUTOR_ENABLE_RICH_WIDGETS_V2",
+    "pause_v2_mutations": "TUTOR_PAUSE_V2_MUTATIONS",
 }
 _ROLLOUT_ENV_NAME = "TUTOR_V2_STUDENT_ROLLOUT_PERCENT"
 
@@ -45,6 +46,7 @@ class V2FeatureFlags:
     diagnosis_v2: bool = True
     lesson_flow_v2: bool = True
     rich_widgets: bool = True
+    pause_v2_mutations: bool = False
     student_rollout_percent: int = 100
 
     def __post_init__(self) -> None:
@@ -73,6 +75,9 @@ class V2FeatureFlags:
             diagnosis_v2=_flag(_FLAG_ENV_NAMES["diagnosis_v2"]),
             lesson_flow_v2=_flag(_FLAG_ENV_NAMES["lesson_flow_v2"]),
             rich_widgets=_flag(_FLAG_ENV_NAMES["rich_widgets"]),
+            pause_v2_mutations=_flag(
+                _FLAG_ENV_NAMES["pause_v2_mutations"], default=False
+            ),
             student_rollout_percent=_student_rollout_percentage(),
         )
 
@@ -90,7 +95,11 @@ class V2FeatureFlags:
 
     @property
     def student_flow_enabled(self) -> bool:
-        return self.student_stack_enabled and self.student_rollout_percent > 0
+        return (
+            self.student_stack_enabled
+            and not self.pause_v2_mutations
+            and self.student_rollout_percent > 0
+        )
 
     def as_dict(self) -> dict[str, bool | int]:
         return asdict(self)

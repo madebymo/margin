@@ -301,3 +301,4 @@ class APIError(BaseModel):
     code: str
     message: str
     session: SessionView | None = None
+    retryable: bool | None = None

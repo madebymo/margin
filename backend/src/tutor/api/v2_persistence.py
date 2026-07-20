@@ -8,7 +8,7 @@ evidence delta, widget trajectory, and idempotency receipt together.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from sqlalchemy import Engine, delete, func, inspect, select
@@ -821,6 +821,28 @@ class V2PersistenceService:
                 ],
                 "ledger": ledger,
             }
+
+    def resume_token_status(
+        self, token_hash: str
+    ) -> Literal["active", "expired", "invalid"]:
+        """Classify a cookie hash without exposing or extending its session.
+
+        This read-only operational seam keeps malformed/revoked/unknown tokens
+        separate from rows that are observably past expiry. Retention may have
+        already purged an old row, in which case ``invalid`` is the only honest
+        classification available.
+        """
+        with Session(self._engine) as session:
+            token = session.scalar(
+                select(ResumeTokenRow).where(
+                    ResumeTokenRow.token_hash == token_hash
+                )
+            )
+            if token is None or token.revoked:
+                return "invalid"
+            if _aware(token.expires_at) <= _utcnow():
+                return "expired"
+            return "active"
 
     def _enforce_episode_quota(
         self,

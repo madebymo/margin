@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import os
+import re
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -17,6 +18,7 @@ from fastapi.responses import JSONResponse
 
 from tutor.api.v2_persistence import DurableLedgerMismatch, V2PersistenceService
 from tutor.api.v2_features import V2FeatureFlags
+from tutor.api.v2_metrics import MetricsSink, V2MetricDimensions
 from tutor.api.v2_schemas import (
     APIError,
     CatalogRolloutView,
@@ -40,10 +42,12 @@ from tutor.api.v2_store import (
     SessionIntegrityError,
     SessionRateLimited,
     SessionUnavailable,
+    ResumeTokenExpired,
     V2SessionHandle,
     V2SessionStore,
 )
 from tutor.api.v2_versions import V2PolicyRegistry, V2VersionRegistry
+from tutor.learner.params import DEFAULT_PARAMS_V2
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import LearnerProfile
@@ -53,6 +57,7 @@ _COOKIE_NAME = "tutor_resume_v2"
 _COOKIE_MAX_AGE = 30 * 24 * 60 * 60
 _ROLLOUT_COOKIE_NAME = "tutor_rollout_v2"
 _ROLLOUT_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
+_RESUME_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{43}$")
 _PILOT_TARGETS = (
     "kc.int.u_substitution",
     "kc.der.chain_rule",
@@ -68,6 +73,16 @@ _Factory = Callable[
 
 def _token_hash(raw_token: str) -> str:
     return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def _resume_token_well_formed(raw_token: str) -> bool:
+    """Recognize the exact opaque 256-bit cookie encoding before DB lookup."""
+    if _RESUME_TOKEN_PATTERN.fullmatch(raw_token) is None:
+        return False
+    try:
+        return len(_urlsafe_decode(raw_token)) == 32
+    except (ValueError, TypeError):
+        return False
 
 
 def _resume_secret(explicit: bytes | str | None) -> bytes:
@@ -182,10 +197,26 @@ def _replacement_resume_token(
 
 
 def _error(
-    status: int, code: str, message: str, session: SessionView | None = None
+    status: int,
+    code: str,
+    message: str,
+    session: SessionView | None = None,
+    *,
+    retryable: bool | None = None,
 ) -> JSONResponse:
-    body = APIError(code=code, message=message, session=session)
-    return JSONResponse(status_code=status, content=body.model_dump(mode="json"))
+    body = APIError(
+        code=code,
+        message=message,
+        session=session,
+        retryable=retryable,
+    )
+    return JSONResponse(
+        status_code=status,
+        content=body.model_dump(
+            mode="json",
+            exclude={"retryable"} if retryable is None else None,
+        ),
+    )
 
 
 def _origin_allowed(request: Request) -> bool:
@@ -334,6 +365,7 @@ def install_v2_routes(
     version_registry: V2VersionRegistry | None = None,
     policy_registry: V2PolicyRegistry | None = None,
     feature_flags: V2FeatureFlags | None = None,
+    metrics_sink: MetricsSink | None = None,
 ) -> V2SessionStore:
     """Install API v2 without changing any v1 route or response model."""
     token_secret = _resume_secret(resume_token_secret)
@@ -356,9 +388,10 @@ def install_v2_routes(
         registry.register(graph, active_item_bank)
     from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 
+    active_policy_versions = SessionOrchestratorV2._policy_versions()
     policies = policy_registry or V2PolicyRegistry.from_environment()
     policies.register(
-        SessionOrchestratorV2._policy_versions(),
+        active_policy_versions,
         SessionOrchestratorV2.restore,
     )
     eligible_goals = _goals(
@@ -392,6 +425,20 @@ def install_v2_routes(
     store = V2SessionStore(
         graph_nodes={node.id: node for node in graph.nodes},
         persistence=persistence,
+        metrics_sink=metrics_sink,
+        metric_dimensions=V2MetricDimensions(
+            graph_version=str(graph.graph_version),
+            item_bank_version=(
+                active_item_bank.bank_version
+                if active_item_bank is not None
+                else "unavailable"
+            ),
+            policy_versions=tuple(sorted(active_policy_versions.items())),
+            learner_parameter_version=(
+                f"bkt-v{DEFAULT_PARAMS_V2.params_version}"
+            ),
+            capability_manifest_version=str(active_widget_manifest["version"]),
+        ),
     )
 
     @app.middleware("http")
@@ -437,7 +484,7 @@ def install_v2_routes(
                     percentage=percentage,
                 ),
             )
-        if not flags.student_stack_enabled:
+        if not flags.student_stack_enabled or flags.pause_v2_mutations:
             return GoalCatalog(
                 goals=[],
                 rollout=CatalogRolloutView(
@@ -481,8 +528,16 @@ def install_v2_routes(
         assignment: _RolloutAssignment,
         request: Request,
     ) -> JSONResponse | None:
-        if assignment.selected and flags.student_stack_enabled:
+        if (
+            assignment.selected
+            and flags.student_stack_enabled
+            and not flags.pause_v2_mutations
+        ):
             return None
+        if flags.pause_v2_mutations:
+            result = mutation_paused_error("create")
+            _set_rollout_cookie(result, assignment.cookie_value, request)
+            return result
         catalog_view = rollout_catalog(assignment).rollout
         code = (
             "rollout_not_selected"
@@ -494,6 +549,23 @@ def install_v2_routes(
         store.record_metric(f"create_blocked_{catalog_view.status}")
         _set_rollout_cookie(result, assignment.cookie_value, request)
         return result
+
+    def mutation_paused_error(
+        operation: str,
+        session: SessionView | None = None,
+    ) -> JSONResponse:
+        """Reject a new state change without disturbing committed receipts."""
+        store.record_metric(f"mutation_paused_{operation}")
+        return _error(
+            503,
+            "v2_mutations_paused",
+            (
+                "Session changes are temporarily paused for a safety check; "
+                "retry this same request_id shortly."
+            ),
+            session,
+            retryable=True,
+        )
 
     def restore_durable(
         token_hash: str, bundle: dict[str, Any] | None = None
@@ -533,52 +605,103 @@ def install_v2_routes(
             raise SessionUnavailable("durable checkpoint cannot be restored") from exc
 
     def authorized_handle(
-        request: Request, session_id: str | None = None
+        request: Request,
+        session_id: str | None = None,
+        *,
+        measure_resume: bool = False,
     ) -> tuple[V2SessionHandle | None, str | None, JSONResponse | None]:
-        store.record_metric("resume_attempts")
+        def outside_eligible_failure(outcome: str) -> None:
+            if not measure_resume:
+                return
+            store.record_metric(f"resume_{outcome}")
+            store.record_metric("resume_failures")
+
+        def eligible_failure(*outcomes: str) -> None:
+            if not measure_resume:
+                return
+            store.record_metric("resume_eligible_attempts")
+            # Compatibility alias: unlike raw cookie attempts, this is the
+            # denominator used by the rollout reliability gate.
+            store.record_metric("resume_attempts")
+            store.record_metric("resume_eligible_failures")
+            store.record_metric("resume_failures")
+            for outcome in outcomes:
+                store.record_metric(outcome)
+
+        def eligible_attempt() -> None:
+            if not measure_resume:
+                return
+            store.record_metric("resume_eligible_attempts")
+            store.record_metric("resume_attempts")
+
         raw = request.cookies.get(_COOKIE_NAME)
         if not raw:
-            store.record_metric("resume_failures")
+            outside_eligible_failure("no_cookie")
             return None, None, _error(
                 401, "resume_token_required", "no current anonymous session"
             )
+        if measure_resume:
+            store.record_metric("resume_cookie_attempts")
+        if not _resume_token_well_formed(raw):
+            outside_eligible_failure("invalid")
+            return None, None, _error(
+                401,
+                "invalid_resume_token",
+                "the anonymous session token is invalid",
+            )
         hashed = _token_hash(raw)
-        try:
-            handle = store.resolve_token(hashed)
-        except KeyError:
+
+        if persistence is None:
             try:
-                handle = restore_durable(hashed)
-            except SessionUnavailable:
-                store.record_metric("resume_failures")
-                store.record_metric("resume_restore_failures")
-                return None, hashed, _error(
-                    503,
-                    "session_restore_unavailable",
-                    "the durable session could not be restored; retry shortly",
-                )
-            if handle is None:
-                store.record_metric("resume_failures")
+                handle = store.resolve_token(hashed)
+            except ResumeTokenExpired:
+                outside_eligible_failure("expired")
                 return None, hashed, _error(
                     401,
                     "invalid_resume_token",
-                    "the anonymous session token is invalid",
+                    "the anonymous session token is invalid or expired",
                 )
-        if persistence is not None:
+            except KeyError:
+                outside_eligible_failure("invalid")
+                return None, hashed, _error(
+                    401,
+                    "invalid_resume_token",
+                    "the anonymous session token is invalid or expired",
+                )
+        else:
+            # Durable status is authoritative over a potentially stale local
+            # cache. Only a known-active token can enter the reliability gate.
+            try:
+                durable_status = persistence.resume_token_status(hashed)
+            except Exception:  # noqa: BLE001 - authorization dependency failure
+                outside_eligible_failure("status_failures")
+                return None, hashed, _error(
+                    503,
+                    "session_restore_unavailable",
+                    "the durable session could not be checked; retry shortly",
+                )
+            if durable_status != "active":
+                store.forget_token(hashed)
+                outside_eligible_failure(durable_status)
+                return None, hashed, _error(
+                    401,
+                    "invalid_resume_token",
+                    "the anonymous session token is invalid or expired",
+                )
+
             try:
                 bundle = persistence.resolve_resume(hashed)
             except DurableLedgerMismatch as exc:
                 store.record_metric(exc.metric)
                 store.record_metric("commit_integrity_failures")
-                store.record_metric("resume_failures")
-                store.record_metric("resume_restore_failures")
+                eligible_failure("resume_restore_failures")
                 return None, hashed, _error(
                     503,
                     "session_restore_unavailable",
                     "the durable session failed its integrity check; retry shortly",
                 )
             except Exception:
-                store.record_metric("resume_failures")
-                store.record_metric("resume_restore_failures")
+                eligible_failure("resume_restore_failures")
                 return None, hashed, _error(
                     503,
                     "session_restore_unavailable",
@@ -586,60 +709,94 @@ def install_v2_routes(
                 )
             if bundle is None:
                 store.forget_token(hashed)
-                store.record_metric("resume_failures")
-                return None, hashed, _error(
-                    401,
-                    "invalid_resume_token",
-                    "the anonymous session token is invalid or expired",
-                )
-            durable_view = SessionView.model_validate(
-                bundle["checkpoint"]["session_view"]
-            )
-            if (
-                durable_view.session_id != handle.session_id
-                or durable_view.revision != handle.revision
-            ):
                 try:
-                    restored = restore_durable(hashed, bundle)
-                except SessionUnavailable:
-                    store.record_metric("resume_failures")
-                    store.record_metric("resume_restore_failures")
+                    durable_status = persistence.resume_token_status(hashed)
+                except Exception:  # noqa: BLE001 - active status was already known
+                    durable_status = "active"
+                if durable_status == "active":
+                    eligible_failure("resume_restore_failures")
                     return None, hashed, _error(
                         503,
                         "session_restore_unavailable",
                         "the durable session could not be restored; retry shortly",
                     )
-                if restored is None:
-                    store.record_metric("resume_failures")
-                    return None, hashed, _error(
-                        401,
-                        "invalid_resume_token",
-                        "the anonymous session token is invalid or expired",
-                    )
-                handle = restored
+                outside_eligible_failure(durable_status)
+                return None, hashed, _error(
+                    401,
+                    "invalid_resume_token",
+                    "the anonymous session token is invalid or expired",
+                )
+
+            try:
+                handle = store.resolve_token(hashed)
+            except (KeyError, ResumeTokenExpired):
+                handle = None
+            try:
+                durable_view = SessionView.model_validate(
+                    bundle["checkpoint"]["session_view"]
+                )
+                if (
+                    handle is None
+                    or durable_view.session_id != handle.session_id
+                    or durable_view.revision != handle.revision
+                ):
+                    handle = restore_durable(hashed, bundle)
+            except SessionUnavailable:
+                eligible_failure("resume_restore_failures")
+                return None, hashed, _error(
+                    503,
+                    "session_restore_unavailable",
+                    "the durable session could not be restored; retry shortly",
+                )
+            except Exception:
+                eligible_failure("resume_restore_failures")
+                return None, hashed, _error(
+                    503,
+                    "session_restore_unavailable",
+                    "the durable session could not be restored; retry shortly",
+                )
+            if handle is None:
+                eligible_failure("resume_restore_failures")
+                return None, hashed, _error(
+                    503,
+                    "session_restore_unavailable",
+                    "the durable session could not be restored; retry shortly",
+                )
+
         if session_id is not None and not hmac.compare_digest(
             handle.session_id, session_id
         ):
-            store.record_metric("resume_failures")
+            outside_eligible_failure("session_mismatch")
             return None, hashed, _error(404, "session_not_found", "unknown session")
-        store.record_metric("resume_successes")
+        eligible_attempt()
         return handle, hashed, None
 
     def refresh_resume(
         request: Request,
         response: Response,
         token_hash: str,
+        *,
+        measure_resume: bool = False,
     ) -> JSONResponse | None:
         """Roll durable/local expiry and refresh the browser cookie together."""
+        def refresh_failure() -> None:
+            if not measure_resume:
+                return
+            store.record_metric("resume_eligible_failures")
+            store.record_metric("resume_failures")
+            store.record_metric("resume_refresh_failures")
+
         try:
             active = store.refresh_token(token_hash)
         except SessionUnavailable:
+            refresh_failure()
             return _error(
                 503,
                 "persistence_unavailable",
                 "the anonymous session expiry could not be refreshed; retry shortly",
             )
         if not active:
+            refresh_failure()
             return _error(
                 401,
                 "invalid_resume_token",
@@ -647,10 +804,13 @@ def install_v2_routes(
             )
         raw_token = request.cookies.get(_COOKIE_NAME)
         if raw_token is None:
+            refresh_failure()
             return _error(
                 401, "resume_token_required", "no current anonymous session"
             )
         _set_resume_cookie(response, raw_token, request)
+        if measure_resume:
+            store.record_metric("resume_successes")
         return None
 
     @router.get("/goals", response_model=GoalCatalog)
@@ -854,6 +1014,11 @@ def install_v2_routes(
                 "the creation receipt could not be checked; retry with the same request_id",
             )
 
+        if flags.pause_v2_mutations:
+            paused = mutation_paused_error("create")
+            _set_rollout_cookie(paused, assignment.cookie_value, request)
+            return paused
+
         current_raw = request.cookies.get(_COOKIE_NAME)
         if current_raw:
             current_hash = _token_hash(current_raw)
@@ -981,12 +1146,20 @@ def install_v2_routes(
     def get_current(
         request: Request, response: Response
     ) -> SessionView | JSONResponse:
-        handle, token_hash, error = authorized_handle(request)
+        handle, token_hash, error = authorized_handle(
+            request,
+            measure_resume=True,
+        )
         if error is not None:
             return error
         assert handle is not None
         assert token_hash is not None
-        refresh_error = refresh_resume(request, response, token_hash)
+        refresh_error = refresh_resume(
+            request,
+            response,
+            token_hash,
+            measure_resume=True,
+        )
         if refresh_error is not None:
             return refresh_error
         return store.view(handle)
@@ -1038,6 +1211,8 @@ def install_v2_routes(
             return error
         assert handle is not None
         assert token_hash is not None
+        if flags.pause_v2_mutations:
+            return mutation_paused_error("reset", store.view(handle))
         try:
             from datetime import datetime, timezone
 
@@ -1099,12 +1274,21 @@ def install_v2_routes(
     def get_session(
         session_id: str, request: Request, response: Response
     ) -> SessionView | JSONResponse:
-        handle, token_hash, error = authorized_handle(request, session_id)
+        handle, token_hash, error = authorized_handle(
+            request,
+            session_id,
+            measure_resume=True,
+        )
         if error is not None:
             return error
         assert handle is not None
         assert token_hash is not None
-        refresh_error = refresh_resume(request, response, token_hash)
+        refresh_error = refresh_resume(
+            request,
+            response,
+            token_hash,
+            measure_resume=True,
+        )
         if refresh_error is not None:
             return refresh_error
         return store.view(handle)
@@ -1133,6 +1317,17 @@ def install_v2_routes(
         assert handle is not None
         assert token_hash is not None
         try:
+            if flags.pause_v2_mutations:
+                replayed = store.replay_action(
+                    handle,
+                    action,
+                    token_hash=token_hash,
+                )
+                if replayed is None:
+                    return mutation_paused_error("action", store.view(handle))
+                raw_token = request.cookies[_COOKIE_NAME]
+                _set_resume_cookie(response, raw_token, request)
+                return replayed
             view = store.apply(session_id, action, token_hash=token_hash)
             raw_token = request.cookies[_COOKIE_NAME]
             _set_resume_cookie(response, raw_token, request)
@@ -1208,4 +1403,21 @@ def install_v2_routes(
     app.state.v2_version_registry = registry
     app.state.v2_policy_registry = policies
     app.state.v2_feature_flags = flags
+    app.state.v2_readiness = {
+        "student_stack_enabled": flags.student_stack_enabled,
+        "accepting_mutations": not flags.pause_v2_mutations,
+        "durable_persistence": persistence is not None,
+        "reviewed_goal_count": len(eligible_goals),
+        "active_versions": {
+            "graph": graph.graph_version,
+            "item_bank": (
+                active_item_bank.bank_version
+                if active_item_bank is not None
+                else None
+            ),
+            "policies": dict(sorted(active_policy_versions.items())),
+            "learner_parameters": f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
+            "capability_manifest": active_widget_manifest["version"],
+        },
+    }
     return store
