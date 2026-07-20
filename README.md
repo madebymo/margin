@@ -1,43 +1,473 @@
 # Adaptive Math Tutor
 
-An LLM chat tutor that adaptively diagnoses gaps in foundational math knowledge, teaches a just-in-time path of interactive mini-lessons from the deepest gap up to the student's original question, and finishes with the student solving that question unaided.
+Adaptive Math Tutor is a deterministic, evidence-aware tutor for curated
+calculus goals. It probes prerequisite knowledge, keeps confirmed mastery,
+confirmed gaps, and uncertainty separate, teaches a short path of skills, and
+finishes with an independently authored goal problem.
 
-Architecture summary: deterministic control plane (state machine, graph service, learner model, math verifier) + four stateless LLM call sites (diagnostician, lesson writer, interaction generator, evaluator) + persistent data assets (versioned KC graph, pedagogy packs, append-only evidence log, widget library).
+The trustworthy-session v2 architecture keeps mathematical truth in reviewed,
+versioned content and deterministic verification. LLMs may eventually provide
+coaching language, but they do not author mastery evidence or choose the
+correct answer.
 
-## Layout
-- `backend/` — Python backend
-  - `src/tutor/schemas/` — Pydantic v2 models (source of truth for JSON Schemas)
-  - `src/tutor/db/` — SQLAlchemy 2.0 models (Postgres; SQLite variant for tests)
-  - `src/tutor/graph/` — KC graph service (acyclicity, ancestor subgraph, topo sort)
-  - `src/tutor/seed/` — Calc-1 KC graph seed (~40 nodes) + KC-to-affordance coverage matrix
-  - `src/tutor/packs/` — pedagogy pack CSV import surface
-  - `src/tutor/learner/` — BKT-lite learner model over the evidence log
-  - `src/tutor/orchestrator/` — deterministic session state machine, diagnosis, routing
-  - `src/tutor/llm/` — LLM-backed diagnostician/lesson writer (OpenAI default)
-  - `src/tutor/api/` — FastAPI session service + committed production web assets
-- `frontend/` — Vite + Svelte widget runtime and Elm SVG scene renderer
-- `scripts/` — JSON Schema export, utilities
-- `docker-compose.yml` — Postgres 16 for local development
+## Release posture: fail closed
 
-## Quickstart
+The v2 control plane, API, persistence model, diagnosis policy, allocator,
+restricted verifier, and unified Svelte interface are implemented. Student
+release is intentionally blocked by content review:
+
+- The packaged bank is `draft-v2.0.0`; its items have `review_status: draft`
+  and `released_kcs: []`.
+- At local development's default 100% rollout setting, `GET /api/v2/goals` returns an
+  empty catalog with `rollout.status: "content_unavailable"`. A target appears
+  only when its complete hard-prerequisite closure is declared released and
+  passes item-bank validation.
+- New v1 sessions return `410 Gone` by default. Set
+  `TUTOR_ALLOW_V1_SESSION_CREATION=1` only for local compatibility testing.
+- The five pilot goals and their 22 hard-ancestor KCs still need complete,
+  independently authored, human-reviewed item families before pilot traffic is
+  enabled.
+
+This is deliberate: missing or unreviewed content must make a goal unavailable,
+not silently fall back to canonical examples or model-authored scored items.
+
+## Architecture
+
+- `backend/src/tutor/schemas/` — strict Pydantic v2 public and content schemas
+- `backend/src/tutor/content/` — item-bank validation, bundle allocation,
+  exposure tracking, and leakage detection
+- `backend/src/tutor/verify/` — restricted grammar/AST and supervised symbolic
+  equivalence worker
+- `backend/src/tutor/orchestrator/` — v1 compatibility machine plus the v2
+  diagnosis and lesson state machine
+- `backend/src/tutor/learner/` — replayable evidence model and v2
+  distinct-family confirmation policy
+- `backend/src/tutor/api/` — FastAPI v1 compatibility routes, authoritative v2
+  snapshots, idempotency, resume, persistence, and release registry
+- `backend/src/tutor/db/` — SQLAlchemy models and the additive v2 migration
+- `backend/src/tutor/seed/` — Calc-1 graph, coverage matrix, and packaged draft
+  item bank
+- `backend/src/tutor/sim/` — v1 and v2 synthetic diagnosis harnesses
+- `frontend/` — one Svelte session state model with native accessible widget
+  controls and Elm-rendered SVG scenes
+
+Every v2 session pins its graph, item-bank, diagnosis, lesson, allocator,
+learner-parameter, and widget-capability versions. Expected answers and scoring
+rules have no representation in the public `SessionView`.
+
+## Local setup
+
+Python 3.11 or newer and Node.js are required.
+
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e "backend[dev,api]"
-pytest backend/tests
+
 npm --prefix frontend ci
+
+python -m tutor.seed.load_seed --validate
+ruff check backend/src backend/tests
+pytest backend/tests
 npm --prefix frontend test
 npm --prefix frontend run build
-python -m tutor.cli                     # terminal chat demo
-uvicorn tutor.api.app:app --reload      # web chat at http://*********:8000
-python -m tutor.sim.harness             # diagnostic-policy metrics (budgets 5/8/10)
-docker compose up -d db                 # optional: real Postgres
+scripts/check_frontend_dist.sh
+
+# Requires a one-time local Chromium install.
+npx --prefix frontend playwright install chromium
+npm --prefix frontend run test:e2e
+```
+
+Run the API and committed web application:
+
+```bash
+uvicorn tutor.api.app:app --reload
+```
+
+Open `http://127.0.0.1:8000/`. With the packaged draft bank, the intake screen
+honestly reports that no reviewed goal is available. For frontend development,
+run `npm --prefix frontend run dev` in a second terminal; Vite proxies the API
+to port 8000.
+
+The terminal v1 compatibility demo remains available:
+
+```bash
+python -m tutor.cli
+```
+
+LLM dependencies are optional:
+
+```bash
+pip install -e "backend[llm]"
+export OPENAI_API_KEY=...
+```
+
+`llm_coaching` is accepted by the v2 intake contract but currently reports an
+explicit fallback to `curated`; it is not presented as an LLM runtime failure.
+
+## API v2
+
+The public routes are:
+
+| Method | Route | Contract |
+| --- | --- | --- |
+| `GET` | `/api/v2/goals` | Cohort-specific rollout status plus goals with a fully released and valid hard-prerequisite closure |
+| `GET` | `/api/v2/capabilities` | Versioned widget capability manifest |
+| `POST` | `/api/v2/sessions` | Create or replay an anonymous episode |
+| `POST` | `/api/v2/sessions/recover` | Recover a committed create/reset response using its client-held request proof |
+| `GET` | `/api/v2/sessions/current` | Restore the complete authoritative snapshot from the resume cookie |
+| `GET` | `/api/v2/sessions/{id}` | Read the owned session without advancing it |
+| `POST` | `/api/v2/sessions/{id}/actions` | Apply one revision-checked, idempotent action |
+| `POST` | `/api/v2/sessions/current/reset` | Atomically replace the current episode while retaining prior evidence |
+
+Session creation accepts:
+
+```json
+{
+  "request_id": "8d46af11-f3c6-49ad-887a-0d3f201fa5ce",
+  "goal_id": "goal.der.chain_rule",
+  "course": "AP Calculus AB",
+  "age_band": "16-18",
+  "content_mode": "curated",
+  "context": "Optional coaching context",
+  "provider": "openai"
+}
+```
+
+Before a create or reset is sent, the web client keeps only the versioned
+operation name and cryptographically generated `request_id` in per-tab
+`sessionStorage`. It never stores the creation payload, coaching context, or a
+student answer there. If the commit succeeds but its replacement `Set-Cookie`
+response is lost, bootstrap posts that proof to `/api/v2/sessions/recover`
+before reading the current session. Reset recovery also requires the revoked
+old `HttpOnly` cookie; `GET /sessions/current` never treats a revoked token as
+an alias for its successor. The client clears its proof only after a confirmed
+recovery or a definitive 4xx response.
+
+The optional context is returned as context, not represented as a solved,
+verified, or “original” question.
+
+An action body is one of the following discriminated shapes:
+
+```json
+{
+  "type": "answer",
+  "request_id": "4ff95a14-1e0e-442e-9220-4193887601b2",
+  "expected_revision": 3,
+  "pending_key": "diagnostic:kc.der.chain_rule:2",
+  "answer": "2*x"
+}
+```
+
+The other action types are `request_hint`, `widget_attempt` (with a `response`
+object), and `use_text_fallback`. Each includes `request_id`,
+`expected_revision`, and `pending_key`. Reset uses the same concurrency fields,
+with a nullable `pending_key`.
+
+Every successful action returns a complete, student-safe `SessionView`.
+Duplicate requests with the same payload replay the committed view. Reusing a
+request ID for a different payload, or sending a stale revision/key, returns a
+typed `409` with the authoritative view where available. A failed durable
+transaction returns a retryable `503` without replacing live state.
+
+Answers are rejected at the API boundary above the verifier's 256-character
+limit. Each episode also has a hard 256-action storage ceiling: exact retries
+still replay at the ceiling, while a new request returns `429` without adding a
+transcript entry or receipt. An anonymous learner may create at most 32
+episodes in the rolling 30-day resume window. These bounds prevent invalid
+input and reset loops from growing cumulative snapshots without limit.
+
+Anonymous resume uses a 256-bit token in an `HttpOnly`, `SameSite=Lax` cookie,
+`Secure` away from localhost. Mutations enforce same-origin checks. Each token
+hash is bound to one exact episode checkpoint and has a rolling 30-day expiry;
+raw tokens and expected answers are not logged. Reset atomically revokes the
+old token, creates a fresh same-goal episode on the same anonymous learner and
+pinned release, replays eligible prior evidence at a new fixed `as_of`, and
+returns the replacement `SessionView` with a new token.
+
+`GET /api/v2/goals` includes a `rollout` object with `status`, `reason`, and
+`percentage`. Its status is one of `available`, `not_selected`, `paused`, or
+`content_unavailable`. These states are intentionally distinct: a browser
+outside a limited canary receives `not_selected`, without being told that
+curriculum review failed. Only a selected browser can receive
+`content_unavailable` when its cohort is open but no goal passes the reviewed
+content gate.
+
+## Content release and validation
+
+Each released KC must have, at minimum:
+
+- 3 diagnostic families, including 2 production-answer families
+- 4 independent production check-in families
+- 1 guided-widget family
+- 2 independent production capstone families
+- 1 worked-example family
+
+Items carry stable item/revision/family/KC identifiers, structured prompt
+segments, three ordered hints, a discriminated answer contract, review status,
+and provenance. Reviewed error signatures must reference a human-approved
+misconception in the pedagogy pack for that KC.
+
+Run the release validator after any graph, coverage, pack, or item-bank change:
+
+```bash
 python -m tutor.seed.load_seed --validate
 ```
-LLM mode: `pip install -e "backend[llm]"`, set `OPENAI_API_KEY` (model override via `TUTOR_LLM_MODEL`), then `python -m tutor.cli --llm` or toggle LLM in the web UI.
-Persistence: set `DATABASE_URL=postgresql+psycopg://tutor:tutor@localhost/tutor` (after `docker compose up -d db`) to durably store learners, the append-only evidence log, episode checkpoints, and derived mastery; learner state is rebuildable by replaying the evidence log.
 
-For frontend development, run FastAPI on port 8000 and `npm --prefix frontend run dev` in a second terminal; Vite proxies `/sessions` and `/healthz`. FastAPI production/local serving uses the committed hashed bundle under `backend/src/tutor/api/static/dist/`. Run `scripts/check_frontend_dist.sh` before committing frontend changes to detect stale or new build artifacts.
+Validation checks graph and coverage integrity, stable content identifiers,
+review/provenance rules, answer-spec parseability, family independence,
+surface coverage, production-family requirements, and answer leakage. The
+current draft passes structural validation while releasing no KC.
 
-## Status
-Done: Phase 0 (data layer), the deterministic tutor loop, LLM adapters, session API, diagnostic-policy simulation harness, answer-safe widget serialization, and the Phase 1 Svelte/Elm widget runtime with a rich slider scene.
-Next: diagnosis-policy tuning against harness metrics, pedagogy packs for the remaining KCs, richer scenes for the other widget types, and a separately designed secure protocol for live-during-drag coaching.
+Do not add a KC to `released_kcs` merely to expose it in the UI. Author and
+review its complete family set and the complete hard-ancestor closure first.
+
+## Persistence and deployment
+
+Development and tests can run memory-only. A production pilot must use
+PostgreSQL and a stable resume-token secret:
+
+```bash
+docker compose up -d db
+export DATABASE_URL='postgresql+psycopg://tutor:tutor@localhost/tutor'
+
+# Initialize/publish the base schema and graph for a fresh database.
+python -m tutor.seed.load_seed --validate --db "$DATABASE_URL"
+
+# Required before enabling v2 against an existing database; safe to rerun.
+python -m tutor.db.migrate_session_v2
+
+# Generate once, store in a secret manager, and reuse across restarts.
+export TUTOR_RESUME_TOKEN_SECRET='replace-with-at-least-32-random-bytes'
+export TUTOR_PILOT_PRODUCTION=1
+export TUTOR_ENABLE_API_SESSION_V2=1
+export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
+export TUTOR_ENABLE_DIAGNOSIS_V2=1
+export TUTOR_ENABLE_LESSON_FLOW_V2=1
+export TUTOR_ENABLE_RICH_WIDGETS_V2=0
+export TUTOR_V2_STUDENT_ROLLOUT_PERCENT=0
+uvicorn tutor.api.app:app
+```
+
+Pilot mode fails startup if `DATABASE_URL` is not PostgreSQL, persistence
+cannot initialize, the v2 schema has not been migrated, or the resume secret is
+missing/too short. It also requires all five feature flags and the rollout
+percentage explicitly; the example starts closed before the reviewed 5/25/100
+canary progression. Non-pilot development reports `memory_only` durability
+when no database is configured.
+
+Durable sessions restore the exact graph and item-bank versions pinned in
+their checkpoint. Keep prior immutable release bundles available as JSON files
+with exactly two top-level keys, `graph` and `item_bank`, and configure:
+
+```bash
+export TUTOR_V2_RELEASE_REGISTRY_DIR=/srv/tutor/releases
+```
+
+Startup rejects malformed bundles, incompatible graph/bank pairs, and reuse of
+a version identifier for different content. A policy-version bump must retain
+the executable restore implementation too. Each configured Python module must
+expose `register_v2_policy_runtimes(registry)` and register the exact version
+set it can restore:
+
+```bash
+export TUTOR_V2_POLICY_RUNTIME_MODULES='tutor_retained.policy_v20,tutor_retained.policy_v21'
+```
+
+Startup fails if a retained module cannot be imported or lacks that hook. Keep
+the predecessor implementation in the deployment image for the full 30-day
+resume window.
+
+Resume reconciles the checkpoint against the ordered durable transcript,
+evidence, exposure-transition, widget-attempt, and mutation-receipt ledgers.
+Missing or divergent rows fail closed with `503` and an integrity metric; the
+checkpoint copy cannot silently mask missing append-only evidence. Expired
+anonymous checkpoint, transcript, receipt, exposure, widget, and token rows
+are purged while learner identity and longitudinal evidence are retained.
+
+### PostgreSQL transaction gates
+
+The ordinary backend suite remains self-contained on SQLite. A dedicated CI
+job starts an isolated PostgreSQL 16 service and runs the production-like
+contention, rollback, and process-kill tests. Local execution is opt-in so it
+cannot accidentally target a developer or production database:
+
+```bash
+docker compose up -d db
+export TUTOR_TEST_POSTGRES_URL='postgresql+psycopg://tutor:tutor@localhost/tutor'
+pytest backend/tests/test_api_v2_postgres.py -v
+```
+
+Use a disposable database and a role allowed to create and drop schemas. Each
+test creates a randomly named private schema, runs the complete v2 schema
+there, and drops it afterward. When `TUTOR_TEST_POSTGRES_URL` is unset, the
+module skips cleanly.
+
+These gates exercise two independent application stores contending on the same
+PostgreSQL checkpoint. They assert that duplicate actions produce one revision,
+one evidence event, one transcript mutation, and one receipt; distinct actions
+serialize with one stale loser; and a deliberately injected failure during the
+receipt insert rolls back the entire turn. The failed request is then retried
+with the same request ID, restored in a fresh app instance, and replayed without
+additional durable rows. A fourth gate terminates a child process immediately
+after the receipt insert but before commit, then proves Postgres rolled the
+whole turn back before retry and exact replay.
+
+## Feature flags, cohort rollout, and widget capabilities
+
+These rollout switches are independent. Non-production development defaults
+them to enabled; `TUTOR_PILOT_PRODUCTION=1` requires each value explicitly:
+
+- `TUTOR_ENABLE_API_SESSION_V2`
+- `TUTOR_ENABLE_CONTENT_ALLOCATION_V2`
+- `TUTOR_ENABLE_DIAGNOSIS_V2`
+- `TUTOR_ENABLE_LESSON_FLOW_V2`
+- `TUTOR_ENABLE_RICH_WIDGETS_V2`
+
+Disabling the API flag removes the v2 routes. Disabling content allocation,
+diagnosis, or lesson flow returns an empty catalog with a `paused` rollout
+status for selected browsers. Rich widgets are separate: disabling them keeps
+the student flow available and serves required guided practice through the
+keyboard text equivalent.
+
+New-session admission uses one explicit percentage:
+
+```bash
+# The only accepted values are 0, 5, 25, and 100.
+export TUTOR_V2_STUDENT_ROLLOUT_PERCENT=5
+```
+
+The first catalog request receives a signed, random 256-bit anonymous cohort
+cookie. Its deterministic bucket is stable across requests and process
+restarts when `TUTOR_RESUME_TOKEN_SECRET` is stable. Increasing rollout from 5
+to 25 to 100 preserves every previously selected cohort. The cookie is
+`HttpOnly`, `SameSite=Lax`, `Secure` away from localhost, scoped to `/api/v2`,
+and contains no account or student content. Invalid or modified values are
+replaced.
+
+Rollout admission controls new episodes only. Current-session reads, actions,
+reset, and exact idempotent creation replays remain available so lowering or
+pausing admission does not strand an existing student. The server enforces the
+same assignment on `POST /api/v2/sessions`; hiding goals in the interface is
+not the security boundary. Percentage selection never bypasses the
+released-content and complete hard-ancestor validation gate.
+
+Legacy-session diagnosis shadowing is separately opt-in:
+
+```bash
+export TUTOR_ENABLE_DIAGNOSIS_V2_SHADOW=1
+```
+
+The observer consumes only already-scored evidence metadata, never raw
+answers, prompts, expected answers, learner IDs, or context. It compares v2's
+counterfactual next-KC choice with the unchanged v1 route, stops comparison
+after divergence, isolates observer failures, and reports aggregate metrics
+under `diagnosis_v2_shadow` in `/healthz`.
+
+The full manifest currently enables mapping and slider controls with keyboard
+equivalents. `live_input` stays on the accessible text path until reviewed
+`render.plot` semantics are implemented end to end; `click_region` remains
+disabled because true target geometry and an equivalent keyboard interaction
+are not implemented. Widget attempts are formative; they cannot establish
+mastery. Every submission is durably ordered, and invalid, incorrect, solved,
+remediated, and text-fallback outcomes remain distinct in the safe transcript
+and attempt ledger.
+
+The browser starts with a mapping-only manifest and stays there if capability
+fetch or validation fails. The server pins the episode manifest and intersects
+it with the runtime switch, so an emergency rich-widget rollback converts an
+already pending visual practice to text and prevents new rich generation.
+
+`GET /healthz` reports effective flags, persistence availability, catalog and
+session counts, privacy-safe v2 counters keyed by stable item IDs, resume
+success rate, middleware-counted action 5xx rate, duplicate-advance and
+missing-evidence detections, and commit-integrity failures. Raw answers,
+expected answers, and student context are excluded from operational metrics.
+
+## Diagnosis simulation
+
+The v2 harness exits non-zero when an encoded diagnosis-policy gate fails. A
+10,000-episode run across the five pilot targets and five seeds is:
+
+```bash
+python -m tutor.sim.harness_v2 \
+  --learners 100 \
+  --budget 8 \
+  --seeds 3 7 11 17 23
+```
+
+CI runs this exact 10,000-episode activation gate on every change and fails
+closed when any encoded threshold regresses.
+
+The command runs 10,000 episodes across the five goals, five seeds, and four
+slip/guess profiles. The latest local run of the selected policy passed the
+encoded diagnosis gates: 1.19% false-mastery skips, 96.98% frontier precision,
+93.06% next-KC accuracy, 0.026 mean overteach, ECE
+0.0166, Brier 0.0372 versus v1's 0.1072, and perfect-learner probe counts of
+median 2 / p95 2.
+
+Run the full 15-pair `lambda`/`delta` comparison with `--sweep`; candidates
+that fail any diagnosis-policy gate rank behind passing candidates. The completed
+150,000-episode sweep selected `lambda=0`, `delta=0.25`: all candidates passed,
+and the selected pair produced 93.06% next-KC accuracy versus 92.48% for the
+former `lambda=0.35`, `delta=0.5` pin. Diagnosis policy `v2.1` pins the winner.
+
+The harness is synthetic diagnosis-policy evidence, not a complete release
+proof. It does not claim to measure allocator or capstone family reuse. Those
+invariants are covered by allocator/state-machine property tests and must also
+run across every reviewed content family before release.
+
+## Browser and accessibility journey
+
+The dedicated `browser-e2e` CI job builds the unified application, starts a
+guarded test-only FastAPI runtime, and runs the Chromium Playwright journey
+with axe. The runtime is defined under `backend/tests/`, requires
+`TUTOR_E2E_TEST_APP=1`, and explicitly injects the narrow approved power-rule
+fixture. It does not alter the packaged draft bank, production app factory, or
+fail-closed catalog behavior.
+
+The journeys cover keyboard-only intake, a full no-refresh lesson and
+capstone, a competing-tab stale revision, a real committed-response transport
+retry, required guided text practice, exact reload/cookie resume, create/reset
+response-loss recovery, malformed-widget fallback, desktop and 390px mobile
+layouts, horizontal-overflow checks, and WCAG A/AA axe scans. Run them locally
+after installing Chromium:
+
+```bash
+python -m pip install -e "backend[dev,api]"
+npm --prefix frontend ci
+npx --prefix frontend playwright install chromium
+npm --prefix frontend run build
+npm --prefix frontend run test:e2e
+```
+
+Test discovery does not require launching Chromium:
+
+```bash
+npm --prefix frontend run test:e2e:list
+```
+
+CI retains Playwright traces, screenshots, videos, and the HTML report when
+the journey fails. These automated checks are necessary but do not replace a
+headed visual review in the target deployment environment.
+
+## Remaining pilot blockers
+
+- Author and independently review complete item-bank coverage for the five
+  goals and their 22 hard prerequisites; the shipped bank remains a draft.
+- Collect and review diagnosis shadow metrics on representative legacy
+  traffic, then approve the 5/25/100 canary progression. Stable admission and
+  failure-isolated shadowing are implemented, but promotion remains an
+  operator decision rather than an automatic metrics controller.
+- Run the PostgreSQL contention, rollback, and process-kill suite in the target
+  deployment environment in addition to the dedicated PostgreSQL CI job.
+- Run and visually review the Playwright/axe journey in the target deployment
+  environment; repository CI now executes its automated Chromium checks.
+- Configure and verify a shared edge/API request-rate limiter. Application
+  action and episode quotas bound one anonymous learner, but a client that
+  deliberately discards cookies must also be bounded before worker admission.
+- Keep `click_region` disabled until geometric hit testing and equivalent
+  keyboard semantics are complete.
+
+No pilot should be activated until the reviewed-content, operational, replay,
+accessibility, and no-leakage gates all pass together.

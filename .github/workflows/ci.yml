@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend
+        run: python -m pip install -e "backend[dev,api]"
+
+      - name: Lint
+        run: ruff check backend/src backend/tests
+
+      - name: Validate graph, coverage, and item bank
+        run: python -m tutor.seed.load_seed --validate
+
+      - name: Run diagnosis activation gates (10,000 synthetic episodes)
+        run: >-
+          python -m tutor.sim.harness_v2
+          --learners 100
+          --budget 8
+          --seeds 3 7 11 17 23
+
+      - name: Test backend
+        run: pytest backend/tests
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tutor
+          POSTGRES_PASSWORD: tutor
+          POSTGRES_DB: tutor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tutor -d tutor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TUTOR_TEST_POSTGRES_URL: postgresql+psycopg://tutor:tutor@127.0.0.1:5432/tutor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend
+        run: python -m pip install -e "backend[dev,api]"
+
+      - name: Run PostgreSQL concurrency and recovery gates
+        run: pytest backend/tests/test_api_v2_postgres.py -v
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend
+        run: npm --prefix frontend ci
+
+      - name: Test frontend
+        run: npm --prefix frontend test
+
+      - name: Build and verify committed distribution
+        run: scripts/check_frontend_dist.sh
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend and frontend
+        run: |
+          python -m pip install -e "backend[dev,api]"
+          npm --prefix frontend ci
+
+      - name: Install Chromium runtime
+        run: npx --prefix frontend playwright install --with-deps chromium
+
+      - name: Build unified application
+        run: npm --prefix frontend run build
+
+      - name: Run Playwright and axe journey
+        run: npm --prefix frontend run test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
