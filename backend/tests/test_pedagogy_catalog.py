@@ -118,6 +118,60 @@ def test_reviewed_pack_requires_strict_timezone_aware_provenance():
         PedagogyPackProvenance.model_validate(provenance)
 
 
+@pytest.mark.parametrize(
+    ("author", "reviewed_by"),
+    [
+        ("Same Person", "Same Person"),
+        ("  Same Person  ", "same person"),
+        ("SAME PERSON", " same person "),
+    ],
+)
+def test_review_provenance_requires_an_independent_reviewer(
+    author: str,
+    reviewed_by: str,
+):
+    with pytest.raises(ValidationError, match="someone other than the author"):
+        PedagogyPackProvenance(
+            author=author,
+            reviewed_by=reviewed_by,
+            reviewed_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        )
+
+
+@pytest.mark.parametrize("field", ["author", "reviewed_by"])
+def test_review_provenance_rejects_whitespace_only_people(field: str):
+    payload = _provenance().model_dump(mode="json")
+    payload[field] = " \t "
+    with pytest.raises(ValidationError, match="at least 1 character"):
+        PedagogyPackProvenance.model_validate(payload)
+
+
+def test_review_provenance_trims_people_before_storing_them():
+    provenance = PedagogyPackProvenance(
+        author="  Curriculum author ",
+        reviewed_by=" Independent reviewer  ",
+        reviewed_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+    )
+
+    assert provenance.author == "Curriculum author"
+    assert provenance.reviewed_by == "Independent reviewer"
+
+
+def test_human_approved_pack_requires_at_least_one_meaningful_source():
+    payload = _approved_pack().model_dump(mode="json")
+    payload["sources"] = []
+    with pytest.raises(ValidationError, match="requires at least one source"):
+        PedagogyPack.model_validate(payload)
+
+    payload["sources"] = [" \t "]
+    with pytest.raises(ValidationError, match="meaningful nonblank strings"):
+        PedagogyPack.model_validate(payload)
+
+    draft = PedagogyPack(kc_id="kc.der.power_rule", sources=[])
+    assert draft.review_status == ReviewStatus.DRAFT
+    assert draft.sources == []
+
+
 def test_catalog_is_strict_frozen_and_accepts_only_reviewed_packs():
     catalog = _catalog(_approved_pack())
     with pytest.raises(ValidationError, match="frozen"):

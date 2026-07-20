@@ -50,12 +50,23 @@ class PedagogyPackProvenance(_StrictFrozenModel):
     reviewed_by: str = Field(min_length=1, max_length=256)
     reviewed_at: datetime
 
+    @field_validator("author", "reviewed_by", mode="before")
+    @classmethod
+    def _normalize_people(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
     @field_validator("reviewed_at")
     @classmethod
     def _review_timestamp_is_aware(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("reviewed_at must include a timezone")
         return value
+
+    @model_validator(mode="after")
+    def _independent_reviewer(self) -> "PedagogyPackProvenance":
+        if self.author.casefold() == self.reviewed_by.casefold():
+            raise ValueError("reviewed_by must identify someone other than the author")
+        return self
 
 
 class PedagogyPack(_StrictFrozenModel):
@@ -69,6 +80,20 @@ class PedagogyPack(_StrictFrozenModel):
     review_status: ReviewStatus = ReviewStatus.DRAFT
     version: int = Field(default=1, ge=1)
     provenance: PedagogyPackProvenance | None = None
+
+    @field_validator("sources", mode="before")
+    @classmethod
+    def _normalize_sources(cls, value: object) -> object:
+        if not isinstance(value, (list, tuple)):
+            return value
+        normalized: list[object] = []
+        for source in value:
+            if isinstance(source, str):
+                source = source.strip()
+                if not source:
+                    raise ValueError("sources must contain meaningful nonblank strings")
+            normalized.append(source)
+        return normalized
 
     @model_validator(mode="after")
     def _content_invariants(self) -> "PedagogyPack":
@@ -87,6 +112,8 @@ class PedagogyPack(_StrictFrozenModel):
             and self.provenance is None
         ):
             raise ValueError("a human_approved pack requires reviewed provenance")
+        if self.review_status == ReviewStatus.HUMAN_APPROVED and not self.sources:
+            raise ValueError("a human_approved pack requires at least one source")
         return self
 
 
