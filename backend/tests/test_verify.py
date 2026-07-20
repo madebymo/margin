@@ -97,6 +97,35 @@ def test_parser_resource_limits(payload):
         parse_restricted(payload)
 
 
+def test_parser_depth_limit_measures_ast_not_precedence_call_stack():
+    natural_quotient_rule_form = "(2*x*(x+2)-(x^2+1))/(x+2)^2"
+
+    parsed = parse_restricted(
+        natural_quotient_rule_form,
+        allowed_variables=["x"],
+        allowed_functions=[],
+        allowed_assignment_lhs=None,
+    )
+
+    assert str(parsed)
+    with pytest.raises(MathVerificationError, match="maximum depth 16"):
+        parse_restricted("+".join(["x"] * 17))
+
+
+def test_factored_quotient_rule_answer_is_accepted_by_supervised_verifier():
+    spec = SymbolicAnswerSpec(
+        expected="(x^2+4*x-1)/(x^2+4*x+4)",
+        variables=["x"],
+    )
+
+    verdict = verify_answer(
+        spec,
+        "(2*x*(x+2)-(x^2+1))/(x+2)^2",
+    )
+
+    assert verdict.status == VerificationStatus.CORRECT
+
+
 def test_typed_symbolic_result_and_exact_assignment_contract():
     spec = SymbolicAnswerSpec(
         expected="2*x",

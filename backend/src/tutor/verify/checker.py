@@ -116,6 +116,13 @@ class _LexToken(NamedTuple):
     value: str
 
 
+class _ParsedExpression(NamedTuple):
+    """One safely constructed expression and its syntactic AST depth."""
+
+    value: sympy.Expr
+    depth: int
+
+
 def _normalized_lhs(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
@@ -200,15 +207,28 @@ class _ExpressionParser:
         self._node_count = 0
 
     def parse(self) -> sympy.Expr:
-        expression = self._parse_sum(1)
+        expression = self._parse_sum()
         if self._peek() is not None:
             token = self._peek()
             raise MathVerificationError(
                 f"unexpected token {token.value!r}" if token else "unexpected input"
             )
-        return expression
+        return expression.value
 
-    def _count(self, depth: int) -> None:
+    def _record(
+        self,
+        value: sympy.Expr,
+        *children: _ParsedExpression,
+    ) -> _ParsedExpression:
+        """Record one real syntax node rather than parser call-stack depth.
+
+        The recursive-descent grammar has several precedence methods between a
+        parenthesis and an atom. Counting each method call as an AST level made
+        ordinary factored quotient-rule answers exceed the depth-16 contract.
+        Parentheses and precedence layers are not AST nodes; operators,
+        functions, and atoms are.
+        """
+        depth = 1 + max((child.depth for child in children), default=0)
         if depth > MAX_AST_DEPTH:
             raise MathVerificationError(
                 f"expression exceeds maximum depth {MAX_AST_DEPTH}"
@@ -218,6 +238,7 @@ class _ExpressionParser:
             raise MathVerificationError(
                 f"expression exceeds maximum size {MAX_AST_NODES}"
             )
+        return _ParsedExpression(value=value, depth=depth)
 
     def _peek(self, offset: int = 0) -> _LexToken | None:
         position = self._position + offset
@@ -232,13 +253,17 @@ class _ExpressionParser:
         self._position += 1
         return token
 
-    def _parse_sum(self, depth: int) -> sympy.Expr:
-        result = self._parse_product(depth + 1)
+    def _parse_sum(self) -> _ParsedExpression:
+        result = self._parse_product()
         while (token := self._peek()) is not None and token.value in {"+", "-"}:
             operator = self._take().value
-            right = self._parse_product(depth + 1)
-            self._count(depth)
-            result = result + right if operator == "+" else result - right
+            right = self._parse_product()
+            value = (
+                result.value + right.value
+                if operator == "+"
+                else result.value - right.value
+            )
+            result = self._record(value, result, right)
         return result
 
     def _starts_implicit_factor(self, token: _LexToken | None) -> bool:
@@ -246,45 +271,49 @@ class _ExpressionParser:
             token.kind in {"NUMBER", "IDENT"} or token.value == "("
         )
 
-    def _parse_product(self, depth: int) -> sympy.Expr:
-        result = self._parse_unary(depth + 1)
+    def _parse_product(self) -> _ParsedExpression:
+        result = self._parse_unary()
         previous = self._tokens[self._position - 1]
         while (token := self._peek()) is not None:
             if token.value in {"*", "/"}:
                 operator = self._take().value
-                right = self._parse_unary(depth + 1)
+                right = self._parse_unary()
             elif self._starts_implicit_factor(token):
                 if previous.kind == "NUMBER" and token.kind == "NUMBER":
                     raise MathVerificationError(
                         "adjacent numbers require an explicit operator"
                     )
                 operator = "*"
-                right = self._parse_unary(depth + 1)
+                right = self._parse_unary()
             else:
                 break
-            self._count(depth)
-            result = result * right if operator == "*" else result / right
+            value = (
+                result.value * right.value
+                if operator == "*"
+                else result.value / right.value
+            )
+            result = self._record(value, result, right)
             previous = self._tokens[self._position - 1]
         return result
 
-    def _parse_unary(self, depth: int) -> sympy.Expr:
+    def _parse_unary(self) -> _ParsedExpression:
         token = self._peek()
         if token is not None and token.value in {"+", "-"}:
             operator = self._take().value
-            operand = self._parse_unary(depth + 1)
-            self._count(depth)
-            return operand if operator == "+" else -operand
-        return self._parse_power(depth + 1)
+            operand = self._parse_unary()
+            value = operand.value if operator == "+" else -operand.value
+            return self._record(value, operand)
+        return self._parse_power()
 
-    def _parse_power(self, depth: int) -> sympy.Expr:
-        base = self._parse_primary(depth + 1)
+    def _parse_power(self) -> _ParsedExpression:
+        base = self._parse_primary()
         token = self._peek()
         if token is not None and token.value in {"^", "**"}:
             self._take()
-            exponent = self._parse_unary(depth + 1)
-            if exponent.is_number:
+            exponent = self._parse_unary()
+            if exponent.value.is_number:
                 try:
-                    numeric_exponent = float(exponent)
+                    numeric_exponent = float(exponent.value)
                 except (TypeError, ValueError, OverflowError) as exc:
                     raise MathVerificationError("invalid exponent") from exc
                 if (
@@ -294,17 +323,19 @@ class _ExpressionParser:
                     raise MathVerificationError(
                         f"numeric exponent magnitude exceeds {MAX_EXPONENT_MAGNITUDE}"
                     )
-            self._count(depth)
-            return sympy.Pow(base, exponent)
+            return self._record(
+                sympy.Pow(base.value, exponent.value),
+                base,
+                exponent,
+            )
         return base
 
-    def _parse_primary(self, depth: int) -> sympy.Expr:
-        self._count(depth)
+    def _parse_primary(self) -> _ParsedExpression:
         token = self._take()
         if token.kind == "NUMBER":
-            return _bounded_rational(token.value)
+            return self._record(_bounded_rational(token.value))
         if token.value == "(":
-            expression = self._parse_sum(depth + 1)
+            expression = self._parse_sum()
             self._take(")")
             return expression
         if token.kind != "IDENT":
@@ -342,18 +373,25 @@ class _ExpressionParser:
             if self._peek() is None or self._peek().value != "(":
                 raise MathVerificationError(f"function {name!r} requires parentheses")
             self._take("(")
-            argument = self._parse_sum(depth + 1)
+            argument = self._parse_sum()
             self._take(")")
-            value = _FUNCTIONS[name](argument)
-            return sympy.Pow(value, function_power) if function_power is not None else value
+            function = self._record(_FUNCTIONS[name](argument.value), argument)
+            if function_power is None:
+                return function
+            exponent = self._record(function_power)
+            return self._record(
+                sympy.Pow(function.value, exponent.value),
+                function,
+                exponent,
+            )
 
         if self._peek() is not None and self._peek().value == "(":
             raise MathVerificationError(f"function {name!r} is not allowed")
         if name in _CONSTANTS:
-            return _CONSTANTS[name]
+            return self._record(_CONSTANTS[name])
         if self._allowed_variables is not None and name not in self._allowed_variables:
             raise MathVerificationError(f"variable {name!r} is not allowed")
-        return sympy.Symbol(name)
+        return self._record(sympy.Symbol(name))
 
 
 def parse_restricted(
