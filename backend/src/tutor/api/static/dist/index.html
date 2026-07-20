@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Adaptive Math Tutor</title>
+  <script type="module" crossorigin src="/static/assets/index-Db7VEdQx.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/assets/index-V3UnIOAS.css">
+</head>
+<body>
+  <header>
+    <strong>Adaptive Math Tutor</strong>
+    <input
+      id="target"
+      list="targets"
+      value="kc.int.u_substitution"
+      size="26"
+      title="target KC id"
+    >
+    <datalist id="targets">
+      <option value="kc.int.u_substitution"></option>
+      <option value="kc.der.chain_rule"></option>
+      <option value="kc.int.ftc"></option>
+      <option value="kc.der.product_quotient"></option>
+      <option value="kc.alg.solve_quadratic"></option>
+    </datalist>
+    <select id="llm">
+      <option value="off">template content</option>
+      <option value="on">LLM content (OpenAI)</option>
+    </select>
+    <button id="start">Start session</button>
+    <span id="phase">idle</span>
+  </header>
+  <div id="log"></div>
+  <div id="summary"></div>
+  <footer>
+    <input id="answer" placeholder="Your answer… (Enter to send)" disabled>
+    <button id="hintBtn" class="secondary" disabled>Hint</button>
+    <button id="send" disabled>Send</button>
+  </footer>
+</body>
+</html>

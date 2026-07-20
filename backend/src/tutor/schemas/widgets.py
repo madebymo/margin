@@ -23,11 +23,24 @@ class WidgetBase(BaseModel):
 class SliderParams(BaseModel):
     """Slider range and optional plot to render behind it."""
 
-    min: float
-    max: float
-    step: float = Field(gt=0)
-    plot: str | None = None
-    shade: str | None = None
+    min: float = Field(allow_inf_nan=False)
+    max: float = Field(allow_inf_nan=False)
+    step: float = Field(gt=0, allow_inf_nan=False)
+    plot: str | None = Field(
+        default=None,
+        description=(
+            "Live plot 'y = <expr>' in x plus exactly one slider variable "
+            "(e.g. 'y = m*x'); the frontend animates it as the slider moves."
+        ),
+    )
+    shade: str | None = Field(
+        default=None,
+        description=(
+            "Optional overlay drawn with the plot: a goal marker 'point(a, b)' or a "
+            "region 'x >= 0' / '0 <= x <= 2', marking the target STATE. Never the "
+            "answer value; the correct target must drive the plot through the marker."
+        ),
+    )
 
     @model_validator(mode="after")
     def _range_ok(self) -> "SliderParams":
@@ -39,14 +52,21 @@ class SliderParams(BaseModel):
 class SuccessCondition(BaseModel):
     """Target value the learner must reach, within tolerance."""
 
-    target: float
-    tolerance: float = Field(ge=0)
+    target: float = Field(allow_inf_nan=False)
+    tolerance: float = Field(ge=0, allow_inf_nan=False)
 
 
 class FeedbackRule(BaseModel):
-    """Conditional feedback shown while the learner interacts."""
+    """Conditional feedback returned after an incorrect slider submission."""
 
-    when: str = Field(min_length=1)
+    when: str = Field(
+        min_length=1,
+        description=(
+            "One comparison of the slider variable against a number using < <= > >= "
+            "(e.g. 'm < 1.5'); must be evaluated server-side after an incorrect "
+            "slider submission. The rule is never included in the client widget config."
+        ),
+    )
     say: str = Field(min_length=1)
 
 
@@ -64,7 +84,14 @@ class Region(BaseModel):
 
     id: str = Field(min_length=1)
     label: str | None = None
-    shape: dict[str, Any] = Field(default_factory=dict)
+    shape: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Optional data-space geometry: {'type':'point','x':..,'y':..}, "
+            "{'type':'rect',...}, or {'type':'circle',...}. Coords may be ASCII exprs. "
+            "Empty {} falls back to labeled buttons."
+        ),
+    )
 
 
 class ClickRegionWidget(WidgetBase):
@@ -115,7 +142,14 @@ class LiveInputWidget(WidgetBase):
 
     widget_type: Literal["live_input"] = "live_input"
     input_kind: Literal["number", "expression"]
-    render: dict[str, Any] = Field(default_factory=dict)
+    render: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Optional live plot redrawn as the learner types: "
+            "{'plot':'y = k*x','var':'k'} substitutes the typed value for var. "
+            "No goal marker here (it would leak expected)."
+        ),
+    )
     checker: LiveInputChecker
 
 

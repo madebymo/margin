@@ -8,6 +8,8 @@ the pure ``route`` function over the episode envelope.
 """
 
 import logging
+import math
+import re
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Literal
@@ -44,9 +46,28 @@ from tutor.schemas.widgets import (
     SliderWidget,
     WidgetConfig,
 )
-from tutor.verify.checker import check_answer
+from tutor.verify.checker import check_answer, parse_restricted
 
 _CALC_ASSUMED_FLOOR = {"Algebra 1", "Algebra 2", "Precalculus"}
+_FEEDBACK_COMPARISON = re.compile(
+    r"\s*([A-Za-z][A-Za-z0-9]*)\s*(<=|>=|<|>)\s*(.+?)\s*"
+)
+_MATH_TOKEN = re.compile(
+    r"(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|[A-Za-z][A-Za-z0-9]*"
+)
+_PLOT_FUNCTIONS = {"sin", "cos", "tan", "sec", "exp", "log", "ln", "sqrt"}
+_SERVER_ONLY_WIDGET_FIELDS = {
+    "success_condition",
+    "correct_region_ids",
+    "correct_pairs",
+    "checker",
+    "feedback_rules",
+}
+_SHAPE_COORDINATES = {
+    "point": ("x", "y"),
+    "rect": ("x", "y", "w", "h"),
+    "circle": ("cx", "cy", "r"),
+}
 
 logger = logging.getLogger("tutor.orchestrator")
 
@@ -120,6 +141,150 @@ def _score_widget(widget: WidgetConfig, response: dict) -> bool:
             widget.checker.tolerance,
         )
     return False
+
+
+def _client_shape(shape: dict) -> dict:
+    """Project free-form geometry onto the documented light-field contract."""
+    shape_type = shape.get("type")
+    coordinates = _SHAPE_COORDINATES.get(shape_type)
+    if coordinates is None:
+        return {}
+    projected = {"type": shape_type}
+    for name in coordinates:
+        value = shape.get(name)
+        if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+            return {}
+        if isinstance(value, (int, float)):
+            try:
+                finite_value = math.isfinite(float(value))
+            except OverflowError:
+                return {}
+            if not finite_value:
+                return {}
+        projected[name] = value
+    return projected
+
+
+def _client_render(render: dict) -> dict:
+    """Project live-input render data without forwarding invented nested keys."""
+    if not render:
+        return {}
+    plot = render.get("plot")
+    variable = render.get("var")
+    if not isinstance(plot, str) or not isinstance(variable, str):
+        return {}
+    return {"plot": plot, "var": variable}
+
+
+def _widget_for_client(widget: WidgetConfig) -> dict:
+    """Serialize one widget through the explicit client-safe projection."""
+    client = widget.model_dump(exclude=_SERVER_ONLY_WIDGET_FIELDS)
+    if isinstance(widget, ClickRegionWidget):
+        for client_region, server_region in zip(
+            client["regions"], widget.regions, strict=True
+        ):
+            client_region["shape"] = _client_shape(server_region.shape)
+    elif isinstance(widget, LiveInputWidget):
+        client["render"] = _client_render(widget.render)
+    return client
+
+
+def _infer_slider_parameter(plot: str | None) -> str:
+    """Return the sole non-``x`` symbol in a validated slider plot."""
+    if plot is None:
+        raise ValueError("params.plot is missing")
+    left, separator, right = plot.partition("=")
+    if separator != "=" or "=" in right or left.strip() != "y":
+        raise ValueError("params.plot must be one equation of the form 'y = <expression>'")
+    expression = parse_restricted(plot)
+    if getattr(expression, "free_symbols", None) is None:
+        raise ValueError("params.plot must contain one math expression")
+    identifiers = [
+        match
+        for match in _MATH_TOKEN.finditer(right)
+        if match.group()[0].isalpha()
+    ]
+    for match in identifiers:
+        tail = right[match.end() :].lstrip()
+        if tail.startswith("(") and match.group() not in _PLOT_FUNCTIONS:
+            raise ValueError(f"params.plot contains unknown function {match.group()!r}")
+    symbols = {
+        match.group()
+        for match in identifiers
+        if match.group() not in _PLOT_FUNCTIONS | {"pi"}
+    }
+    if "x" not in symbols or len(symbols) != 2:
+        raise ValueError("params.plot must contain exactly x and one slider parameter")
+    parameter = next(symbol for symbol in symbols if symbol != "x")
+    if parameter == "y":
+        raise ValueError("params.plot cannot use y as the slider parameter")
+    return parameter
+
+
+def _parse_feedback_condition(condition: str, parameter: str) -> tuple[str, float]:
+    """Parse one safe ``parameter <op> exact-number`` comparison."""
+    match = _FEEDBACK_COMPARISON.fullmatch(condition)
+    if match is None:
+        raise ValueError("expected one comparison using <, <=, >, or >=")
+    left, comparison, raw_threshold = match.groups()
+    if left != parameter:
+        raise ValueError(
+            f"left identifier {left!r} does not match slider parameter {parameter!r}"
+        )
+    if "=" in raw_threshold:
+        raise ValueError("threshold must be one math expression, not an assignment")
+
+    threshold_expression = parse_restricted(raw_threshold)
+    free_symbols = getattr(threshold_expression, "free_symbols", None)
+    if free_symbols is None:
+        raise ValueError("threshold must be one math expression")
+    if free_symbols:
+        raise ValueError("threshold must not contain free symbols")
+    if getattr(threshold_expression, "is_finite", None) is not True:
+        raise ValueError("threshold must be finite")
+    if getattr(threshold_expression, "is_real", None) is not True:
+        raise ValueError("threshold must be real")
+    try:
+        threshold = float(threshold_expression.evalf())
+    except Exception as exc:  # noqa: BLE001 — malformed model output is ignored
+        raise ValueError("threshold must resolve to a finite real number") from exc
+    if not math.isfinite(threshold):
+        raise ValueError("threshold must resolve to a finite real number")
+    return comparison, threshold
+
+
+def _matching_slider_feedback(widget: SliderWidget, response: dict) -> str | None:
+    """Return the first matching server-only feedback message, if any."""
+    if not widget.feedback_rules:
+        return None
+    try:
+        value = float(response.get("value"))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(value):
+        return None
+
+    try:
+        parameter = _infer_slider_parameter(widget.params.plot)
+    except ValueError as exc:
+        logger.warning("ignoring slider feedback rules: %s", exc)
+        return None
+
+    for rule in widget.feedback_rules:
+        try:
+            comparison, threshold = _parse_feedback_condition(rule.when, parameter)
+        except ValueError as exc:
+            logger.warning("ignoring slider feedback rule %r: %s", rule.when, exc)
+            continue
+        matches = (
+            (comparison == "<" and value < threshold)
+            or (comparison == "<=" and value <= threshold)
+            or (comparison == ">" and value > threshold)
+            or (comparison == ">=" and value >= threshold)
+        )
+        if matches:
+            return rule.say
+    return None
 
 
 class SessionOrchestrator:
@@ -255,6 +420,10 @@ class SessionOrchestrator:
             if correct
             else "Not yet — adjust your answer and try again."
         )
+        if not correct and isinstance(widget, SliderWidget):
+            feedback = _matching_slider_feedback(widget, response)
+            if feedback is not None:
+                message = f"{message} {feedback}"
         return correct, message
 
     def _ancestors_of(self, kc: str) -> set[str]:
@@ -421,12 +590,15 @@ class SessionOrchestrator:
         if planned is None:
             planned = self._planner.plan_lesson(node)
             self._planned_lessons[kc] = planned
+        client_widget = (
+            _widget_for_client(planned.widget) if planned.widget is not None else None
+        )
         lesson = Interaction(
             key=self._next_key(),
             kind="lesson",
             kc_id=kc,
             text=planned.narrative,
-            widget=planned.widget.model_dump() if planned.widget is not None else None,
+            widget=client_widget,
         )
         if planned.widget is not None:
             self._active_widgets[lesson.key] = (kc, planned.widget)

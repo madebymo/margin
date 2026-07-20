@@ -1,5 +1,7 @@
 """Schema validation contracts: widgets, evidence, mastery, lessons."""
 
+import copy
+import math
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -65,6 +67,25 @@ def test_unknown_widget_type_rejected():
 
 def test_slider_step_must_be_positive():
     payload = {**VALID_SLIDER, "params": {"min": 0, "max": 4, "step": 0}}
+    with pytest.raises(ValidationError):
+        parse_widget_config(payload)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+@pytest.mark.parametrize(
+    ("section", "field"),
+    [
+        ("params", "min"),
+        ("params", "max"),
+        ("params", "step"),
+        ("success_condition", "target"),
+        ("success_condition", "tolerance"),
+    ],
+)
+def test_slider_numeric_fields_must_be_finite(section, field, value):
+    payload = copy.deepcopy(VALID_SLIDER)
+    payload[section][field] = value
+
     with pytest.raises(ValidationError):
         parse_widget_config(payload)
 

@@ -7,8 +7,11 @@ venv/
 .hypothesis/
 *.egg-info/
 dist/
+!backend/src/tutor/api/static/dist/
+!backend/src/tutor/api/static/dist/**
 build/
 .env
 node_modules/
+elm-stuff/
 .DS_Store
 schemas/json/

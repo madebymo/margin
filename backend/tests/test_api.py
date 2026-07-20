@@ -1,9 +1,25 @@
 """Session API: lifecycle over HTTP against the in-process store."""
 
+import mimetypes
+import re
+from pathlib import Path
+from urllib.parse import urlsplit
+
 import pytest
 from fastapi.testclient import TestClient
 
 from tutor.api.app import create_app
+
+_DIST_INDEX = (
+    Path(__file__).resolve().parents[1]
+    / "src"
+    / "tutor"
+    / "api"
+    / "static"
+    / "dist"
+    / "index.html"
+)
+_STATIC_REFERENCE = re.compile(r"""(?:src|href)=["'](/static/[^"']+)["']""")
 
 
 @pytest.fixture(scope="module")
@@ -21,10 +37,26 @@ def test_healthz(client):
     assert response.json()["status"] == "ok"
 
 
-def test_index_serves_chat_ui(client):
+def test_index_serves_production_bundle_and_all_referenced_assets(client):
+    assert _DIST_INDEX.is_file(), "run `npm --prefix frontend run build`"
+
     response = client.get("/")
+
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
     assert "Adaptive Math Tutor" in response.text
+    static_references = sorted(set(_STATIC_REFERENCE.findall(response.text)))
+    assert static_references
+
+    for reference in static_references:
+        assert re.search(r"/assets/.+-[A-Za-z0-9_-]{8}\.(?:css|js)$", reference)
+        asset = client.get(reference)
+        assert asset.status_code == 200, reference
+        expected_type = mimetypes.guess_type(urlsplit(reference).path)[0]
+        assert expected_type is not None, reference
+        actual_type = asset.headers["content-type"].split(";", 1)[0]
+        assert actual_type == expected_type, reference
+        assert asset.content, reference
 
 
 def test_create_session_starts_diagnosis(client):

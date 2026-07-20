@@ -24,6 +24,9 @@ Tests & lint:
 pytest backend/tests                                       # full suite (in-memory SQLite, no Postgres needed)
 pytest backend/tests/test_machine_e2e.py::test_full_session_reaches_done   # single test
 ruff check backend/src backend/tests                       # line-length 100 (backend/pyproject.toml)
+npm --prefix frontend test                                 # parser/scene/recipe tests
+npm --prefix frontend run build                            # compile Elm + build hashed production assets
+scripts/check_frontend_dist.sh                             # verify committed dist is current
 ```
 
 Run the app:
@@ -31,6 +34,7 @@ Run the app:
 python -m tutor.cli                        # terminal chat demo (commands: hint, reveal, quit)
 python -m tutor.cli --llm --provider openai --target kc.der.chain_rule
 uvicorn tutor.api.app:app --reload         # web chat + REST API at http://localhost:8000
+npm --prefix frontend run dev              # Vite dev server; proxies API to port 8000
 ```
 
 Diagnostics & data tooling:
@@ -53,7 +57,7 @@ Environment: `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (LLM providers), `TUTOR_LLM_
 `SessionOrchestrator` (`machine.py`) drives one session through phases INTAKE → DIAGNOSE → PLAN → TEACH → CAPSTONE → DONE/STOPPED. It owns all sequencing and the single `_Pending` item currently awaiting an answer; **the expected answer never leaves the server** (API responses expose only `pending_kind`/`pending_kc`; `pending_expected` is for tests/CLI `reveal` only). Generation is delegated to ports, scoring to the verifier, belief updates to the learner model, and routing to the pure `route` function.
 
 - `DiagnosisController` (`diagnosis.py`) — adaptive diagnosis over the **hard-ancestor subgraph** of the target. Policy v1.1: probe the target first; on a miss, probe the implicated prereq (if error analysis names one) else binary-search the unresolved hard-ancestor chain by depth; on a hit, re-probe single-observation bad nodes once (slip recovery) then drill toward the deepest bad node; spend leftover budget verifying the shallowest unprobed would-be lesson node (gated on an observed gap so a passing student short-circuits after one probe). No node is probed more than twice. Outputs a **frontier** (deepest observed-bad nodes with no observed-bad hard ancestor) and a **teaching path** (topological order of unmastered nodes, target last).
-- `LessonPlanner` (`planner.py`) — per-KC content pipeline: narrative → 2-3 widget candidates → deterministic hard gates (expected-answer parseability, answer-leak) → evaluator verdict → bounded repair loop (≤3, rejection feedback fed back) → mandatory static worked-example fallback. Planned lessons are cached per KC for the session. Widgets attach to lesson `Interaction`s (`Interaction.widget`, keyed by the lesson's interaction key); attempts are scored server-side by `SessionOrchestrator.answer_widget` and only the **first attempt per key** is recorded as an `EvidenceEvent` (`response_class=widget`) — widget practice is formative and never advances the state machine or consumes routing budget.
+- `LessonPlanner` (`planner.py`) — per-KC content pipeline: narrative → 2-3 widget candidates → deterministic hard gates (expected-answer parseability, answer-leak) → evaluator verdict → bounded repair loop (≤3, rejection feedback fed back) → mandatory static worked-example fallback. Planned lessons are cached per KC for the session. Widgets attach to lesson `Interaction`s (`Interaction.widget`, keyed by the lesson's interaction key); attempts are scored server-side by `SessionOrchestrator.answer_widget` and only the **first attempt per key** is recorded as an `EvidenceEvent` (`response_class=widget`) — widget practice is formative and never advances the state machine or consumes routing budget. Slider `feedback_rules` remain server-only; after an incorrect Check, the first valid matching rule is appended to the verdict.
 - `route()` (`routing.py`) — **pure function** `(envelope, outcome) → (decision, new_envelope)`. Idempotent on duplicate interaction keys; enforces global interaction budget; descends only to a strict ancestor not already inserted, bounded by `max_inserts`/`max_detour_depth` with an acyclic resume stack; per-KC retries are capped and exhaustion falls back (never loops). Never mutates its input — returns a deep copy.
 - `EpisodeEnvelope` (`envelope.py`) — explicit routing state (budgets, retries, `inserted`, `resume_stack`, `seen_interaction_keys`) that persists across detours so oscillation can't reset counters. Only ever updated through `route()` (plus the machine's resume pop).
 
@@ -72,7 +76,7 @@ LLM outputs are never trusted raw:
 - `verify/checker.py` `check_answer` — restricted SymPy parsing under a character whitelist (no underscores/quotes/brackets — blocks dunder/attribute tricks) and a fixed function table; unknown names become inert symbols. `sympy_equiv` or `numeric` checking, with a normalized string-compare fallback when either side fails to parse. Never arbitrary evaluation.
 
 ### API (`tutor/api/`)
-`app.py` builds a FastAPI app around one graph version and an in-memory `SessionStore` (`store.py`, thread-safe, FIFO-bounded at 500). Endpoints: `POST /sessions`, `POST /sessions/{id}/answer`, `POST /sessions/{id}/hint`, `POST /sessions/{id}/widget` (authoritative widget scoring), `GET /sessions/{id}`, `GET /healthz`, `GET /` (single-file chat UI in `api/static/index.html`). LLM ports are constructed per-session on request (`llm: true`) and degrade to templates with a warning if unavailable. The chat UI contains the vanilla-JS widget runtime: renderers for all four widget types with client-side interaction and server-side scoring — a new widget type must be renderable there and scoreable in `machine._score_widget`.
+`app.py` builds a FastAPI app around one graph version and an in-memory `SessionStore` (`store.py`, thread-safe, FIFO-bounded at 500). Endpoints: `POST /sessions`, `POST /sessions/{id}/answer`, `POST /sessions/{id}/hint`, `POST /sessions/{id}/widget` (authoritative widget scoring), `GET /sessions/{id}`, `GET /healthz`, and `GET /`. The root serves Vite's committed `api/static/dist/index.html`; `/static` serves its hashed assets. LLM ports are constructed per-session on request (`llm: true`) and degrade to templates with a warning if unavailable. `frontend/` is the only UI source: vanilla JS retains the chat/session loop, shared Svelte chrome renders all four native widget controls, and the rich slider normalizes into an Elm-owned SVG `<tutor-scene>`. A new widget type must be renderable there and scoreable in `machine._score_widget`.
 
 ### Data assets & persistence
 - `schemas/` — Pydantic v2 models, the source of truth for the JSON Schemas exported by `scripts/export_json_schemas.py`. `kc.GraphDocument` validates unique node ids, edge endpoint existence, and acyclicity (three-color DFS `find_cycle`). KC ids must match `^kc\.(alg|fun|lim|der|int)\.[a-z0-9_]+$`; `canonical_examples` holds 1–3 examples. `learner.EvidenceEvent` is `frozen` (immutable). `common.py` defines `EdgeType` (HARD/SOFT), `ResponseClass`, `ReviewStatus`, `JobStatus`, `WidgetType`.

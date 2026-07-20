@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from tutor.api.store import SessionStore
@@ -27,6 +28,7 @@ from tutor.seed.load_seed import load_graph
 logger = logging.getLogger("tutor.api")
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
+_DIST_DIR = _STATIC_DIR / "dist"
 
 
 class CreateSessionRequest(BaseModel):
@@ -140,10 +142,10 @@ def create_app(
             "persistence": persistence is not None,
         }
 
-    @app.get("/", response_class=HTMLResponse)
-    def index() -> str:
-        """Serve the single-file chat UI."""
-        return (_STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    @app.get("/", response_class=FileResponse)
+    def index() -> FileResponse:
+        """Serve the production frontend entry point."""
+        return FileResponse(_DIST_DIR / "index.html")
 
     @app.post("/sessions", response_model=TurnResponse)
     def create_session(request: CreateSessionRequest) -> TurnResponse:
@@ -213,6 +215,14 @@ def create_app(
         """Current state without advancing the session."""
         orchestrator = _get_session(session_id)
         return _turn(session_id, orchestrator, [])
+
+    # Keep the mount last so API routes retain precedence. ``check_dir=False``
+    # lets backend modules import before the frontend's first production build.
+    app.mount(
+        "/static",
+        StaticFiles(directory=_DIST_DIR, check_dir=False),
+        name="static",
+    )
 
     return app
 

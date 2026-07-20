@@ -7,6 +7,8 @@ fallback. The fallback is mandatory: a bad generator or evaluator can never
 block a session.
 """
 
+import math
+import re
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -18,7 +20,12 @@ from tutor.orchestrator.ports import (
     item_from_example,
 )
 from tutor.schemas.kc import KCNode
-from tutor.schemas.widgets import LiveInputWidget, MappingWidget, WidgetConfig
+from tutor.schemas.widgets import (
+    LiveInputWidget,
+    MappingWidget,
+    SliderWidget,
+    WidgetConfig,
+)
 from tutor.verify.checker import MathVerificationError, parse_restricted
 
 
@@ -51,6 +58,106 @@ class EvaluatorPort(Protocol):
         ...
 
 
+_DECIMAL_TOKEN = (
+    r"(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?|\.\d+)"
+    r"(?:[eE][+-]?\d+)?"
+)
+_EXACT_ATOM = rf"(?:{_DECIMAL_TOKEN}|pi|sqrt\(\s*{_DECIMAL_TOKEN}\s*\))"
+_MATH_VALUE_TOKEN = re.compile(
+    rf"(?<![A-Za-z0-9_])([+-]?{_EXACT_ATOM}"
+    rf"(?:\s*/\s*[+-]?{_EXACT_ATOM})?)(?![A-Za-z0-9_])"
+)
+_TARGET_CONTEXT = re.compile(
+    r"(?:target|answer|correct(?:\s+value)?|"
+    r"set\b.{0,24}\bto|value\b.{0,12}(?:is|=)|"
+    r"parameter\b.{0,12}(?:is|=))\s*$",
+    re.IGNORECASE,
+)
+
+
+def _token_value(token: str) -> float | None:
+    try:
+        expression = parse_restricted(token.replace(",", ""))
+    except MathVerificationError:
+        return None
+    if getattr(expression, "free_symbols", None):
+        return None
+    if getattr(expression, "is_finite", None) is not True:
+        return None
+    if getattr(expression, "is_real", None) is not True:
+        return None
+    try:
+        value = float(expression.evalf())
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return value if math.isfinite(value) else None
+
+
+def _matching_value_spans(text: str, expected: float) -> list[tuple[int, int]]:
+    matches: list[tuple[int, int]] = []
+    for match in _MATH_VALUE_TOKEN.finditer(text):
+        value = _token_value(match.group(1))
+        if value is not None and math.isclose(
+            value, expected, rel_tol=1e-12, abs_tol=1e-12
+        ):
+            matches.append(match.span(1))
+    return matches
+
+
+def _contains_numeric_value(text: str, expected: float) -> bool:
+    """Whether learner-visible prose contains the slider's hidden target."""
+    return bool(_matching_value_spans(text, expected))
+
+
+def _contains_contextual_target(text: str, expected: float) -> bool:
+    """Catch prompt phrases that explicitly identify a number as the answer."""
+    for start, _ in _matching_value_spans(text, expected):
+        if _TARGET_CONTEXT.search(text[max(0, start - 48) : start]):
+            return True
+    return False
+
+
+def _point_coordinates(shade: str | None) -> tuple[str, str] | None:
+    if not isinstance(shade, str):
+        return None
+    match = re.fullmatch(r"\s*point\s*\((.*)\)\s*", shade)
+    if match is None:
+        return None
+    body = match.group(1)
+    depth = 0
+    comma = -1
+    for index, character in enumerate(body):
+        if character == "(":
+            depth += 1
+        elif character == ")":
+            depth -= 1
+        elif character == "," and depth == 0:
+            if comma != -1:
+                return None
+            comma = index
+        if depth < 0:
+            return None
+    if depth != 0 or comma == -1:
+        return None
+    return body[:comma].strip(), body[comma + 1 :].strip()
+
+
+def _expression_pattern(expression: str) -> str:
+    return r"\s*".join(re.escape(part) for part in expression.split())
+
+
+def _without_authorized_marker(text: str, shade: str | None) -> str:
+    coordinates = _point_coordinates(shade)
+    if coordinates is None:
+        return text
+    x_coord, y_coord = coordinates
+    marker = re.compile(
+        rf"\(\s*{_expression_pattern(x_coord)}\s*,"
+        rf"\s*{_expression_pattern(y_coord)}\s*\)"
+    )
+    return marker.sub("", text)
+
+
 def deterministic_gates(widget: WidgetConfig) -> list[str]:
     """Hard gates that need no LLM: math parseability and answer leakage."""
     problems: list[str] = []
@@ -62,6 +169,18 @@ def deterministic_gates(widget: WidgetConfig) -> list[str]:
         expected = widget.checker.expected.strip()
         if len(expected) >= 3 and expected in widget.prompt:
             problems.append("expected answer leaks into the widget prompt")
+    elif isinstance(widget, SliderWidget):
+        target = widget.success_condition.target
+        prompt = _without_authorized_marker(widget.prompt, widget.params.shade)
+        if _contains_contextual_target(prompt, target):
+            problems.append("slider target leaks into the widget prompt")
+        if _contains_numeric_value(widget.learning_objective, target):
+            problems.append("slider target leaks into the learning objective")
+        for rule in widget.feedback_rules:
+            feedback = _without_authorized_marker(rule.say, widget.params.shade)
+            if _contains_numeric_value(feedback, target):
+                problems.append("slider target leaks into learner-visible feedback")
+                break
     return problems
 
 

@@ -1,5 +1,7 @@
 """Lesson planner: gates, evaluator verdicts, repair loop, fallback, machine wiring."""
 
+import math
+
 import pytest
 
 from tutor.llm.client import LLMError
@@ -11,7 +13,7 @@ from tutor.orchestrator.planner import (
     deterministic_gates,
 )
 from tutor.schemas.learner import LearnerProfile
-from tutor.schemas.widgets import LiveInputWidget
+from tutor.schemas.widgets import LiveInputWidget, SliderWidget
 from tutor.seed.load_seed import load_graph
 from tutor.verify.checker import check_answer
 
@@ -86,6 +88,99 @@ def test_deterministic_gate_catches_answer_leak():
         checker={"equivalence": "sympy_equiv", "expected": "4*x^3"},
     )
     assert any("leak" in problem for problem in deterministic_gates(leaky))
+
+
+@pytest.mark.parametrize(
+    ("prompt", "say"),
+    [
+        ("Set the slope to 1.5.", "Move the line toward the marker."),
+        ("Move the line through the marker.", "The target is 1.50."),
+        ("Move the line through the marker.", "Aim for 3/2 next."),
+    ],
+)
+def test_deterministic_gate_catches_slider_target_leaks(prompt, say):
+    leaky = SliderWidget(
+        learning_objective="Interpret slope",
+        prompt=prompt,
+        params={
+            "min": -1,
+            "max": 4,
+            "step": 0.1,
+            "plot": "y = m*x",
+            "shade": "point(2, 3)",
+        },
+        success_condition={"target": 1.5, "tolerance": 0.1},
+        feedback_rules=[{"when": "m < 1.5", "say": say}],
+    )
+
+    assert any("target leaks" in problem for problem in deterministic_gates(leaky))
+
+
+def test_deterministic_gate_allows_hidden_rule_threshold_and_goal_marker():
+    safe = SliderWidget(
+        learning_objective="Interpret slope",
+        prompt="Move the line through the marker at (2, 3).",
+        params={
+            "min": -1,
+            "max": 4,
+            "step": 0.1,
+            "plot": "y = m*x",
+            "shade": "point(2, 3)",
+        },
+        success_condition={"target": 1.5, "tolerance": 0.1},
+        feedback_rules=[
+            {
+                "when": "m < 1.5",
+                "say": "The line rises too slowly; increase the slope.",
+            }
+        ],
+    )
+
+    assert deterministic_gates(safe) == []
+
+
+@pytest.mark.parametrize(
+    ("target", "say"),
+    [
+        (1000.0, "The answer is 1e3."),
+        (1000.0, "The answer is 1,000."),
+        (math.pi / 2, "The answer is pi/2."),
+        (math.sqrt(2), "The answer is sqrt(2)."),
+    ],
+)
+def test_deterministic_gate_catches_formatted_slider_target_leaks(target, say):
+    leaky = SliderWidget(
+        learning_objective="Interpret slope",
+        prompt="Move the line through the marker.",
+        params={"min": -2000, "max": 2000, "step": 0.1, "plot": "y = m*x"},
+        success_condition={"target": target, "tolerance": 0.1},
+        feedback_rules=[{"when": "m < 0", "say": say}],
+    )
+
+    assert any("target leaks" in problem for problem in deterministic_gates(leaky))
+
+
+def test_deterministic_gate_exempts_authorized_marker_coordinate_collision():
+    safe = SliderWidget(
+        learning_objective="Interpret slope",
+        prompt="Move the line through the marker at (2, 0).",
+        params={
+            "min": -1,
+            "max": 1,
+            "step": 0.1,
+            "plot": "y = m*x",
+            "shade": "point(2, 0)",
+        },
+        success_condition={"target": 0, "tolerance": 0.1},
+        feedback_rules=[
+            {
+                "when": "m < 0",
+                "say": "The line misses the marker at (2, 0); increase the slope.",
+            }
+        ],
+    )
+
+    assert deterministic_gates(safe) == []
 
 
 def test_llm_generator_with_accepting_judge(graph):

@@ -36,6 +36,14 @@ llm-anthropic = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"tutor.api" = [
+    "static/dist/index.html",
+    "static/dist/assets/*",
+]
+"tutor.packs" = ["*.csv"]
+"tutor.seed" = ["*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
