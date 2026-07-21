@@ -1,0 +1,29 @@
+{
+  "compiler_version": "content-compiler-v1",
+  "entries": [
+    {
+      "blueprint_id": "blueprint.exponent.product_same_base",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics and pedagogy review.",
+      "revision": 2,
+      "source_digest": "06623c4f86cbcd086695dd8753e210b33c0c9ff8327bd62837754f745b680949"
+    },
+    {
+      "blueprint_id": "blueprint.exponent.quotient_same_base",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics and pedagogy review.",
+      "revision": 2,
+      "source_digest": "c442f27b9153297dbabb6b8253f6a46ef8e4b173ac0fcbac411edf1c8a703dd1"
+    },
+    {
+      "blueprint_id": "blueprint.exponent.power_of_power",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics and pedagogy review.",
+      "revision": 2,
+      "source_digest": "4e95b12aede5d6d31f4fd97feee61ecec54228cde3d818dd6d409c5b434544c3"
+    }
+  ],
+  "graph_version": 2,
+  "manifest_version": "exponent-prototypes-review-v2.0.0",
+  "schema_version": 1
+}

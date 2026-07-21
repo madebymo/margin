@@ -43,8 +43,8 @@ from tutor.verify.checker import VerificationStatus, verify_answer
 
 COMPILER_VERSION = "content-compiler-v1"
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
-DEFAULT_BLUEPRINT_PATH = SEED_DIR / "item_family_blueprints_v1.json"
-DEFAULT_REVIEW_MANIFEST_PATH = SEED_DIR / "item_review_manifest_v1.json"
+DEFAULT_BLUEPRINT_PATH = SEED_DIR / "item_family_blueprints_v2.json"
+DEFAULT_REVIEW_MANIFEST_PATH = SEED_DIR / "item_review_manifest_v2.json"
 DEFAULT_GRAPH_PATH = SEED_DIR / "kc_graph_calc1.json"
 
 

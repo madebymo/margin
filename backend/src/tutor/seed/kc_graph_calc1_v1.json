@@ -1,5 +1,5 @@
 {
-  "graph_version": 2,
+  "graph_version": 1,
   "nodes": [
     {
       "id": "kc.alg.arith_fractions",
@@ -11,35 +11,35 @@
     {
       "id": "kc.alg.exponent_rules",
       "name": "Exponent rules",
-      "description": "Simplify one-base expressions using product, quotient, power, zero, and negative integer exponent rules.",
+      "description": "Apply product, quotient, power, zero, and negative exponent rules to simplify expressions.",
       "course_level": "Algebra 1",
       "canonical_examples": ["x^3 * x^2 = x^5", "(x^2)^3 / x^4 = x^2"]
     },
     {
       "id": "kc.alg.polynomial_ops",
       "name": "Polynomial operations",
-      "description": "Add, subtract, expand, and collect polynomials of degree at most three with integer coefficients.",
+      "description": "Add, subtract, and multiply polynomials; expand products and collect like terms.",
       "course_level": "Algebra 1",
       "canonical_examples": ["(x + 2)(x - 3) = x^2 - x - 6"]
     },
     {
       "id": "kc.alg.factoring",
       "name": "Factoring polynomials",
-      "description": "Factor greatest common monomials, differences of squares, and monic quadratics with integer roots.",
+      "description": "Factor polynomials using common factors, difference of squares, and quadratic trinomial patterns.",
       "course_level": "Algebra 1",
       "canonical_examples": ["x^2 - 5x + 6 = (x - 2)(x - 3)", "x^2 - 9 = (x - 3)(x + 3)"]
     },
     {
       "id": "kc.alg.solve_linear",
       "name": "Solving linear equations",
-      "description": "Solve one-variable linear equations, parameterized in this pilot to have integer solutions.",
+      "description": "Solve one-variable linear equations by isolating the unknown with inverse operations.",
       "course_level": "Algebra 1",
       "canonical_examples": ["3x + 5 = 17 gives x = 4"]
     },
     {
       "id": "kc.alg.solve_quadratic",
       "name": "Solving quadratic equations",
-      "description": "Solve monic, factorable quadratic equations with integer roots by factoring.",
+      "description": "Solve quadratic equations by factoring, completing the square, or the quadratic formula.",
       "course_level": "Algebra 2",
       "canonical_examples": ["x^2 - 5x + 6 = 0 gives x = 2 or x = 3"]
     },
@@ -60,7 +60,7 @@
     {
       "id": "kc.fun.function_notation",
       "name": "Function notation and evaluation",
-      "description": "Interpret and evaluate affine and polynomial functions written as f(x), at integer inputs or simple expressions.",
+      "description": "Interpret and evaluate functions written as f(x), including evaluation at expressions.",
       "course_level": "Algebra 2",
       "canonical_examples": ["If f(x) = x^2 + 1 then f(3) = 10", "f(a + h) = (a + h)^2 + 1"]
     },
@@ -74,16 +74,16 @@
     {
       "id": "kc.fun.graph_reading",
       "name": "Reading function graphs",
-      "description": "Read integer-valued points, intercepts, slopes, and qualitative behavior from piecewise-linear plots and equivalent tables.",
+      "description": "Read values, intercepts, slopes, and qualitative behavior from the graph of a function.",
       "course_level": "Algebra 2",
       "canonical_examples": ["From a graph, f(2) = 4 and f is increasing on (0, 3)"]
     },
     {
       "id": "kc.fun.composition",
       "name": "Function composition",
-      "description": "Build and evaluate affine or polynomial compositions f(g(x)) and identify their inner and outer parts.",
+      "description": "Build and evaluate composite functions f(g(x)) and decompose a function into inner and outer parts.",
       "course_level": "Precalculus",
-      "canonical_examples": ["If f(x) = x^2 and g(x) = 3x + 1 then f(g(x)) = (3x + 1)^2", "h(x) = (x^2 + 1)^3 has outer u^3 and inner u = x^2 + 1"]
+      "canonical_examples": ["If f(x) = x^2 and g(x) = 3x + 1 then f(g(x)) = (3x + 1)^2", "h(x) = sin(x^2) has outer sin(u) and inner u = x^2"]
     },
     {
       "id": "kc.fun.inverse_functions",
@@ -158,23 +158,23 @@
     {
       "id": "kc.der.power_rule",
       "name": "Power rule",
-      "description": "Differentiate integer powers using d/dx x^n = n x^(n-1), including negative integer exponents.",
+      "description": "Differentiate power functions using d/dx x^n = n x^(n-1).",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["d/dx x^5 = 5x^4", "d/dx x^-3 = -3x^-4"]
+      "canonical_examples": ["d/dx x^5 = 5x^4", "d/dx sqrt(x) = 1/(2 sqrt(x))"]
     },
     {
       "id": "kc.der.sum_constant_rules",
       "name": "Linearity of differentiation",
-      "description": "Differentiate integer-coefficient polynomial sums, differences, and constant multiples term by term.",
+      "description": "Differentiate sums, differences, and constant multiples term by term.",
       "course_level": "Calc I / AP Calc AB",
       "canonical_examples": ["d/dx (3x^2 + 5x - 7) = 6x + 5"]
     },
     {
       "id": "kc.der.product_quotient",
       "name": "Product and quotient rules",
-      "description": "Apply product and quotient rules to polynomial factors or reviewed point-value data without hidden fraction arithmetic.",
+      "description": "Differentiate products and quotients using the product and quotient rules.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["If p(x)=f(x)g(x), then p'(2)=f'(2)g(2)+f(2)g'(2)"]
+      "canonical_examples": ["d/dx (x^2 sin(x)) = 2x sin(x) + x^2 cos(x)"]
     },
     {
       "id": "kc.der.trig_derivatives",
@@ -193,9 +193,9 @@
     {
       "id": "kc.der.chain_rule",
       "name": "Chain rule",
-      "description": "Differentiate integer powers of affine or polynomial inner functions by multiplying by the inner derivative.",
+      "description": "Differentiate composite functions: the derivative of f(g(x)) is f'(g(x)) times g'(x).",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["d/dx (x^2 + 1)^3 = 6x(x^2 + 1)^2", "d/dx (3x + 1)^4 = 12(3x + 1)^3"]
+      "canonical_examples": ["d/dx sin(x^2) = 2x cos(x^2)", "d/dx (3x + 1)^4 = 12(3x + 1)^3"]
     },
     {
       "id": "kc.der.differentials",
@@ -214,65 +214,65 @@
     {
       "id": "kc.int.area_under_curve",
       "name": "Area under a curve as accumulation",
-      "description": "Accumulate nonnegative rectangular and triangular regions with integer dimensions from plots and tables.",
+      "description": "Interpret the area between a curve and the x-axis as an accumulated quantity.",
       "course_level": "Calc I / AP Calc AB",
       "canonical_examples": ["Area under v(t) on [0, 4] gives distance traveled"]
     },
     {
       "id": "kc.int.riemann_sums",
       "name": "Riemann sums",
-      "description": "Compute left, right, or midpoint rectangle sums from tables with equal integer-width partitions.",
+      "description": "Approximate area under a curve with sums of rectangle areas that improve with finer partitions.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["For unit-width intervals, a left sum using heights 1, 3, and 4 is 1 + 3 + 4 = 8"]
+      "canonical_examples": ["Left sum of x^2 on [0, 1] with 4 rectangles: (0 + 1/16 + 4/16 + 9/16) * (1/4)"]
     },
     {
       "id": "kc.int.definite_integral",
       "name": "The definite integral",
-      "description": "Interpret definite-integral bounds, orientation, sign, and accumulated value using reviewed finite data.",
+      "description": "Define the definite integral as the limit of Riemann sums; interpret its sign and notation.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["Reversing the bounds changes integral from 1 to 3 of 2x dx from 8 to -8"]
+      "canonical_examples": ["integral from 0 to 1 of x^2 dx = 1/3"]
     },
     {
       "id": "kc.int.antiderivatives",
       "name": "Antiderivatives",
-      "description": "Find polynomial antiderivatives by reversing the integer power rule on deliberately divisible coefficients.",
+      "description": "Find functions whose derivative is a given function, reversing differentiation rules.",
       "course_level": "Calc I / AP Calc AB",
       "canonical_examples": ["An antiderivative of 3x^2 is x^3"]
     },
     {
       "id": "kc.int.indefinite_notation",
       "name": "Indefinite integrals and +C",
-      "description": "Write polynomial indefinite-integral families with exactly one arbitrary constant of integration.",
+      "description": "Use indefinite integral notation and include the constant of integration.",
       "course_level": "Calc I / AP Calc AB",
       "canonical_examples": ["integral of 2x dx = x^2 + C"]
     },
     {
       "id": "kc.int.ftc",
       "name": "Fundamental Theorem of Calculus",
-      "description": "Evaluate polynomial definite integrals at integer bounds using polynomial antiderivatives.",
+      "description": "Connect derivatives and definite integrals: evaluate definite integrals using antiderivatives.",
       "course_level": "Calc I / AP Calc AB",
       "canonical_examples": ["integral from 1 to 3 of 2x dx = 9 - 1 = 8"]
     },
     {
       "id": "kc.int.integral_basic_rules",
-      "name": "Basic polynomial integration rules",
-      "description": "Integrate integer-coefficient polynomial sums term by term using the reverse integer power rule.",
+      "name": "Basic integration rules and table",
+      "description": "Integrate term by term using the reverse power rule and the basic table of trig and exponential integrals.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["integral of (3x^2 + 4x) dx = x^3 + 2x^2 + C"]
+      "canonical_examples": ["integral of (3x^2 + cos(x)) dx = x^3 + sin(x) + C"]
     },
     {
       "id": "kc.int.recognizing_composite",
       "name": "Recognizing composite structure in integrands",
-      "description": "Spot an affine or polynomial inner function together with an exact multiple of its derivative in a power-composite integrand.",
+      "description": "Spot when an integrand contains a composite function together with a multiple of its inner derivative.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["In integral of 6x(x^2+1)^2 dx, the factor 2x is the derivative of the inner x^2+1"]
+      "canonical_examples": ["In integral of 2x cos(x^2) dx, the factor 2x is the derivative of the inner x^2"]
     },
     {
       "id": "kc.int.u_substitution",
       "name": "U-substitution (indefinite integrals)",
-      "description": "Evaluate polynomial-power indefinite integrals by substituting the inner polynomial and converting the full differential.",
+      "description": "Evaluate integrals by substituting u for an inner function and converting dx to du, reversing the chain rule.",
       "course_level": "Calc I / AP Calc AB",
-      "canonical_examples": ["integral of 6x(x^2+1)^2 dx = (x^2+1)^3 + C via u = x^2+1"]
+      "canonical_examples": ["integral of 2x cos(x^2) dx = sin(x^2) + C via u = x^2"]
     },
     {
       "id": "kc.int.u_sub_definite",

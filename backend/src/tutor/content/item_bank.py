@@ -45,7 +45,7 @@ from tutor.verify.checker import (
 )
 
 DEFAULT_ITEM_BANK_PATH = (
-    Path(__file__).resolve().parents[1] / "seed" / "item_bank_v2.json"
+    Path(__file__).resolve().parents[1] / "seed" / "item_bank_v3.json"
 )
 
 InputMode = Literal["expression", "number", "choice", "set", "tuple"]

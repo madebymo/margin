@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "blueprint_version": "exponent-prototypes-v2.0.0",
+  "output_bank_version": "draft-exponent-prototypes-v2.0.0",
+  "graph_version": 2,
+  "released_kcs": [],
+  "family_blueprints": [
+    {
+      "prototype_id": "exponent.product_same_base",
+      "blueprint_id": "blueprint.exponent.product_same_base",
+      "revision": 2,
+      "family_id": "family.exponent.product_same_base",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "task_kind": "transform",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "source": "curated-authoring/exponent-prototypes-v2",
+      "author": "Adaptive Math Tutor content team",
+      "cases": [
+        {
+          "case_id": "p2_5",
+          "left_exponent": 2,
+          "right_exponent": 5
+        },
+        {
+          "case_id": "p3_6",
+          "left_exponent": 3,
+          "right_exponent": 6
+        }
+      ]
+    },
+    {
+      "prototype_id": "exponent.quotient_same_base",
+      "blueprint_id": "blueprint.exponent.quotient_same_base",
+      "revision": 2,
+      "family_id": "family.exponent.quotient_same_base",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "task_kind": "transform",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "source": "curated-authoring/exponent-prototypes-v2",
+      "author": "Adaptive Math Tutor content team",
+      "cases": [
+        {
+          "case_id": "q9_4",
+          "numerator_exponent": 9,
+          "denominator_exponent": 4
+        },
+        {
+          "case_id": "q13_7",
+          "numerator_exponent": 13,
+          "denominator_exponent": 7
+        }
+      ]
+    },
+    {
+      "prototype_id": "exponent.power_of_power",
+      "blueprint_id": "blueprint.exponent.power_of_power",
+      "revision": 2,
+      "family_id": "family.exponent.power_of_power",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "task_kind": "transform",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "source": "curated-authoring/exponent-prototypes-v2",
+      "author": "Adaptive Math Tutor content team",
+      "cases": [
+        {
+          "case_id": "p3_4",
+          "inner_exponent": 3,
+          "outer_exponent": 4
+        },
+        {
+          "case_id": "p5_3",
+          "inner_exponent": 5,
+          "outer_exponent": 3
+        }
+      ]
+    }
+  ]
+}

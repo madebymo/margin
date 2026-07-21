@@ -21,7 +21,7 @@ PACKAGE_DIR = Path(tutor.packs.__file__).resolve().parent
 TEMPLATE_CSV = PACKAGE_DIR / "template.csv"
 GENERATED_DIR = PACKAGE_DIR / "generated"
 DEFAULT_PEDAGOGY_CATALOG_PATH = (
-    PACKAGE_DIR.parent / "seed" / "pedagogy_catalog_v1.json"
+    PACKAGE_DIR.parent / "seed" / "pedagogy_catalog_v2.json"
 )
 
 
