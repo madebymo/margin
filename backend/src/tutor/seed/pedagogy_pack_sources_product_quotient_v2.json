@@ -1,0 +1,360 @@
+{
+  "schema_version": 2,
+  "source_version": "product-quotient-closure-pedagogy-draft-v2",
+  "graph_version": 2,
+  "pack_sources": [
+    {
+      "source_id": "pedagogy.source.exponent_rules",
+      "revision": 2,
+      "kc_id": "kc.alg.exponent_rules",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.exponent_rules.multiply_exponents_on_product",
+          "description": "Multiplies exponents when multiplying powers with the same base instead of adding them.",
+          "error_signature": "For x^a*x^b, produces x^(a*b).",
+          "remediation_hint": "Keep the common base and add the two exponents; exponent multiplication belongs to a power raised to another power."
+        },
+        {
+          "id": "m.exponent_rules.subtract_exponents_on_product",
+          "description": "Subtracts exponents in a product as though the operation were division.",
+          "error_signature": "For x^a*x^b, produces x^(a-b) or x^(b-a).",
+          "remediation_hint": "Name the operation joining the powers before changing the exponents: multiplication of equal bases calls for addition."
+        },
+        {
+          "id": "m.exponent_rules.negative_exponent_is_negative_value",
+          "description": "Treats a negative exponent as a negative coefficient rather than a reciprocal power.",
+          "error_signature": "Rewrites x^(-n) as -x^n for positive integer n.",
+          "remediation_hint": "A negative exponent changes which side of the fraction bar contains the factor; it does not change the sign of the value."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.exponent_rules.operation_sorter",
+          "description": "Sort the visible operation first: equal-base products add exponent counts, quotients remove counts, and nested powers repeat groups. The base stays attached throughout.",
+          "widget_affinity": ["mapping", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "same_base_product_multiplies_exponents: x^a*x^b is rewritten as x^(a*b)",
+        "same_base_product_subtracts_exponents: x^a*x^b is rewritten as x^(a-b) or x^(b-a)",
+        "negative_exponent_changes_sign: x^(-n) is rewritten as -x^n for positive integer n"
+      ],
+      "sources": [
+        "OpenStax Elementary Algebra 2e, Section 10.2: Use Multiplication Properties of Exponents.",
+        "OpenStax College Algebra 2e, Section 1.2: Exponents and Scientific Notation."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Exponent rules track how many copies of one base are present. First identify the operation that joins the powers; that operation determines what happens to the exponents."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^a*x^b=x^(a+b), x^a/x^b=x^(a-b)",
+          "spoken_text": "x to the a times x to the b equals x to the quantity a plus b; x to the a divided by x to the b equals x to the quantity a minus b."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(x^a)^b=x^(a*b), x^0=1, x^(-n)=1/x^n",
+          "spoken_text": "The quantity x to the a raised to b equals x to the a times b; x to the zero equals one; and x to negative n equals one divided by x to the n."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "These statements use integer exponents and require a nonzero base whenever division or a negative exponent is involved. Apply one visible operation at a time, then check that the base and sign were preserved."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Pause before simplifying and circle the operation immediately between or around the powers. Do not change an exponent until that operation has been named."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "product -> add; quotient -> subtract; power of a power -> multiply",
+          "spoken_text": "For a product, add exponents; for a quotient, subtract exponents in numerator-minus-denominator order; for a power of a power, multiply exponents."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "If the final exponent is negative, rewrite the powered factor as a reciprocal without inserting a minus sign. Then substitute a simple nonzero value, such as x equals 2, to check that the original and simplified forms agree."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.power_rule",
+      "revision": 2,
+      "kc_id": "kc.der.power_rule",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.power_rule.missing_multiplier",
+          "description": "Reduces the exponent but omits the original exponent as a multiplier.",
+          "error_signature": "For d/dx x^n, produces x^(n-1).",
+          "remediation_hint": "Write the original exponent in front before reducing the exponent that remains on x by one."
+        },
+        {
+          "id": "m.power_rule.exponent_unchanged",
+          "description": "Uses the exponent as a multiplier but leaves the exponent on the variable unchanged.",
+          "error_signature": "For d/dx x^n, produces n*x^n.",
+          "remediation_hint": "After copying the original exponent into the coefficient, subtract one from the exponent still attached to x."
+        },
+        {
+          "id": "m.power_rule.negative_exponent_wrong_direction",
+          "description": "Moves a negative exponent toward zero instead of subtracting one.",
+          "error_signature": "For d/dx x^(-n), produces -n*x^(-n+1) for positive integer n.",
+          "remediation_hint": "Subtracting one from a negative integer makes it one unit more negative."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.power_rule.down_one_step",
+          "description": "The exponent does two jobs: it leaves its current value in front as a multiplier, and the copy still attached to x moves down exactly one integer step.",
+          "widget_affinity": ["slider", "mapping"]
+        }
+      ],
+      "error_patterns": [
+        "power_rule_missing_multiplier: d/dx x^n is answered as x^(n-1)",
+        "power_rule_unchanged_exponent: d/dx x^n is answered as n*x^n",
+        "power_rule_negative_wrong_direction: d/dx x^(-n) is answered with exponent -n+1"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The power rule differentiates an integer power with two coordinated changes. The old exponent becomes a coefficient, and the exponent remaining on the variable is one less than before."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx(c*x^n)=c*n*x^(n-1)",
+          "spoken_text": "The derivative with respect to x of c times x to the n equals c times n times x to the quantity n minus one."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The constant coefficient c stays attached and is multiplied by n. The same rule works for zero and negative integer exponents; when n is negative, n minus one is farther below zero."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "old coefficient -> c*n; old exponent -> n-1",
+          "spoken_text": "The old coefficient changes to c times n, while the old exponent changes to n minus one."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Write two temporary blanks before simplifying: one for the new coefficient and one for the new exponent. Fill both from the original term."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "new coefficient=c*n; new exponent=n-1",
+          "spoken_text": "The new coefficient is c times n, and the new exponent is n minus one."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Check for both common omissions: the original exponent must appear in the coefficient, and the exponent on x must change. For a negative exponent, compute the subtraction on a number line before rewriting the result."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.sum_constant_rules",
+      "revision": 2,
+      "kc_id": "kc.der.sum_constant_rules",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.sum_constant_rules.first_term_only",
+          "description": "Differentiates only the first term of a sum and copies the remaining terms unchanged.",
+          "error_signature": "The response contains the derivative of the first term followed by unchanged original terms.",
+          "remediation_hint": "Give every signed additive term its own derivative pass before recombining the results."
+        },
+        {
+          "id": "m.sum_constant_rules.lost_subtraction_sign",
+          "description": "Changes a subtraction sign into addition while differentiating term by term.",
+          "error_signature": "A derivative term that should retain a leading minus sign appears positive.",
+          "remediation_hint": "Attach each plus or minus sign to its term before differentiating, and carry that sign into the derivative."
+        },
+        {
+          "id": "m.sum_constant_rules.constant_copied",
+          "description": "Copies an additive constant into the derivative instead of replacing it with zero.",
+          "error_signature": "The original nonzero additive constant remains in the derivative.",
+          "remediation_hint": "A fixed number has no change, so its derivative contributes zero."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.sum_constant_rules.term_assembly_line",
+          "description": "Each signed term travels independently through a differentiation station. After every term has been transformed, the results rejoin in their original order.",
+          "widget_affinity": ["mapping", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "sum_rule_unchanged_tail: at least one nonconstant term after the first is copied without differentiation",
+        "sum_rule_sign_loss: a negative original term produces a positive derivative term",
+        "sum_rule_constant_retained: a nonzero additive constant remains in the derivative"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiation distributes across addition and subtraction. Treat each signed polynomial term as a separate small problem, then place the derivative terms back in the same order."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx(f(x)+g(x))=f'(x)+g'(x)",
+          "spoken_text": "The derivative of f of x plus g of x equals f prime of x plus g prime of x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx(c*f(x))=c*f'(x), d/dx(k)=0",
+          "spoken_text": "The derivative of c times f of x equals c times f prime of x, and the derivative of a constant k equals zero."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A subtraction sign belongs to the term that follows it, so that sign remains when the term is differentiated. An additive constant disappears because its rate of change is zero."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Rewrite the polynomial as a list of signed terms. Place a derivative mark beside every term before computing any of them."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "+a*x^m -> +a*m*x^(m-1); -b*x^n -> -b*n*x^(n-1); +k -> 0",
+          "spoken_text": "A positive a x to the m stays positive and differentiates to a m x to the m minus one; a negative b x to the n stays negative and differentiates to negative b n x to the n minus one; a constant contributes zero."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Before submitting, count the original nonconstant terms and the derivative terms. The counts should match unless like derivative terms were deliberately combined, and no standalone constant should remain."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.product_quotient",
+      "revision": 2,
+      "kc_id": "kc.der.product_quotient",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.product_quotient.product_of_derivatives",
+          "description": "Differentiates a product by multiplying the two derivatives and omits both hold-one-factor terms.",
+          "error_signature": "For u*v, produces u'*v' instead of u'*v+u*v'.",
+          "remediation_hint": "Differentiate one factor at a time while holding the other unchanged, then add the two results."
+        },
+        {
+          "id": "m.product_quotient.reversed_quotient_numerator",
+          "description": "Reverses the two terms in the quotient-rule numerator, negating an otherwise correct derivative.",
+          "error_signature": "For u/v, uses u*v'-v*u' in the numerator.",
+          "remediation_hint": "Begin the numerator with denominator times numerator derivative, then subtract numerator times denominator derivative."
+        },
+        {
+          "id": "m.product_quotient.denominator_not_squared",
+          "description": "Uses the original denominator rather than its square in the quotient-rule result.",
+          "error_signature": "The quotient-rule numerator is plausible, but the denominator is v rather than v^2.",
+          "remediation_hint": "After forming the ordered numerator, square the entire original denominator."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.product_quotient.two_turns_and_balance",
+          "description": "For a product, each factor takes one turn changing while its partner waits. For a quotient, the denominator leads the ordered subtraction and then supports the result twice by being squared.",
+          "widget_affinity": ["mapping", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "product_rule_derivatives_multiplied: d/dx(u*v) is answered as u'*v'",
+        "quotient_rule_numerator_reversed: d/dx(u/v) uses u*v'-v*u' in the numerator",
+        "quotient_rule_denominator_unsquared: d/dx(u/v) uses v instead of v^2 as the denominator"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A product changes through two contributions: first the left factor changes while the right factor is held, then the right factor changes while the left factor is held. The contributions are added."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx(u*v)=u'*v+u*v'",
+          "spoken_text": "The derivative of u times v equals u prime times v plus u times v prime."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For a quotient, keep the numerator order fixed: denominator times the derivative of the numerator, minus numerator times the derivative of the denominator. Then divide by the square of the original denominator."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx(u/v)=(v*u'-u*v')/v^2",
+          "spoken_text": "The derivative of u divided by v equals the quantity v times u prime minus u times v prime, divided by v squared."
+        },
+        {
+          "kind": "table",
+          "role": "context",
+          "caption": "Structure of the product and quotient rules",
+          "column_headers": ["Original form", "Derivative structure"],
+          "rows": [
+            ["u(x)*v(x)", "u'(x)*v(x)+u(x)*v'(x)"],
+            ["u(x)/v(x)", "(v(x)*u'(x)-u(x)*v'(x))/(v(x))^2"]
+          ],
+          "spoken_text": "For a product, add the left-derivative contribution and the right-derivative contribution. For a quotient, subtract in denominator-times-numerator-derivative order and divide by the denominator squared."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Label the two original functions u and v before differentiating. Write u prime and v prime separately; do not combine them yet."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "product: (u')*v + u*(v')",
+          "spoken_text": "For a product, multiply u prime by unchanged v, then add unchanged u times v prime."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "quotient: [v*(u') - u*(v')]/v^2",
+          "spoken_text": "For a quotient, form v times u prime minus u times v prime, and divide by v squared."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use three checks before simplifying: a product result must contain two added contributions; a quotient numerator must start with v times u prime; and the complete original denominator must be squared."
+        }
+      ]
+    }
+  ]
+}

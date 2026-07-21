@@ -32,8 +32,8 @@ from tutor.schemas.pedagogy_authoring import (
 
 COMPILER_VERSION = "pedagogy-review-compiler-v1"
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
-DEFAULT_SOURCE_PATH = SEED_DIR / "pedagogy_pack_sources_product_quotient_v1.json"
-DEFAULT_MANIFEST_PATH = SEED_DIR / "pedagogy_pack_reviews_product_quotient_v1.json"
+DEFAULT_SOURCE_PATH = SEED_DIR / "pedagogy_pack_sources_product_quotient_v2.json"
+DEFAULT_MANIFEST_PATH = SEED_DIR / "pedagogy_pack_reviews_product_quotient_v2.json"
 DEFAULT_GRAPH_PATH = SEED_DIR / "kc_graph_calc1.json"
 
 

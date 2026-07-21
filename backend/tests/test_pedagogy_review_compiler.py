@@ -220,11 +220,15 @@ def test_source_or_manifest_tampering_invalidates_exact_digest(
 
 
 def test_graph_and_compiler_pins_fail_closed(source_document, manifest, graph):
-    source_v2 = source_document.model_copy(update={"graph_version": 2})
+    source_v2 = source_document.model_copy(
+        update={"graph_version": graph.graph_version + 1}
+    )
     with pytest.raises(PedagogyReviewError, match="source/graph version mismatch"):
         validate_review_bundle(source_v2, manifest, graph)
 
-    manifest_v2 = manifest.model_copy(update={"graph_version": 2})
+    manifest_v2 = manifest.model_copy(
+        update={"graph_version": graph.graph_version + 1}
+    )
     with pytest.raises(PedagogyReviewError, match="manifest/graph version mismatch"):
         validate_review_bundle(source_document, manifest_v2, graph)
 
