@@ -35,6 +35,13 @@ jobs:
           python -m tutor.content.compiler --check
           python -m tutor.packs.review_compiler --check
           python -m tutor.content.product_quotient_release --check
+          python -m tutor.content.chain_rule_release --check
+          python -m tutor.content.solve_quadratics_release --check
+          python -m tutor.content.ftc_release --check
+          python -m tutor.content.product_quotient_reviewer_packet --check
+          python -m tutor.content.chain_rule_reviewer_packet --check
+          python -m tutor.content.solve_quadratics_reviewer_packet --check
+          python -m tutor.content.ftc_reviewer_packet --check
 
       - name: Run diagnosis activation gates (10,000 synthetic episodes)
         run: >-

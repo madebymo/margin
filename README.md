@@ -238,23 +238,51 @@ python -m tutor.content.compiler --check \
 Do not add a KC to `released_kcs` merely to expose it in the UI. Author and
 review its complete family set and the complete hard-ancestor closure first.
 
-The pending Product/Quotient Rules pilot inventory has its own construct-aware,
-typed compiler and review manifest. It derives mathematical truth from bounded
-blueprints, compares all 1,326 family-answer pairs in a supervised worker,
-checks 5,601 answer-shaped visible candidates, and performs 2,652 deterministic
-literal cross-family scans:
+Four cumulative pilot waves are now authored as pending review inputs. Together
+they contain 221 draft families and 17 draft pedagogy packs, while releasing
+zero KCs and exposing zero goals to fresh pilot learners:
+
+| Pending wave | New KCs | Draft families | Cumulative families |
+|---|---:|---:|---:|
+| Product/Quotient Rules | 4 | 52 | 52 |
+| Chain Rule | 3 | 39 | 91 |
+| Solve Quadratics | 4 | 52 | 143 |
+| Fundamental Theorem of Calculus | 6 | 78 | 221 |
+
+Each wave has a construct-aware typed compiler and exact review manifest. The
+compilers derive mathematical truth from bounded source parameters and reject
+answer reuse or visible leakage both within the wave and against all preceding
+families. Run all four exact draft checks with:
 
 ```bash
 python -m tutor.content.product_quotient_release --check
+python -m tutor.content.chain_rule_release --check
+python -m tutor.content.solve_quadratics_release --check
+python -m tutor.content.ftc_release --check
 ```
 
-Generate the deterministic private packet used for independent review directly
-from the pending assessment and pedagogy source/review manifests:
+The FTC check covers 3,003 within-wave answer pairs and 6,006 directed
+within-wave family paths. Its mandatory cumulative check covers all 24,310
+unordered answer pairs and 48,620 directed family paths in the 221-family
+catalog. Candidate math is normalized in bounded workers, and every canonical
+match is confirmed by the restricted verifier before being reported as a leak.
+
+Generate deterministic private packets used for independent review directly
+from each wave's pending assessment and pedagogy source/review manifests:
 
 ```bash
 python -m tutor.content.product_quotient_reviewer_packet \
   --check \
   --out-dir /tmp/product-quotient-review
+python -m tutor.content.chain_rule_reviewer_packet \
+  --check \
+  --out-dir /tmp/chain-rule-review
+python -m tutor.content.solve_quadratics_reviewer_packet \
+  --check \
+  --out-dir /tmp/solve-quadratics-review
+python -m tutor.content.ftc_reviewer_packet \
+  --check \
+  --out-dir /tmp/ftc-review
 ```
 
 The output contains exact learner-visible and spoken rendering, expected-answer
@@ -267,13 +295,13 @@ changes no review manifest, and publishes no release. Independent reviewers
 record their own decisions through the separate review workflow after inspecting
 the packet's exact digests.
 
-The packaged inventory is deliberately marked AI-assisted and unreviewed. It
-contains 52 independently reviewable candidate families across the exact
-four-KC hard closure and publishes zero KCs. These automated integrity checks
-do not establish instructional validity or psychometric family independence.
-Human reviewers must approve the construct coverage and ordering (including
-what two early successes establish), task coherence, accessibility, and every
-bound family digest before promotion.
+Every packaged wave is deliberately marked AI-assisted and unreviewed. These
+automated integrity checks do not establish instructional validity or
+psychometric family independence. Human reviewers must approve construct
+coverage and ordering (including what two early successes establish), task
+coherence, accessibility, and every bound family digest before promotion. The
+remaining U-substitution wave requires five new KCs, 65 families, and five
+pedagogy packs before the final 22-KC/286-family catalog can enter review.
 
 ## Persistence and deployment
 
@@ -362,8 +390,6 @@ export TUTOR_V2_POLICY_RUNTIME_MODULES='tutor_retained.policy_v20,tutor_retained
 
 Startup fails if a retained module cannot be imported or lacks that hook. Keep
 the predecessor implementation in the deployment image for the full 30-day
-resume window.
-
 Resume reconciles the checkpoint against the ordered durable transcript,
 evidence, exposure-transition, widget-attempt, and mutation-receipt ledgers.
 Missing or divergent rows fail closed with `503` and an integrity metric; the
