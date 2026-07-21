@@ -10,12 +10,14 @@ from __future__ import annotations
 import atexit
 import math
 import multiprocessing
+import os
+import queue
 import re
 import threading
-import time
+from dataclasses import dataclass
 from enum import StrEnum
 from multiprocessing.connection import Connection
-from typing import Final, Iterable, NamedTuple
+from typing import Callable, Final, Iterable, Mapping, NamedTuple, Protocol
 
 import sympy
 from pydantic import BaseModel, ConfigDict
@@ -37,6 +39,13 @@ MAX_AST_NODES: Final = 128
 MAX_AST_DEPTH: Final = 16
 MAX_EXPONENT_MAGNITUDE: Final = 20
 WORKER_START_TIMEOUT_SECONDS: Final = 2.0
+DEFAULT_VERIFIER_POOL_SIZE: Final = max(1, min(4, os.cpu_count() or 1))
+DEFAULT_VERIFIER_QUEUE_CAPACITY: Final = 32
+DEFAULT_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS: Final = 0.25
+
+_RETRYABLE_OVERLOAD_CODES: Final = frozenset(
+    {"verifier_saturated", "verifier_queue_timeout"}
+)
 
 _ASSIGNMENT_LHS = re.compile(
     r"^[A-Za-z][A-Za-z0-9]*(?:\([A-Za-z][A-Za-z0-9]*\))?$"
@@ -109,6 +118,119 @@ class VerificationResult(BaseModel):
     def correct(self) -> bool:
         """Whether the result is a verified mathematical match."""
         return self.status == VerificationStatus.CORRECT
+
+    @property
+    def retryable_overload(self) -> bool:
+        """Whether verification did not start because local capacity was full."""
+        return self.code in _RETRYABLE_OVERLOAD_CODES
+
+
+def _environment_int(
+    environ: Mapping[str, str],
+    name: str,
+    default: int,
+    *,
+    minimum: int,
+    maximum: int,
+) -> int:
+    raw = environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return value
+
+
+def _environment_float(
+    environ: Mapping[str, str],
+    name: str,
+    default: float,
+    *,
+    minimum: float,
+    maximum: float,
+) -> float:
+    raw = environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class VerifierPoolSettings:
+    """Bounded process-pool configuration, suitable for environment loading."""
+
+    pool_size: int = DEFAULT_VERIFIER_POOL_SIZE
+    queue_capacity: int = DEFAULT_VERIFIER_QUEUE_CAPACITY
+    queue_wait_timeout_seconds: float = DEFAULT_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.pool_size <= 64:
+            raise ValueError("pool_size must be between 1 and 64")
+        if not 0 <= self.queue_capacity <= 4096:
+            raise ValueError("queue_capacity must be between 0 and 4096")
+        if not 0.001 <= self.queue_wait_timeout_seconds <= 60:
+            raise ValueError("queue_wait_timeout_seconds must be between 0.001 and 60")
+
+    @classmethod
+    def from_environment(
+        cls,
+        environ: Mapping[str, str] | None = None,
+    ) -> VerifierPoolSettings:
+        source = os.environ if environ is None else environ
+        return cls(
+            pool_size=_environment_int(
+                source,
+                "TUTOR_VERIFIER_POOL_SIZE",
+                DEFAULT_VERIFIER_POOL_SIZE,
+                minimum=1,
+                maximum=64,
+            ),
+            queue_capacity=_environment_int(
+                source,
+                "TUTOR_VERIFIER_QUEUE_CAPACITY",
+                DEFAULT_VERIFIER_QUEUE_CAPACITY,
+                minimum=0,
+                maximum=4096,
+            ),
+            queue_wait_timeout_seconds=_environment_float(
+                source,
+                "TUTOR_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS",
+                DEFAULT_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS,
+                minimum=0.001,
+                maximum=60,
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class VerifierMetricsSnapshot:
+    """Aggregate-only verifier counters; no learner input is retained."""
+
+    requests: int
+    invalid: int
+    timed_out: int
+    saturated: int
+
+
+class _VerifierWorker(Protocol):
+    def verify(
+        self,
+        spec: AnswerSpec,
+        given: str,
+        timeout_seconds: float,
+    ) -> VerificationResult: ...
+
+    def close(self) -> None: ...
 
 
 class _LexToken(NamedTuple):
@@ -798,20 +920,12 @@ class _SupervisedWorker:
         given: str,
         timeout_seconds: float,
     ) -> VerificationResult:
-        queued_at = time.monotonic()
         if not self._lock.acquire(timeout=timeout_seconds):
             return VerificationResult(
                 status=VerificationStatus.TIMEOUT,
                 code="verifier_queue_timeout",
             )
         try:
-            queue_deadline = queued_at + timeout_seconds
-            equivalence_budget = queue_deadline - time.monotonic()
-            if equivalence_budget <= 0:
-                return VerificationResult(
-                    status=VerificationStatus.TIMEOUT,
-                    code="verifier_queue_timeout",
-                )
             if self._process is None or not self._process.is_alive():
                 self._stop()
                 try:
@@ -822,19 +936,12 @@ class _SupervisedWorker:
                         code="worker_start_timeout",
                     )
             assert self._connection is not None
-            # Cold startup has a separate bounded allowance. Queue wait and
-            # actual symbolic work still share the requested timeout.
-            deadline = time.monotonic() + equivalence_budget
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                self._stop()
-                return VerificationResult(
-                    status=VerificationStatus.TIMEOUT,
-                    code="equivalence_timeout",
-                )
+            # Cold startup and bounded pool admission have separate allowances.
+            # A worker receives the full authored equivalence budget once the
+            # request starts executing.
             try:
                 self._connection.send((spec.model_dump(mode="json"), given))
-                if not self._connection.poll(remaining):
+                if not self._connection.poll(timeout_seconds):
                     self._stop()
                     return VerificationResult(
                         status=VerificationStatus.TIMEOUT,
@@ -857,8 +964,158 @@ class _SupervisedWorker:
             self._stop()
 
 
-_WORKER = _SupervisedWorker()
-atexit.register(_WORKER.close)
+class _SupervisedVerifierPool:
+    """Bounded admission and scheduling over isolated verifier processes."""
+
+    def __init__(
+        self,
+        settings: VerifierPoolSettings | None = None,
+        *,
+        worker_factory: Callable[[], _VerifierWorker] = _SupervisedWorker,
+    ) -> None:
+        self.settings = settings or VerifierPoolSettings()
+        self._workers = tuple(
+            worker_factory() for _ in range(self.settings.pool_size)
+        )
+        # LIFO keeps one process warm for serial traffic while still scaling
+        # out to the remaining workers under concurrent load.
+        self._available: queue.LifoQueue[_VerifierWorker] = queue.LifoQueue(
+            maxsize=self.settings.pool_size
+        )
+        for worker in self._workers:
+            self._available.put_nowait(worker)
+        self._admission = threading.BoundedSemaphore(
+            self.settings.pool_size + self.settings.queue_capacity
+        )
+        self._metrics_lock = threading.Lock()
+        self._requests = 0
+        self._invalid = 0
+        self._timed_out = 0
+        self._saturated = 0
+        self._lifecycle = threading.Condition()
+        self._active_calls = 0
+        self._closed = False
+
+    def _record(self, result: VerificationResult) -> None:
+        with self._metrics_lock:
+            self._requests += 1
+            if result.status == VerificationStatus.INVALID:
+                self._invalid += 1
+            if result.status == VerificationStatus.TIMEOUT:
+                self._timed_out += 1
+            if result.retryable_overload:
+                self._saturated += 1
+
+    def _recorded(self, result: VerificationResult) -> VerificationResult:
+        self._record(result)
+        return result
+
+    def verify(
+        self,
+        spec: AnswerSpec,
+        given: str,
+        timeout_seconds: float,
+    ) -> VerificationResult:
+        with self._lifecycle:
+            if self._closed:
+                return self._recorded(
+                    VerificationResult(
+                        status=VerificationStatus.TIMEOUT,
+                        code="verifier_unavailable",
+                    )
+                )
+            admitted = self._admission.acquire(blocking=False)
+            if admitted:
+                self._active_calls += 1
+        if not admitted:
+            return self._recorded(
+                VerificationResult(
+                    status=VerificationStatus.TIMEOUT,
+                    code="verifier_saturated",
+                )
+            )
+
+        worker: _VerifierWorker | None = None
+        try:
+            try:
+                worker = self._available.get(
+                    timeout=self.settings.queue_wait_timeout_seconds
+                )
+            except queue.Empty:
+                return self._recorded(
+                    VerificationResult(
+                        status=VerificationStatus.TIMEOUT,
+                        code="verifier_queue_timeout",
+                    )
+                )
+            return self._recorded(worker.verify(spec, given, timeout_seconds))
+        finally:
+            if worker is not None:
+                self._available.put_nowait(worker)
+            self._admission.release()
+            with self._lifecycle:
+                self._active_calls -= 1
+                self._lifecycle.notify_all()
+
+    def metrics_snapshot(self) -> VerifierMetricsSnapshot:
+        with self._metrics_lock:
+            return VerifierMetricsSnapshot(
+                requests=self._requests,
+                invalid=self._invalid,
+                timed_out=self._timed_out,
+                saturated=self._saturated,
+            )
+
+    def close(self) -> None:
+        with self._lifecycle:
+            if self._closed:
+                return
+            self._closed = True
+            while self._active_calls:
+                self._lifecycle.wait()
+        for worker in self._workers:
+            worker.close()
+
+
+_WORKER_POOL_LOCK = threading.Lock()
+_WORKER_POOL: _SupervisedVerifierPool | None = None
+
+
+def _worker_pool() -> _SupervisedVerifierPool:
+    global _WORKER_POOL
+    with _WORKER_POOL_LOCK:
+        if _WORKER_POOL is None:
+            _WORKER_POOL = _SupervisedVerifierPool(
+                VerifierPoolSettings.from_environment()
+            )
+        return _WORKER_POOL
+
+
+def verifier_metrics_snapshot() -> VerifierMetricsSnapshot:
+    """Return aggregate counters without starting worker processes."""
+    with _WORKER_POOL_LOCK:
+        pool = _WORKER_POOL
+    if pool is None:
+        return VerifierMetricsSnapshot(
+            requests=0,
+            invalid=0,
+            timed_out=0,
+            saturated=0,
+        )
+    return pool.metrics_snapshot()
+
+
+def close_verifier_pool() -> None:
+    """Close every verifier process; intended for application lifespan shutdown."""
+    global _WORKER_POOL
+    with _WORKER_POOL_LOCK:
+        pool = _WORKER_POOL
+        _WORKER_POOL = None
+    if pool is not None:
+        pool.close()
+
+
+atexit.register(close_verifier_pool)
 
 
 def verify_answer(
@@ -876,7 +1133,7 @@ def verify_answer(
     if len(given) > MAX_INPUT_LENGTH:
         return _invalid("input_too_long")
     if supervised:
-        return _WORKER.verify(answer_spec, given, timeout_seconds)
+        return _worker_pool().verify(answer_spec, given, timeout_seconds)
     return _verify_local(answer_spec, given)
 
 

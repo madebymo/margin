@@ -1,5 +1,8 @@
 """Restricted parsing and answer checking."""
 
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 
 from tutor.schemas.assessment import (
@@ -13,7 +16,10 @@ from tutor.schemas.assessment import (
 )
 from tutor.verify.checker import (
     MathVerificationError,
+    VerifierPoolSettings,
     _SupervisedWorker,
+    _SupervisedVerifierPool,
+    VerificationResult,
     VerificationStatus,
     check_answer,
     parse_restricted,
@@ -347,3 +353,287 @@ def test_supervisor_bounds_time_waiting_for_a_busy_worker():
 
     assert verdict.status == VerificationStatus.TIMEOUT
     assert verdict.code == "verifier_queue_timeout"
+    assert verdict.retryable_overload
+
+
+def test_verifier_pool_settings_load_bounded_environment_values():
+    settings = VerifierPoolSettings.from_environment(
+        {
+            "TUTOR_VERIFIER_POOL_SIZE": "3",
+            "TUTOR_VERIFIER_QUEUE_CAPACITY": "17",
+            "TUTOR_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS": "0.4",
+        }
+    )
+
+    assert settings == VerifierPoolSettings(
+        pool_size=3,
+        queue_capacity=17,
+        queue_wait_timeout_seconds=0.4,
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("TUTOR_VERIFIER_POOL_SIZE", "0"),
+        ("TUTOR_VERIFIER_QUEUE_CAPACITY", "-1"),
+        ("TUTOR_VERIFIER_QUEUE_WAIT_TIMEOUT_SECONDS", "forever"),
+    ],
+)
+def test_verifier_pool_settings_reject_invalid_environment(name, value):
+    with pytest.raises(ValueError, match=name):
+        VerifierPoolSettings.from_environment({name: value})
+
+
+class _BlockingVerifierWorker:
+    def __init__(self, release: threading.Event) -> None:
+        self.started = threading.Event()
+        self.release = release
+        self.closed = False
+
+    def verify(self, spec, given, timeout_seconds):
+        self.started.set()
+        assert self.release.wait(timeout=2)
+        return VerificationResult(
+            status=VerificationStatus.CORRECT,
+            code="equivalent",
+            normalized_form="x**2",
+        )
+
+    def close(self):
+        self.closed = True
+
+
+def test_pool_executes_up_to_configured_worker_count_concurrently():
+    release = threading.Event()
+    workers: list[_BlockingVerifierWorker] = []
+
+    def factory():
+        worker = _BlockingVerifierWorker(release)
+        workers.append(worker)
+        return worker
+
+    pool = _SupervisedVerifierPool(
+        VerifierPoolSettings(pool_size=2, queue_capacity=0),
+        worker_factory=factory,
+    )
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(pool.verify, spec, "x*x", 0.25)
+                for _ in range(2)
+            ]
+            assert all(worker.started.wait(timeout=1) for worker in workers)
+            release.set()
+            assert all(
+                future.result(timeout=1).status == VerificationStatus.CORRECT
+                for future in futures
+            )
+    finally:
+        release.set()
+        pool.close()
+
+
+def test_full_pool_rejects_before_execution_with_retryable_overload():
+    release = threading.Event()
+    workers: list[_BlockingVerifierWorker] = []
+
+    def factory():
+        worker = _BlockingVerifierWorker(release)
+        workers.append(worker)
+        return worker
+
+    pool = _SupervisedVerifierPool(
+        VerifierPoolSettings(pool_size=1, queue_capacity=0),
+        worker_factory=factory,
+    )
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    try:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            active = executor.submit(pool.verify, spec, "x*x", 0.25)
+            assert workers[0].started.wait(timeout=1)
+
+            overloaded = pool.verify(spec, "student input is never recorded", 0.25)
+
+            assert overloaded.status == VerificationStatus.TIMEOUT
+            assert overloaded.code == "verifier_saturated"
+            assert overloaded.retryable_overload
+            snapshot = pool.metrics_snapshot()
+            assert snapshot.requests == 1
+            assert snapshot.timed_out == 1
+            assert snapshot.saturated == 1
+            assert "student" not in repr(snapshot)
+            release.set()
+            assert active.result(timeout=1).correct
+    finally:
+        release.set()
+        pool.close()
+
+
+def test_admitted_request_has_a_bounded_queue_wait():
+    release = threading.Event()
+    workers: list[_BlockingVerifierWorker] = []
+
+    def factory():
+        worker = _BlockingVerifierWorker(release)
+        workers.append(worker)
+        return worker
+
+    pool = _SupervisedVerifierPool(
+        VerifierPoolSettings(
+            pool_size=1,
+            queue_capacity=1,
+            queue_wait_timeout_seconds=0.01,
+        ),
+        worker_factory=factory,
+    )
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    try:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            active = executor.submit(pool.verify, spec, "x*x", 0.25)
+            assert workers[0].started.wait(timeout=1)
+
+            queued = pool.verify(spec, "x*x", 0.25)
+
+            assert queued.status == VerificationStatus.TIMEOUT
+            assert queued.code == "verifier_queue_timeout"
+            assert queued.retryable_overload
+            release.set()
+            assert active.result(timeout=1).correct
+    finally:
+        release.set()
+        pool.close()
+
+
+def test_pool_timeout_reaps_only_the_affected_worker():
+    class NeverReplies:
+        def send(self, payload):
+            self.payload = payload
+
+        def poll(self, timeout):
+            return False
+
+        def close(self):
+            self.closed = True
+
+    class Replies:
+        def send(self, payload):
+            self.payload = payload
+
+        def poll(self, timeout):
+            return True
+
+        def recv(self):
+            return VerificationResult(
+                status=VerificationStatus.CORRECT,
+                code="equivalent",
+            ).model_dump(mode="json")
+
+        def close(self):
+            self.closed = True
+
+    class RunningProcess:
+        def __init__(self):
+            self.alive = True
+
+        def is_alive(self):
+            return self.alive
+
+        def terminate(self):
+            self.alive = False
+
+        def join(self, timeout):
+            return None
+
+        def kill(self):
+            self.alive = False
+
+    healthy = _SupervisedWorker()
+    healthy_process = RunningProcess()
+    healthy._connection = Replies()
+    healthy._process = healthy_process
+    stuck = _SupervisedWorker()
+    stuck._connection = NeverReplies()
+    stuck._process = RunningProcess()
+    workers = iter((healthy, stuck))
+    pool = _SupervisedVerifierPool(
+        VerifierPoolSettings(pool_size=2, queue_capacity=0),
+        worker_factory=lambda: next(workers),
+    )
+    spec = SymbolicAnswerSpec(expected="x^2", variables=["x"])
+    try:
+        timed_out = pool.verify(spec, "x*x", 0.001)
+
+        assert timed_out.code == "equivalence_timeout"
+        assert not timed_out.retryable_overload
+        assert stuck._connection is None
+        assert stuck._process is None
+        assert healthy._process is healthy_process
+        assert healthy_process.is_alive()
+
+        recovered = pool.verify(spec, "x*x", 0.25)
+
+        assert recovered.correct
+        assert healthy._process is healthy_process
+        assert healthy_process.is_alive()
+    finally:
+        pool.close()
+
+
+def test_pool_crash_reaps_only_the_affected_worker():
+    class CrashesOnReceive:
+        def send(self, payload):
+            self.payload = payload
+
+        def poll(self, timeout):
+            return True
+
+        def recv(self):
+            raise EOFError
+
+        def close(self):
+            self.closed = True
+
+    class RunningProcess:
+        def __init__(self):
+            self.alive = True
+
+        def is_alive(self):
+            return self.alive
+
+        def terminate(self):
+            self.alive = False
+
+        def join(self, timeout):
+            return None
+
+        def kill(self):
+            self.alive = False
+
+    healthy = _SupervisedWorker()
+    healthy_process = RunningProcess()
+    healthy._process = healthy_process
+    crashed = _SupervisedWorker()
+    crashed._connection = CrashesOnReceive()
+    crashed._process = RunningProcess()
+    workers = iter((healthy, crashed))
+    pool = _SupervisedVerifierPool(
+        VerifierPoolSettings(pool_size=2, queue_capacity=0),
+        worker_factory=lambda: next(workers),
+    )
+    try:
+        result = pool.verify(
+            SymbolicAnswerSpec(expected="x^2", variables=["x"]),
+            "x*x",
+            0.01,
+        )
+
+        assert result.status == VerificationStatus.INVALID
+        assert result.code == "worker_unavailable"
+        assert crashed._connection is None
+        assert crashed._process is None
+        assert healthy._process is healthy_process
+        assert healthy_process.is_alive()
+    finally:
+        pool.close()
