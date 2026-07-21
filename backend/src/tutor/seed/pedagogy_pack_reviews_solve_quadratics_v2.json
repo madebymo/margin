@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "manifest_version": "solve-quadratics-pedagogy-review-manifest-v2",
+  "graph_version": 2,
+  "compiler_version": "pedagogy-review-compiler-v1",
+  "entries": [
+    {
+      "source_id": "pedagogy.source.polynomial_ops",
+      "revision": 1,
+      "source_digest": "8ed464eaeb39d2b3721ecedb66702fc39fca9ddfd2efab6427ba4c48f23b99ca",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.factoring",
+      "revision": 1,
+      "source_digest": "349a8c9f6b5fa963b203d8350bafd6ce0f5518602f277e30e8dd6760c7a557f0",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.solve_linear",
+      "revision": 1,
+      "source_digest": "6aa9c160c0d5f3c32c2f08ab683c149965b4e15161e3bc97711e1d96eb35dafd",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.solve_quadratic",
+      "revision": 1,
+      "source_digest": "bfd5a567679e5aec3ccda14b9ce04b400d3ab208ce4ace6d1933d1f3c3b8a7f6",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    }
+  ]
+}

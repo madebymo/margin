@@ -1,0 +1,331 @@
+{
+  "schema_version": 2,
+  "source_version": "solve-quadratics-wave-pedagogy-draft-v2",
+  "graph_version": 2,
+  "pack_sources": [
+    {
+      "source_id": "pedagogy.source.polynomial_ops",
+      "revision": 1,
+      "kc_id": "kc.alg.polynomial_ops",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.polynomial_ops.unlike_terms",
+          "description": "Combines terms with different powers.",
+          "error_signature": "Coefficients of x^2 and x are added as if their variable parts matched.",
+          "remediation_hint": "Sort terms by exponent before combining any coefficients."
+        },
+        {
+          "id": "m.polynomial_ops.subtraction_sign",
+          "description": "Applies subtraction to only the first term.",
+          "error_signature": "Later terms of the subtracted polynomial keep their original signs.",
+          "remediation_hint": "Distribute the negative sign to every term before collecting."
+        },
+        {
+          "id": "m.polynomial_ops.incomplete_distribution",
+          "description": "Omits one cross product when expanding.",
+          "error_signature": "A product of two binomials contains fewer than four pre-combination products.",
+          "remediation_hint": "Use a two-by-two multiplication grid and fill every cell."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.polynomial_ops.organized_workspace",
+          "description": "Like powers are labeled drawers: coefficients can be combined only after every term is placed in the drawer carrying the same exponent.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "polynomial_unlike_terms: combines coefficients across different exponents",
+        "polynomial_sign_loss: fails to negate every subtracted term",
+        "polynomial_missing_cross_product: omits a binomial cross product"
+      ],
+      "sources": [
+        "OpenStax Algebra and Trigonometry 2e, Section 1.5: Polynomials.",
+        "OpenStax College Algebra 2e, Section 1.4: Polynomials."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Polynomial operations preserve the power attached to each term while coefficients are added, subtracted, or produced by distribution."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "(2*x+3)*(x-4)=2*x^2-5*x-12",
+          "spoken_text": "The quantity two x plus three times x minus four expands to two x squared minus five x minus twelve."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A final scan by descending exponent makes missing powers and sign errors visible."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Write every polynomial in descending powers and insert zero placeholders for missing powers."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "(2*x+3)*(x-4)=2*x^2-5*x-12",
+          "spoken_text": "The quantity two x plus three times x minus four expands to two x squared minus five x minus twelve."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For a product, verify every term in the first factor multiplied every term in the second before collecting."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.factoring",
+      "revision": 1,
+      "kc_id": "kc.alg.factoring",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.factoring.skips_gcf",
+          "description": "Starts a special pattern before removing the greatest common monomial.",
+          "error_signature": "The proposed factors retain a common coefficient or x power inside.",
+          "remediation_hint": "Remove the greatest common monomial before looking for another pattern."
+        },
+        {
+          "id": "m.factoring.sum_product_reversed",
+          "description": "Uses factors whose sum and product conditions are reversed.",
+          "error_signature": "Proposed roots add to the constant and multiply to the x coefficient.",
+          "remediation_hint": "For a monic quadratic, roots multiply to the constant and add to the opposite x coefficient."
+        },
+        {
+          "id": "m.factoring.same_sign_difference",
+          "description": "Factors a difference of squares with equal signs.",
+          "error_signature": "Both conjugate factors use plus or both use minus.",
+          "remediation_hint": "A difference of squares requires one plus and one minus factor."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.factoring.organized_workspace",
+          "description": "Factoring is an audit trail run backward: remove what every term shares, then identify the multiplication pattern that reconstructs the original polynomial.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "factoring_gcf_omitted: residual terms retain a common monomial",
+        "factoring_root_conditions_swapped: sum and product tests are reversed",
+        "factoring_conjugate_sign_error: difference-of-squares factors use matching signs"
+      ],
+      "sources": [
+        "OpenStax Intermediate Algebra 2e, Section 6.1: Greatest Common Factor and Factor by Grouping.",
+        "OpenStax Intermediate Algebra 2e, Section 6.4: General Strategy for Factoring Polynomials."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A normalized factorization begins with the greatest common monomial and leaves a primitive residual polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x^2-9=(x-3)*(x+3)",
+          "spoken_text": "x squared minus nine equals x minus three times x plus three."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Multiplying the proposed factors is the final truth check; it must reproduce every original coefficient."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "First name the common coefficient and lowest shared x power; divide them out term by term."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x^2-9=(x-3)*(x+3)",
+          "spoken_text": "x squared minus nine equals x minus three times x plus three."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Then test the remaining pattern by multiplying the proposed factors back together."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.solve_linear",
+      "revision": 1,
+      "kc_id": "kc.alg.solve_linear",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.solve_linear.one_sided_balance",
+          "description": "Changes only one side of an equation.",
+          "error_signature": "A term is added, subtracted, multiplied, or divided on only one side.",
+          "remediation_hint": "Write the same balancing operation beside both sides before simplifying."
+        },
+        {
+          "id": "m.solve_linear.sign_transfer",
+          "description": "Moves a term by changing its sign without an explicit balancing operation.",
+          "error_signature": "The collected equation has a sign inconsistent with subtracting the term from both sides.",
+          "remediation_hint": "Show the subtraction or addition on both sides rather than mentally moving a term."
+        },
+        {
+          "id": "m.solve_linear.divides_one_term",
+          "description": "Divides only one term by the final coefficient.",
+          "error_signature": "The last division does not apply to the complete side of the equation.",
+          "remediation_hint": "After collecting, divide both complete sides by the coefficient of x."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.solve_linear.organized_workspace",
+          "description": "An equation is a balanced scale: every operation is applied to both complete sides until one copy of x remains alone.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "linear_unbalanced_operation: an inverse operation changes only one side",
+        "linear_collection_sign_error: a collected term has the wrong sign",
+        "linear_partial_division: final coefficient division applies to only one term"
+      ],
+      "sources": [
+        "OpenStax Elementary Algebra 2e, Section 2.2: Use a General Strategy to Solve Linear Equations.",
+        "OpenStax Intermediate Algebra 2e, Section 2.1: Solve Linear Equations."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solving a linear equation preserves equality while variable terms are collected on one side and constants on the other."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "3*x+5=x+17 -> 2*x=12 -> x=6",
+          "spoken_text": "Three x plus five equals x plus seventeen, then two x equals twelve, then x equals six."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The final substitution check must make the original left and right sides exactly equal."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Write one balancing operation per line and simplify both sides only after that operation is visible."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "3*x+5=x+17 -> 2*x=12 -> x=6",
+          "spoken_text": "Three x plus five equals x plus seventeen, then two x equals twelve, then x equals six."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Substitute the candidate integer into the untouched original equation to catch sign or division errors."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.solve_quadratic",
+      "revision": 1,
+      "kc_id": "kc.alg.solve_quadratic",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.solve_quadratic.not_zero",
+          "description": "Attempts a zero-product step before the equation equals zero.",
+          "error_signature": "Factors are set equal to zero while a nonzero expression remains on the other side.",
+          "remediation_hint": "Collect the entire equation on one side and write zero on the other before factoring."
+        },
+        {
+          "id": "m.solve_quadratic.one_root",
+          "description": "Reports only one root from two distinct linear factors.",
+          "error_signature": "The response contains a solution from only one factor.",
+          "remediation_hint": "Set every distinct factor equal to zero and collect all roots in one set."
+        },
+        {
+          "id": "m.solve_quadratic.factor_sign",
+          "description": "Solves x-r=0 with the wrong sign.",
+          "error_signature": "A factor x-r produces root -r rather than r.",
+          "remediation_hint": "Undo the signed constant in each linear factor with an explicit balancing step."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.solve_quadratic.organized_workspace",
+          "description": "A factorable quadratic opens two linear doors: after creating a zero product, each factor can independently make that product zero.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "quadratic_zero_form_missing: zero-product reasoning begins before one side is zero",
+        "quadratic_root_omitted: only one distinct linear factor is solved",
+        "quadratic_factor_sign_reversed: a factor produces a root with the wrong sign"
+      ],
+      "sources": [
+        "OpenStax Intermediate Algebra 2e, Section 6.5: Solve Polynomial Equations by Factoring.",
+        "OpenStax College Algebra 2e, Section 2.5: Quadratic Equations."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Every reviewed pilot equation is monic and factors over integer roots, so the lesson stays within factoring and linear-equation reasoning."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x^2+15*x+56=0 -> (x+7)*(x+8)=0 -> {-8,-7}",
+          "spoken_text": "x squared plus fifteen x plus fifty-six equals zero, factors as x plus seven times x plus eight, and has solution set negative eight and negative seven."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Repeated factors contribute one set member, while distinct factors contribute both roots."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Confirm the equation is zero, then find integer factor roots using the sum and product checks."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x^2+15*x+56=0 -> (x+7)*(x+8)=0 -> {-8,-7}",
+          "spoken_text": "x squared plus fifteen x plus fifty-six equals zero, factors as x plus seven times x plus eight, and has solution set negative eight and negative seven."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solve every factor, remove duplicate roots, and substitute each set member into the original equation."
+        }
+      ]
+    }
+  ]
+}
