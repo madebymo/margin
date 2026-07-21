@@ -46,6 +46,7 @@ logger = logging.getLogger("tutor.api")
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 _DIST_DIR = _STATIC_DIR / "dist"
+_V2_METRICS_SINK_FACTORY_ENV = "TUTOR_V2_METRICS_SINK_FACTORY"
 _V2_MUTATION_GATE_FACTORY_ENV = "TUTOR_V2_MUTATION_GATE_FACTORY"
 _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE = timedelta(seconds=60)
 
@@ -183,6 +184,33 @@ def create_app(
     app.state.persistence = persistence
     v2_flags = V2FeatureFlags.from_environment()
     app.state.v2_feature_flags = v2_flags
+    resolved_v2_metrics_sink = v2_metrics_sink
+    if v2_flags.api_session_v2 and resolved_v2_metrics_sink is None:
+        metrics_factory_configured = bool(
+            os.environ.get(_V2_METRICS_SINK_FACTORY_ENV, "").strip()
+        )
+        try:
+            resolved_v2_metrics_sink = build_runtime_plugin_from_environment(
+                _V2_METRICS_SINK_FACTORY_ENV,
+                contract=MetricsSink,
+                contract_name="MetricsSink",
+                required=pilot_production,
+            )
+        except RuntimePluginError as exc:
+            # A configured exporter is explicit deployment intent. Refuse to
+            # start instead of silently dropping fleet-level safety signals,
+            # while keeping provider names, configuration, and errors private.
+            logger.error(
+                "v2 metrics sink plugin startup failed error_type=%s",
+                type(exc).__name__,
+            )
+            if pilot_production and not metrics_factory_configured:
+                raise RuntimeError(
+                    "TUTOR_PILOT_PRODUCTION requires a v2 fleet metrics sink"
+                ) from None
+            raise RuntimeError(
+                "configured v2 fleet metrics sink could not be initialized"
+            ) from None
     resolved_v2_mutation_gate = v2_mutation_gate
     resolved_v2_mutation_gate_max_age = v2_mutation_gate_max_age
     if v2_flags.api_session_v2 and resolved_v2_mutation_gate is None:
@@ -255,6 +283,7 @@ def create_app(
                 {
                     "student_stack_enabled": False,
                     "content_ready": False,
+                    "fleet_metrics_configured": False,
                     "mutations_paused": True,
                     "accepting_mutations": False,
                     "durable_persistence": False,
@@ -419,7 +448,7 @@ def create_app(
                 else None
             ),
             feature_flags=v2_flags,
-            metrics_sink=v2_metrics_sink,
+            metrics_sink=resolved_v2_metrics_sink,
             mutation_gate=resolved_v2_mutation_gate,
             mutation_gate_max_age=resolved_v2_mutation_gate_max_age,
         )

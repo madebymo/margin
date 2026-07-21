@@ -1512,6 +1512,7 @@ def install_v2_routes(
         return {
             "student_stack_enabled": flags.student_stack_enabled,
             "content_ready": content_ready,
+            "fleet_metrics_configured": metrics_sink is not None,
             "mutations_paused": effective_pause,
             "accepting_mutations": (
                 flags.student_stack_enabled
