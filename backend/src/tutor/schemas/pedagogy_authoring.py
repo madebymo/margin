@@ -13,6 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from tutor.schemas.assessment import DisplayPromptSegment
 from tutor.schemas.kc import KC_ID_PATTERN
 from tutor.schemas.pedagogy import Metaphor, Misconception
 
@@ -37,6 +38,8 @@ class PedagogyPackSource(_StrictFrozenModel):
     metaphors: tuple[Metaphor, ...] = Field(min_length=1)
     error_patterns: tuple[str, ...] = Field(min_length=1)
     sources: tuple[str, ...] = Field(min_length=1)
+    lesson_narrative: tuple[DisplayPromptSegment, ...] = ()
+    remediation: tuple[DisplayPromptSegment, ...] = ()
 
     @field_validator("author", mode="before")
     @classmethod
@@ -72,7 +75,7 @@ class PedagogyPackSource(_StrictFrozenModel):
 class PedagogySourceDocument(_StrictFrozenModel):
     """A graph-pinned set of pedagogy sources awaiting review."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     source_version: str = Field(max_length=128, pattern=_CONTENT_ID_PATTERN)
     graph_version: int = Field(ge=1)
     pack_sources: tuple[PedagogyPackSource, ...] = Field(min_length=1)
@@ -89,6 +92,23 @@ class PedagogySourceDocument(_StrictFrozenModel):
         misconception_owners: dict[str, str] = {}
         metaphor_owners: dict[str, str] = {}
         for source in self.pack_sources:
+            if self.schema_version >= 2:
+                if not source.lesson_narrative:
+                    raise ValueError(
+                        f"schema-v2 source {source.source_id!r} lacks lesson_narrative"
+                    )
+                if not source.remediation:
+                    raise ValueError(
+                        f"schema-v2 source {source.source_id!r} lacks remediation"
+                    )
+                if len(source.error_patterns) < 3:
+                    raise ValueError(
+                        f"schema-v2 source {source.source_id!r} requires three error patterns"
+                    )
+                if len(source.sources) < 2:
+                    raise ValueError(
+                        f"schema-v2 source {source.source_id!r} requires two citations"
+                    )
             for misconception in source.misconceptions:
                 previous = misconception_owners.setdefault(misconception.id, source.kc_id)
                 if previous != source.kc_id:

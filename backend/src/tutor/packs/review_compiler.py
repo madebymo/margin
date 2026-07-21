@@ -55,8 +55,16 @@ def load_review_manifest(path: Path | None = None) -> PedagogyReviewManifest:
 
 def source_digest(source: PedagogyPackSource) -> str:
     """Return the canonical SHA-256 identity reviewed by the manifest."""
+    payload = source.model_dump(mode="json")
+    # Preserve exact schema-v1 review identities. The additive instructional
+    # blocks are absent from those source files and are enforced only by a
+    # schema-v2 source document.
+    if not source.lesson_narrative:
+        payload.pop("lesson_narrative", None)
+    if not source.remediation:
+        payload.pop("remediation", None)
     canonical = json.dumps(
-        source.model_dump(mode="json"),
+        payload,
         ensure_ascii=True,
         separators=(",", ":"),
         sort_keys=True,
@@ -229,6 +237,14 @@ def validate_compiled_catalog_provenance(
             raise PedagogyReviewError(f"compiled error-pattern content mismatch for {kc_id}")
         if tuple(pack.sources) != tuple(sorted(source.sources)):
             raise PedagogyReviewError(f"compiled citation content mismatch for {kc_id}")
+        if tuple(pack.lesson_narrative) != tuple(source.lesson_narrative):
+            raise PedagogyReviewError(
+                f"compiled lesson-narrative content mismatch for {kc_id}"
+            )
+        if tuple(pack.remediation) != tuple(source.remediation):
+            raise PedagogyReviewError(
+                f"compiled remediation content mismatch for {kc_id}"
+            )
         if review.decision != PedagogyReviewDecision.APPROVED:
             raise PedagogyReviewError(f"compiled source review is not approved for {kc_id}")
         if pack.provenance is None:
@@ -293,6 +309,8 @@ def compile_pedagogy_catalog(
                 metaphors=sorted(source.metaphors, key=lambda item: item.id),
                 error_patterns=sorted(source.error_patterns),
                 sources=sorted(source.sources),
+                lesson_narrative=source.lesson_narrative,
+                remediation=source.remediation,
                 review_status=ReviewStatus.HUMAN_APPROVED,
                 version=source.revision,
                 provenance=PedagogyPackProvenance(
@@ -308,6 +326,7 @@ def compile_pedagogy_catalog(
         )
 
     catalog = PedagogyPackCatalog(
+        schema_version=source_document.schema_version,
         catalog_version=publication.catalog_version,
         graph_version=graph.graph_version,
         published_by=publication.published_by,

@@ -8,14 +8,27 @@ import argparse
 import json
 from pathlib import Path
 
-from tutor.schemas.assessment import ItemBankDocument, answer_spec_adapter
+from tutor.schemas.assessment import (
+    ItemBankDocument,
+    answer_spec_adapter,
+    display_prompt_segment_adapter,
+    prompt_segment_adapter,
+)
 from tutor.schemas.content_authoring import ContentReviewManifest, ItemBlueprintDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import EvidenceEvent
 from tutor.schemas.lesson import MiniLessonPackage
 from tutor.schemas.pedagogy import PedagogyPack, PedagogyPackCatalog
+from tutor.schemas.pedagogy_authoring import (
+    PedagogyReviewManifest,
+    PedagogySourceDocument,
+)
 from tutor.schemas.probe import DiagnosticProbe
 from tutor.schemas.product_quotient_authoring import ProductQuotientBlueprintDocument
+from tutor.schemas.release_authoring import (
+    PublishedReleaseManifest,
+    ReleaseReviewManifest,
+)
 from tutor.schemas.widgets import widget_config_adapter
 
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "schemas" / "json"
@@ -34,12 +47,18 @@ def export_schemas(out_dir: Path) -> list[Path]:
         "graph_document": GraphDocument.model_json_schema(),
         "evidence_event": EvidenceEvent.model_json_schema(),
         "answer_spec": answer_spec_adapter.json_schema(),
+        "display_prompt_segment": display_prompt_segment_adapter.json_schema(),
+        "prompt_segment": prompt_segment_adapter.json_schema(),
         "item_bank_document": ItemBankDocument.model_json_schema(),
         "item_blueprint_document": ItemBlueprintDocument.model_json_schema(),
         "product_quotient_blueprint_document": (
             ProductQuotientBlueprintDocument.model_json_schema()
         ),
         "content_review_manifest": ContentReviewManifest.model_json_schema(),
+        "pedagogy_source_document": PedagogySourceDocument.model_json_schema(),
+        "pedagogy_review_manifest": PedagogyReviewManifest.model_json_schema(),
+        "release_review_manifest": ReleaseReviewManifest.model_json_schema(),
+        "published_release_manifest": PublishedReleaseManifest.model_json_schema(),
     }
     written: list[Path] = []
     for name, schema in schemas.items():

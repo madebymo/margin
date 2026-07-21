@@ -86,6 +86,14 @@ class MathPromptSegment(StrictFrozenModel):
     kind: Literal["math"] = "math"
     role: PromptSemanticRole = PromptSemanticRole.GIVEN
     expression: str = Field(min_length=1)
+    # ``None`` keeps schema-v2 checkpoints readable. Schema-v3 banks require
+    # reviewed speech text for every learner-visible math segment.
+    spoken_text: str | None = Field(default=None, min_length=1)
+
+    @field_validator("spoken_text", mode="before")
+    @classmethod
+    def _normalize_spoken_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
     @model_validator(mode="after")
     def _valid_role(self) -> "MathPromptSegment":
@@ -95,6 +103,118 @@ class MathPromptSegment(StrictFrozenModel):
             PromptSemanticRole.WORKED_ANSWER,
         }:
             raise ValueError(f"math segments cannot have role {self.role.value!r}")
+        return self
+
+
+class TablePromptSegment(StrictFrozenModel):
+    """An accessible static data table embedded in a prompt."""
+
+    kind: Literal["table"] = "table"
+    role: PromptSemanticRole = PromptSemanticRole.CONTEXT
+    caption: str = Field(min_length=1)
+    column_headers: tuple[str, ...] = Field(min_length=1, max_length=12)
+    rows: tuple[tuple[str, ...], ...] = Field(min_length=1, max_length=50)
+    spoken_text: str = Field(min_length=1)
+
+    @field_validator("caption", "spoken_text", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("column_headers", mode="before")
+    @classmethod
+    def _normalize_headers(cls, value: object) -> object:
+        if not isinstance(value, (list, tuple)):
+            return value
+        return tuple(cell.strip() if isinstance(cell, str) else cell for cell in value)
+
+    @field_validator("rows", mode="before")
+    @classmethod
+    def _normalize_rows(cls, value: object) -> object:
+        if not isinstance(value, (list, tuple)):
+            return value
+        return tuple(
+            tuple(cell.strip() if isinstance(cell, str) else cell for cell in row)
+            if isinstance(row, (list, tuple))
+            else row
+            for row in value
+        )
+
+    @model_validator(mode="after")
+    def _valid_table(self) -> "TablePromptSegment":
+        if self.role not in {
+            PromptSemanticRole.CONTEXT,
+            PromptSemanticRole.GIVEN,
+            PromptSemanticRole.WORKED_STEP,
+            PromptSemanticRole.WORKED_ANSWER,
+        }:
+            raise ValueError(f"table segments cannot have role {self.role.value!r}")
+        if len(self.column_headers) != len(set(self.column_headers)):
+            raise ValueError("table column headers must be unique")
+        if any(not header for header in self.column_headers):
+            raise ValueError("table column headers must be nonblank")
+        width = len(self.column_headers)
+        if any(len(row) != width for row in self.rows):
+            raise ValueError("every table row must match the column-header width")
+        if any(not cell for row in self.rows for cell in row):
+            raise ValueError("table cells must be nonblank")
+        return self
+
+
+class StaticPlotPoint(StrictFrozenModel):
+    """One exact, display-independent point in a reviewed static plot."""
+
+    x: str = Field(min_length=1)
+    y: str = Field(min_length=1)
+
+
+class StaticPlotSeries(StrictFrozenModel):
+    """One labeled series in a reviewed static plot."""
+
+    label: str = Field(min_length=1)
+    points: tuple[StaticPlotPoint, ...] = Field(min_length=2, max_length=100)
+
+
+class PlotPromptSegment(StrictFrozenModel):
+    """Static plot data with an equivalent text or table representation."""
+
+    kind: Literal["plot"] = "plot"
+    role: PromptSemanticRole = PromptSemanticRole.CONTEXT
+    title: str = Field(min_length=1)
+    x_label: str = Field(min_length=1)
+    y_label: str = Field(min_length=1)
+    series: tuple[StaticPlotSeries, ...] = Field(min_length=1, max_length=8)
+    spoken_text: str = Field(min_length=1)
+    equivalent_table: TablePromptSegment | None = None
+
+    @field_validator("title", "x_label", "y_label", "spoken_text", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def _valid_plot(self) -> "PlotPromptSegment":
+        if self.role not in {
+            PromptSemanticRole.CONTEXT,
+            PromptSemanticRole.GIVEN,
+            PromptSemanticRole.WORKED_STEP,
+            PromptSemanticRole.WORKED_ANSWER,
+        }:
+            raise ValueError(f"plot segments cannot have role {self.role.value!r}")
+        labels = [series.label for series in self.series]
+        if len(labels) != len(set(labels)):
+            raise ValueError("plot series labels must be unique")
+        point_count = sum(len(series.points) for series in self.series)
+        if self.equivalent_table is not None:
+            table_cells = sum(len(row) for row in self.equivalent_table.rows)
+            if table_cells < point_count:
+                raise ValueError(
+                    "an equivalent plot table must represent every plotted point"
+                )
+        elif len(self.spoken_text.split()) < 6:
+            raise ValueError(
+                "a plot without an equivalent table requires a complete textual description"
+            )
         return self
 
 
@@ -112,8 +232,28 @@ class BlankPromptSegment(StrictFrozenModel):
         return self
 
 
+DisplayPromptSegment = Annotated[
+    Union[
+        TextPromptSegment,
+        MathPromptSegment,
+        TablePromptSegment,
+        PlotPromptSegment,
+    ],
+    Field(discriminator="kind"),
+]
+display_prompt_segment_adapter: TypeAdapter[DisplayPromptSegment] = TypeAdapter(
+    DisplayPromptSegment
+)
+
+
 PromptSegment = Annotated[
-    Union[TextPromptSegment, MathPromptSegment, BlankPromptSegment],
+    Union[
+        TextPromptSegment,
+        MathPromptSegment,
+        TablePromptSegment,
+        PlotPromptSegment,
+        BlankPromptSegment,
+    ],
     Field(discriminator="kind"),
 ]
 prompt_segment_adapter: TypeAdapter[PromptSegment] = TypeAdapter(PromptSegment)
@@ -371,7 +511,10 @@ class AssessmentItem(StrictFrozenModel):
 class ItemBankDocument(StrictFrozenModel):
     """A complete item-bank release pinned to one KC graph version."""
 
-    schema_version: Literal[2] = 2
+    # Version 2 remains parseable for exact replay. Version 3 adds the
+    # accessibility contract enforced below and is required by the new
+    # publication boundary.
+    schema_version: Literal[2, 3] = 2
     bank_version: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]*$")
     graph_version: int = Field(ge=1)
     # A bank may carry draft inventory without releasing any KC. Runtime
@@ -402,6 +545,15 @@ class ItemBankDocument(StrictFrozenModel):
             tuple[str, frozenset[AssessmentSurface]], int | None
         ] = {}
         for item in self.items:
+            if self.schema_version >= 3:
+                for segment in item.prompt:
+                    if (
+                        isinstance(segment, MathPromptSegment)
+                        and segment.spoken_text is None
+                    ):
+                        raise ValueError(
+                            f"schema-v3 item {item.item_id!r} has math without spoken_text"
+                        )
             previous = family_kcs.setdefault(item.family_id, item.kc_id)
             if previous != item.kc_id:
                 raise ValueError(

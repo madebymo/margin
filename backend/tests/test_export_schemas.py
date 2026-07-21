@@ -13,12 +13,18 @@ _spec.loader.exec_module(_module)
 
 def test_export_writes_valid_schema_files(tmp_path):
     written = _module.export_schemas(tmp_path)
-    assert len(written) == 12
+    assert len(written) == 18
     assert {path.name for path in written} >= {
+        "display_prompt_segment.json",
+        "prompt_segment.json",
         "item_blueprint_document.json",
         "product_quotient_blueprint_document.json",
         "content_review_manifest.json",
         "pedagogy_pack_catalog.json",
+        "pedagogy_source_document.json",
+        "pedagogy_review_manifest.json",
+        "release_review_manifest.json",
+        "published_release_manifest.json",
     }
     for path in written:
         data = json.loads(path.read_text())

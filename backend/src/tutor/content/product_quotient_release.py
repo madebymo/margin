@@ -29,6 +29,11 @@ from tutor.content.item_bank import (
     _candidate_fits_answer_contract,
     render_prompt,
 )
+from tutor.content.task_compilers import (
+    TaskCompilerRegistration,
+    TaskCompilerRegistry,
+    TaskCompilerRegistryError,
+)
 from tutor.graph.service import ancestor_subgraph
 from tutor.schemas.assessment import (
     AssessmentHint,
@@ -479,7 +484,7 @@ class _DerivedTask:
     variables: tuple[str, ...] = ("x",)
 
 
-def _derive_task(task: ReleaseMathTask) -> _DerivedTask:
+def _derive_task_unregistered(task: ReleaseMathTask) -> _DerivedTask:
     """Derive visible structure and truth from the closed typed task union."""
     if isinstance(task, ExponentProductTask):
         given = f"{task.base}^{task.left_exponent}*{task.base}^{task.right_exponent}"
@@ -706,6 +711,104 @@ def _derive_task(task: ReleaseMathTask) -> _DerivedTask:
     raise TypeError(f"unsupported task {type(task).__name__}")
 
 
+_TASK_COMPILER_REGISTRY = TaskCompilerRegistry(
+    TaskCompilerRegistration(
+        kind=kind,
+        task_type=task_type,
+        construct_id=construct_id,
+        kc_id=kc_id,
+        compile=_derive_task_unregistered,
+    )
+    for kind, task_type, construct_id, kc_id in (
+        (
+            "exponent_product",
+            ExponentProductTask,
+            "exponent.product",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "exponent_quotient",
+            ExponentQuotientTask,
+            "exponent.quotient",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "exponent_power",
+            ExponentPowerTask,
+            "exponent.power",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "exponent_negative",
+            ExponentNegativeTask,
+            "exponent.negative",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "exponent_zero",
+            ExponentZeroTask,
+            "exponent.zero",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "exponent_compound",
+            ExponentCompoundTask,
+            "exponent.compound",
+            "kc.alg.exponent_rules",
+        ),
+        (
+            "power_derivative",
+            PowerDerivativeTask,
+            # The signed exponent determines the narrower construct. This
+            # registration is refined by ``_construct_for_task`` below.
+            "power.integer",
+            "kc.der.power_rule",
+        ),
+        (
+            "rational_power_derivative",
+            RationalPowerDerivativeTask,
+            "power.rational",
+            "kc.der.power_rule",
+        ),
+        (
+            "radical_power_derivative",
+            RadicalPowerDerivativeTask,
+            # The source form determines sqrt versus reciprocal radical.
+            "power.radical",
+            "kc.der.power_rule",
+        ),
+        (
+            "polynomial_derivative",
+            PolynomialDerivativeTask,
+            "sum.polynomial_termwise",
+            "kc.der.sum_constant_rules",
+        ),
+        (
+            "product_at_point",
+            ProductAtPointTask,
+            "product_quotient.product_at_point",
+            TARGET_KC,
+        ),
+        (
+            "quotient_at_point",
+            QuotientAtPointTask,
+            "product_quotient.quotient_at_point",
+            TARGET_KC,
+        ),
+    )
+)
+
+
+def _derive_task(task: ReleaseMathTask) -> _DerivedTask:
+    """Compile a typed task through the closed constructor registry."""
+    derived = _TASK_COMPILER_REGISTRY.compile(task)
+    if not isinstance(derived, _DerivedTask):
+        raise ProductQuotientCompilationError(
+            f"task compiler returned unsupported output {type(derived).__name__}"
+        )
+    return derived
+
+
 def _review_status_and_provenance(
     source: ProductQuotientBlueprintDocument,
     family: ReleaseFamilyBlueprint,
@@ -853,6 +956,9 @@ def _compiled_review_artifact(
         ),
     )
     artifact = item.model_dump(mode="json")
+    for segment in artifact["prompt"]:
+        if isinstance(segment, dict) and segment.get("spoken_text") is None:
+            segment.pop("spoken_text", None)
     artifact.pop("review_status")
     provenance = artifact["provenance"]
     if not isinstance(provenance, dict):
@@ -879,28 +985,10 @@ def _compile_family(
 
 
 def _validate_task_kc(family: ReleaseFamilyBlueprint) -> None:
-    task = family.task
-    if isinstance(
-        task,
-        (
-            ExponentProductTask,
-            ExponentQuotientTask,
-            ExponentPowerTask,
-            ExponentNegativeTask,
-            ExponentZeroTask,
-            ExponentCompoundTask,
-        ),
-    ):
-        expected_kc = "kc.alg.exponent_rules"
-    elif isinstance(
-        task,
-        (PowerDerivativeTask, RationalPowerDerivativeTask, RadicalPowerDerivativeTask),
-    ):
-        expected_kc = "kc.der.power_rule"
-    elif isinstance(task, PolynomialDerivativeTask):
-        expected_kc = "kc.der.sum_constant_rules"
-    else:
-        expected_kc = TARGET_KC
+    try:
+        expected_kc = _TASK_COMPILER_REGISTRY.resolve(family.task).kc_id
+    except TaskCompilerRegistryError as exc:
+        raise ProductQuotientCompilationError(str(exc)) from exc
     if family.kc_id != expected_kc:
         raise ProductQuotientCompilationError(
             f"{family.blueprint_id}: task type belongs to {expected_kc}, not {family.kc_id}"
@@ -908,18 +996,6 @@ def _validate_task_kc(family: ReleaseFamilyBlueprint) -> None:
 
 
 def _construct_for_task(task: ReleaseMathTask) -> str:
-    if isinstance(task, ExponentProductTask):
-        return "exponent.product"
-    if isinstance(task, ExponentQuotientTask):
-        return "exponent.quotient"
-    if isinstance(task, ExponentPowerTask):
-        return "exponent.power"
-    if isinstance(task, ExponentNegativeTask):
-        return "exponent.negative"
-    if isinstance(task, ExponentZeroTask):
-        return "exponent.zero"
-    if isinstance(task, ExponentCompoundTask):
-        return "exponent.compound"
     if isinstance(task, PowerDerivativeTask):
         return (
             "power.positive_integer"
@@ -934,13 +1010,10 @@ def _construct_for_task(task: ReleaseMathTask) -> str:
             if task.form == "sqrt"
             else "power.reciprocal_radical"
         )
-    if isinstance(task, PolynomialDerivativeTask):
-        return "sum.polynomial_termwise"
-    if isinstance(task, ProductAtPointTask):
-        return "product_quotient.product_at_point"
-    if isinstance(task, QuotientAtPointTask):
-        return "product_quotient.quotient_at_point"
-    raise TypeError(f"unsupported task {type(task).__name__}")
+    try:
+        return _TASK_COMPILER_REGISTRY.resolve(task).construct_id
+    except TaskCompilerRegistryError as exc:
+        raise ProductQuotientCompilationError(str(exc)) from exc
 
 
 def _validate_construct_taxonomy(

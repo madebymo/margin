@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Iterable, Literal, Sequence
 
 from tutor.schemas.assessment import (
     AnswerSpec,
@@ -24,8 +24,11 @@ from tutor.schemas.assessment import (
     MathPromptSegment,
     NumericAnswerSpec,
     OrderedTupleAnswerSpec,
+    PlotPromptSegment,
+    PromptSegment,
     PromptSemanticRole,
     SymbolicAnswerSpec,
+    TablePromptSegment,
     TextPromptSegment,
 )
 from tutor.schemas.common import EdgeType, ReviewStatus
@@ -160,17 +163,122 @@ def load_item_bank(path: Path | None = None) -> ItemBankDocument:
     return ItemBankDocument.model_validate_json(source.read_text())
 
 
+def render_prompt_segment(segment: PromptSegment, *, blank: str = "____") -> str:
+    """Render one segment into the canonical accessible text fallback."""
+    if isinstance(segment, TextPromptSegment):
+        return segment.text
+    if isinstance(segment, MathPromptSegment):
+        return segment.expression
+    if isinstance(segment, TablePromptSegment):
+        lines = [segment.caption, " | ".join(segment.column_headers)]
+        lines.extend(" | ".join(row) for row in segment.rows)
+        return "\n".join(lines)
+    if isinstance(segment, PlotPromptSegment):
+        parts = [segment.title, segment.spoken_text]
+        if segment.equivalent_table is not None:
+            parts.append(render_prompt_segment(segment.equivalent_table, blank=blank))
+        return "\n".join(parts)
+    if isinstance(segment, BlankPromptSegment):
+        return segment.label or blank
+    raise TypeError(f"unsupported prompt segment {type(segment).__name__}")
+
+
+def render_prompt_segments(
+    segments: Sequence[PromptSegment],
+    *,
+    blank: str = "____",
+) -> str:
+    """Render structured prompt content through one shared serializer."""
+    return " ".join(
+        rendered.strip()
+        for segment in segments
+        if (rendered := render_prompt_segment(segment, blank=blank)).strip()
+    )
+
+
 def render_prompt(item: AssessmentItem, *, blank: str = "____") -> str:
     """Render structured segments without exposing the hidden answer."""
-    parts: list[str] = []
-    for segment in item.prompt:
-        if isinstance(segment, TextPromptSegment):
-            parts.append(segment.text)
-        elif isinstance(segment, MathPromptSegment):
-            parts.append(segment.expression)
-        elif isinstance(segment, BlankPromptSegment):
-            parts.append(segment.label or blank)
-    return " ".join(part.strip() for part in parts if part.strip())
+    return render_prompt_segments(item.prompt, blank=blank)
+
+
+def _segment_visible_fragments(segment: PromptSegment) -> list[str]:
+    """Return exact learner-visible values for leakage and review tooling."""
+    if isinstance(segment, TextPromptSegment):
+        return [segment.text]
+    if isinstance(segment, MathPromptSegment):
+        return [
+            value
+            for value in (segment.expression, segment.spoken_text)
+            if value is not None
+        ]
+    if isinstance(segment, TablePromptSegment):
+        return [
+            segment.caption,
+            segment.spoken_text,
+            *segment.column_headers,
+            *(cell for row in segment.rows for cell in row),
+        ]
+    if isinstance(segment, PlotPromptSegment):
+        fragments = [
+            segment.title,
+            segment.x_label,
+            segment.y_label,
+            segment.spoken_text,
+            *(series.label for series in segment.series),
+            *(
+                value
+                for series in segment.series
+                for point in series.points
+                for value in (point.x, point.y)
+            ),
+        ]
+        if segment.equivalent_table is not None:
+            fragments.extend(_segment_visible_fragments(segment.equivalent_table))
+        return fragments
+    if isinstance(segment, BlankPromptSegment):
+        return [segment.label] if segment.label else []
+    raise TypeError(f"unsupported prompt segment {type(segment).__name__}")
+
+
+def _segment_math_fragments(segment: PromptSegment) -> list[str]:
+    """Return values intended as mathematical data, excluding prose labels."""
+    if isinstance(segment, MathPromptSegment):
+        return [segment.expression]
+    if isinstance(segment, TablePromptSegment):
+        return [cell for row in segment.rows for cell in row]
+    if isinstance(segment, PlotPromptSegment):
+        values = [
+            value
+            for series in segment.series
+            for point in series.points
+            for value in (point.x, point.y)
+        ]
+        if segment.equivalent_table is not None:
+            values.extend(_segment_math_fragments(segment.equivalent_table))
+        return values
+    return []
+
+
+def _segment_prose_fragments(segment: PromptSegment) -> list[str]:
+    """Return prose that participates in the fast literal leakage check."""
+    if isinstance(segment, TextPromptSegment):
+        return [segment.text]
+    if isinstance(segment, MathPromptSegment):
+        return [segment.spoken_text] if segment.spoken_text is not None else []
+    if isinstance(segment, TablePromptSegment):
+        return [segment.caption, segment.spoken_text, *segment.column_headers]
+    if isinstance(segment, PlotPromptSegment):
+        fragments = [
+            segment.title,
+            segment.x_label,
+            segment.y_label,
+            segment.spoken_text,
+            *(series.label for series in segment.series),
+        ]
+        if segment.equivalent_table is not None:
+            fragments.extend(_segment_prose_fragments(segment.equivalent_table))
+        return fragments
+    return []
 
 
 def input_mode_for(item: AssessmentItem) -> InputMode:
@@ -493,10 +601,7 @@ def _visible_item_content(item: AssessmentItem) -> list[str]:
     """Return all content that can precede an independent scored item."""
     visible = [render_prompt(item)]
     for segment in item.prompt:
-        if isinstance(segment, TextPromptSegment):
-            visible.append(segment.text)
-        elif isinstance(segment, MathPromptSegment):
-            visible.append(segment.expression)
+        visible.extend(_segment_visible_fragments(segment))
     # The final hint may reveal this item's own answer, but it must never
     # disclose the answer to a different family that could still be scored.
     visible.extend(hint.text for hint in item.hints)
@@ -512,9 +617,9 @@ def _leakage_problems(item: AssessmentItem) -> list[str]:
     errors: list[str] = []
     expected_values = [_compact(value) for value in _literal_answer_values(item)]
     visible_text = " ".join(
-        segment.text
+        fragment
         for segment in item.prompt
-        if isinstance(segment, TextPromptSegment)
+        for fragment in _segment_prose_fragments(segment)
     )
     visible_text += " " + " ".join(hint.text for hint in item.hints[:2])
     compact_visible = _compact(visible_text)
@@ -525,44 +630,48 @@ def _leakage_problems(item: AssessmentItem) -> list[str]:
 
     if not isinstance(item.answer, ChoiceAnswerSpec):
         for segment in item.prompt:
-            if not isinstance(segment, MathPromptSegment):
-                continue
-            candidates = list(
-                dict.fromkeys(
-                    [
-                        segment.expression,
-                        *_candidate_answer_texts(segment.expression),
-                    ]
-                )
-            )
-            for candidate in candidates:
-                if not _candidate_fits_answer_contract(item, candidate):
-                    continue
-                verdict = _safe_verify(
-                    item.answer,
-                    candidate,
-                    supervised=True,
-                )
-                if verdict.status == VerificationStatus.CORRECT:
-                    canonical = _compact(_canonical_submission(item)).replace("**", "^")
-                    normalized_given = _compact(segment.expression).replace("**", "^")
-                    is_distinct_transform_given = (
-                        item.task_kind == AssessmentTaskKind.TRANSFORM
-                        and segment.role == PromptSemanticRole.GIVEN
-                        and candidate == segment.expression
-                        and normalized_given != canonical
+            for math_fragment in _segment_math_fragments(segment):
+                candidates = list(
+                    dict.fromkeys(
+                        [
+                            math_fragment,
+                            *_candidate_answer_texts(math_fragment),
+                        ]
                     )
-                    if is_distinct_transform_given:
+                )
+                for candidate in candidates:
+                    if not _candidate_fits_answer_contract(item, candidate):
                         continue
-                    errors.append(
-                        "a visible math segment is equivalent to the expected answer"
+                    verdict = _safe_verify(
+                        item.answer,
+                        candidate,
+                        supervised=True,
                     )
-                    break
-                if verdict.status != VerificationStatus.INCORRECT:
-                    errors.append(
-                        "a visible math segment answer-separation check is "
-                        f"indeterminate ({_indeterminate_code(verdict)})"
-                    )
+                    if verdict.status == VerificationStatus.CORRECT:
+                        canonical = _compact(_canonical_submission(item)).replace(
+                            "**", "^"
+                        )
+                        normalized_given = _compact(math_fragment).replace("**", "^")
+                        is_distinct_transform_given = (
+                            item.task_kind == AssessmentTaskKind.TRANSFORM
+                            and isinstance(segment, MathPromptSegment)
+                            and segment.role == PromptSemanticRole.GIVEN
+                            and candidate == segment.expression
+                            and normalized_given != canonical
+                        )
+                        if is_distinct_transform_given:
+                            continue
+                        errors.append(
+                            "a visible math segment is equivalent to the expected answer"
+                        )
+                        break
+                    if verdict.status != VerificationStatus.INCORRECT:
+                        errors.append(
+                            "a visible math segment answer-separation check is "
+                            f"indeterminate ({_indeterminate_code(verdict)})"
+                        )
+                        break
+                if errors:
                     break
             if errors:
                 break

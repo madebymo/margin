@@ -13,6 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from tutor.schemas.assessment import DisplayPromptSegment
 from tutor.schemas.common import ReviewStatus, WidgetType
 from tutor.schemas.kc import KC_ID_PATTERN
 
@@ -105,6 +106,10 @@ class PedagogyPack(_StrictFrozenModel):
     metaphors: list[Metaphor] = Field(default_factory=list)
     error_patterns: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
+    # Empty defaults keep legacy draft and catalog documents replayable. A
+    # schema-v2 catalog requires both reviewed instructional blocks.
+    lesson_narrative: tuple[DisplayPromptSegment, ...] = ()
+    remediation: tuple[DisplayPromptSegment, ...] = ()
     review_status: ReviewStatus = ReviewStatus.DRAFT
     version: int = Field(default=1, ge=1)
     provenance: PedagogyPackProvenance | None = None
@@ -148,7 +153,7 @@ class PedagogyPack(_StrictFrozenModel):
 class PedagogyPackCatalog(_StrictFrozenModel):
     """One published, graph-pinned set of reviewed pedagogy pack revisions."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     catalog_version: str = Field(
         min_length=1,
         max_length=128,
@@ -185,6 +190,31 @@ class PedagogyPackCatalog(_StrictFrozenModel):
                 raise ValueError(
                     f"catalog pack {pack.kc_id!r} lacks reviewed provenance"
                 )
+            if self.schema_version >= 2:
+                if not pack.lesson_narrative:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} lacks lesson_narrative"
+                    )
+                if not pack.remediation:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} lacks remediation"
+                    )
+                if len(pack.misconceptions) < 3:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} requires three misconceptions"
+                    )
+                if not pack.metaphors:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} requires a metaphor"
+                    )
+                if len(pack.error_patterns) < 3:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} requires three error patterns"
+                    )
+                if len(pack.sources) < 2:
+                    raise ValueError(
+                        f"schema-v2 catalog pack {pack.kc_id!r} requires two citations"
+                    )
             for misconception in pack.misconceptions:
                 owner = misconception_owners.setdefault(
                     misconception.id, pack.kc_id
