@@ -1,0 +1,3238 @@
+{
+  "schema_version": 3,
+  "bank_version": "draft-chain-rule-wave-v2.1.0",
+  "graph_version": 2,
+  "released_kcs": [],
+  "items": [
+    {
+      "item_id": "item.crv2.chain_rule.capstone.01",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.capstone.01",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the proposed derivative by supplying the missing chain factor."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(4*x^2+2)^3",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis 4 times x to the power of 2 plus 2 close parenthesis to the power of 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "proposed h'(x)=3*(4*x^2+2)^2",
+          "spoken_text": "proposed h prime open parenthesis x close parenthesis equals 3 times open parenthesis 4 times x to the power of 2 plus 2 close parenthesis to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The proposed work differentiates only the outer layer.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply the proposed expression by 8*x.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 24*x*(4*x^2+2)^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "24*x*(4*x^2+2)^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.capstone.01",
+        "source_revision": 1,
+        "source_digest": "57be12a1363e521d6c1d00379402a4c0ae116a8e457fefd29651a71a56a11918",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "3*(4*x^2+2)^2",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "8*x",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.capstone.02",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.capstone.02",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(-3*x-2)^5",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis minus 3 times x minus 2 close parenthesis to the power of 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiate the outer power while keeping the inner expression, then multiply by the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "The outer exponent becomes 4; multiply the front coefficient by the inner derivative -3.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -15*(-3*x-2)^4.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-15*(-3*x-2)^4",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.capstone.02",
+        "source_revision": 1,
+        "source_digest": "e3c616537a60731600bc36fa0f431ca860114f7cd43b4f24e6f7081265e094e6",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "5*(-3*x-2)^4",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "-3",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.checkin.01",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.checkin.01",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(-2*x+5)^6",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis minus 2 times x plus 5 close parenthesis to the power of 6"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiate the outer power while keeping the inner expression, then multiply by the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "The outer exponent becomes 5; multiply the front coefficient by the inner derivative -2.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -12*(-2*x+5)^5.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-12*(-2*x+5)^5",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.checkin.01",
+        "source_revision": 1,
+        "source_digest": "e8adcd459655499df06153867baeb6666b8bbc337d179aaecd14c5ab40c620a3",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "6*(-2*x+5)^5",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "-2",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.checkin.02",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.checkin.02",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(-4*x^2+4)^3",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis minus 4 times x to the power of 2 plus 4 close parenthesis to the power of 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep one copy of the inner expression under the reduced outer power, then multiply by the derivative of the quadratic inner function.",
+          "revealing": false
+        },
+        {
+          "text": "Differentiate the inner expression to -8*x and multiply that factor by the outer-power derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -24*x*(-4*x^2+4)^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-24*x*(-4*x^2+4)^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.checkin.02",
+        "source_revision": 1,
+        "source_digest": "6b9fd6c662de0548cc7ea18f34735042a62c253691b9dac083112c92cca31bfe",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "3*(-4*x^2+4)^2",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "-8*x",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.checkin.03",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.checkin.03",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h(x)=(u(x))^4. Find h'(-3) from the supplied local data."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u(-3)=2",
+          "spoken_text": "u open parenthesis minus 3 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u'(-3)=7",
+          "spoken_text": "u prime open parenthesis minus 3 close parenthesis equals 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "At the point, the chain rule needs both the inner value and the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "Compute n times the inner value to the power n minus one, then multiply by the supplied inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 224.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "224",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.checkin.03",
+        "source_revision": 1,
+        "source_digest": "17cf85b35bd5d0f6e211a7760dfd79428113fb55f73d9ec97266eff67bdefd4b",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "32",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "7",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.checkin.04",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.checkin.04",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For h(x)=(u(x))^3, use the table to enter (h'(-2), h'(4))."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Local data for u",
+          "column_headers": [
+            "x",
+            "u(x)",
+            "u'(x)"
+          ],
+          "rows": [
+            [
+              "-2",
+              "3",
+              "5"
+            ],
+            [
+              "4",
+              "-3",
+              "-6"
+            ]
+          ],
+          "spoken_text": "At -2, u is 3 and u prime is 5. At 4, u is -3 and u prime is -6."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Each derivative value needs both u(x) and u'(x) from its row.",
+          "revealing": false
+        },
+        {
+          "text": "Apply n times u to the n minus one times u prime in each row.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is (135, -162).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "135",
+          "-162"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.checkin.04",
+        "source_revision": 1,
+        "source_digest": "ed34a3c1ef0f79ebd7c25867d9611f3d165ba371b6df53a1de68dcee62c5c3b3",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(27, 27)",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.checkin.05",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.checkin.05",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the proposed derivative by supplying the missing chain factor."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(5*x-2)^4",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis 5 times x minus 2 close parenthesis to the power of 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "proposed h'(x)=4*(5*x-2)^3",
+          "spoken_text": "proposed h prime open parenthesis x close parenthesis equals 4 times open parenthesis 5 times x minus 2 close parenthesis to the power of 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The proposed work differentiates only the outer layer.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply the proposed expression by 5.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 20*(5*x-2)^3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "20*(5*x-2)^3",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.checkin.05",
+        "source_revision": 1,
+        "source_digest": "658f4ff647839a18893f922e084b9b7ded416987de68d65ecb968daa4b5f1b61",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "4*(5*x-2)^3",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "5",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.diagnostic.01",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(3*x+2)^4",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis 3 times x plus 2 close parenthesis to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiate the outer power while keeping the inner expression, then multiply by the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "The outer exponent becomes 3; multiply the front coefficient by the inner derivative 3.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 12*(3*x+2)^3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "12*(3*x+2)^3",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "5ea2c77f68b0972685e1292a5f4a5b40ffdbf79604b7b20ff7cd229a6195e346",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "4*(3*x+2)^3",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "3",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.diagnostic.02",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(2*x^2-3)^4",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis 2 times x to the power of 2 minus 3 close parenthesis to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep one copy of the inner expression under the reduced outer power, then multiply by the derivative of the quadratic inner function.",
+          "revealing": false
+        },
+        {
+          "text": "Differentiate the inner expression to 4*x and multiply that factor by the outer-power derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 16*x*(2*x^2-3)^3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "16*x*(2*x^2-3)^3",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "03b101af87717513cbf806b065470bbdcc694da494b8a82f3e7a2049ed1318ae",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "4*(2*x^2-3)^3",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "4*x",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.diagnostic.03",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h(x)=(u(x))^4. Find h'(2) from the supplied local data."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u(2)=2",
+          "spoken_text": "u open parenthesis 2 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u'(2)=6",
+          "spoken_text": "u prime open parenthesis 2 close parenthesis equals 6"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "At the point, the chain rule needs both the inner value and the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "Compute n times the inner value to the power n minus one, then multiply by the supplied inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 192.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "192",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "138351096109bc8703eb71fdd1442c8f5b85b66f0aef41d702ac1e6afbeb3058",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "32",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "6",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.diagnostic.04",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the proposed derivative by supplying the missing chain factor."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(-4*x+2)^3",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis minus 4 times x plus 2 close parenthesis to the power of 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "proposed h'(x)=3*(-4*x+2)^2",
+          "spoken_text": "proposed h prime open parenthesis x close parenthesis equals 3 times open parenthesis minus 4 times x plus 2 close parenthesis to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The proposed work differentiates only the outer layer.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply the proposed expression by -4.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -12*(-4*x+2)^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-12*(-4*x+2)^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "cbf807d6b6d8a71d081a2a96092159a991130001f124816d547f79d3fde6d0fb",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "3*(-4*x+2)^2",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "-4",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.chain_rule.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.guided_widget.01",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or its equivalent text fallback. Let h(x)=(u(x))^2. Find h'(4) from the supplied local data."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u(4)=2",
+          "spoken_text": "u open parenthesis 4 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "u'(4)=-2",
+          "spoken_text": "u prime open parenthesis 4 close parenthesis equals minus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "At the point, the chain rule needs both the inner value and the inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "Compute n times the inner value to the power n minus one, then multiply by the supplied inner derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -8.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-8",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "71fa505ec040b0e3320a316b69dd6b8bcfed6d570f6862b18453c3b0010a31a5",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "4",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "-2",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": {
+        "kind": "slider_v1",
+        "presentation": {
+          "prompt": "Choose the numeric answer to the exact problem shown above.",
+          "label": "Your answer",
+          "help_text": "Use the arrow keys or slider in steps of one. The text fallback asks for the same numeric answer.",
+          "minimum": -20.0,
+          "maximum": 20.0,
+          "step": 1.0,
+          "initial_value": 0.0,
+          "value_label": "Selected answer",
+          "result_template": "The selected answer is {value}.",
+          "visual_summary": null
+        },
+        "scoring": {
+          "target": -8.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "item_id": "item.crv2.chain_rule.worked_example.01",
+      "revision": 1,
+      "family_id": "family.crv2.chain_rule.worked_example.01",
+      "kc_id": "kc.der.chain_rule",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Differentiate h with respect to x using the chain rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(x^2+2)^3",
+          "spoken_text": "h open parenthesis x close parenthesis equals open parenthesis x to the power of 2 plus 2 close parenthesis to the power of 3"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Differentiate the inner expression to 2*x and multiply that factor by the outer-power derivative."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "3*(x^2+2)^2*(2*x)",
+          "spoken_text": "3 times open parenthesis x to the power of 2 plus 2 close parenthesis to the power of 2 times open parenthesis 2 times x close parenthesis"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Therefore, the final answer is"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "6*x*(x^2+2)^2",
+          "spoken_text": "6 times x times open parenthesis x to the power of 2 plus 2 close parenthesis to the power of 2"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep one copy of the inner expression under the reduced outer power, then multiply by the derivative of the quadratic inner function.",
+          "revealing": false
+        },
+        {
+          "text": "Differentiate the inner expression to 2*x and multiply that factor by the outer-power derivative.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 6*x*(x^2+2)^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "6*x*(x^2+2)^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.chain_rule.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "2aba09b42b673aa1a8955a61ac6f3c901b962fed04cc3ae41d40e86d2d4823b7",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "3*(x^2+2)^2",
+          "misconception_id": "m.chain_rule.missing_inner_derivative",
+          "implicated_prereq": "kc.fun.composition"
+        },
+        {
+          "expected_wrong": "2*x",
+          "misconception_id": "m.chain_rule.inner_derivative_only",
+          "implicated_prereq": "kc.der.power_rule"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.capstone.01",
+      "revision": 1,
+      "family_id": "family.crv2.composition.capstone.01",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "At x=-5, enter the ordered tuple (f(g(x)), g(f(x)))."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=-3*x+4",
+          "spoken_text": "f open parenthesis x close parenthesis equals minus 3 times x plus 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=5*x-2",
+          "spoken_text": "g open parenthesis x close parenthesis equals 5 times x minus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The two tuple entries use opposite inner functions.",
+          "revealing": false
+        },
+        {
+          "text": "Complete f after g first, then restart and complete g after f.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is (85, 93).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "85",
+          "93"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.capstone.01",
+        "source_revision": 1,
+        "source_digest": "e82537d9237bd67300062ab46c461dc5eab9f67e9cc9352b9eae3417d37d2775",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(93, 85)",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.capstone.02",
+      "revision": 1,
+      "family_id": "family.crv2.composition.capstone.02",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Build f(g(x)). Keep the squared inner expression grouped."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=3*(u)^2-4",
+          "spoken_text": "f open parenthesis u close parenthesis equals 3 times open parenthesis u close parenthesis to the power of 2 minus 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=2*x+2",
+          "spoken_text": "g open parenthesis x close parenthesis equals 2 times x plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The complete output of g becomes the input u of f.",
+          "revealing": false
+        },
+        {
+          "text": "Replace u with the parenthesized affine expression and keep the outer square and scale attached.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 3*(2*x+2)^2-4.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "3*(2*x+2)^2-4",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.capstone.02",
+        "source_revision": 1,
+        "source_digest": "28b60a302403c4503280f9f96f42dd6cd527b7b7c281ab530851bd44d66ac14d",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(3*(x)^2-4)*(2*x+2)",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        },
+        {
+          "expected_wrong": "3*(2*x)^2+2-4",
+          "misconception_id": "m.composition.drops_inner_grouping",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.checkin.01",
+      "revision": 1,
+      "family_id": "family.crv2.composition.checkin.01",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Build f(g(x)). Keep the squared inner expression grouped."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=-2*(u)^2+5",
+          "spoken_text": "f open parenthesis u close parenthesis equals minus 2 times open parenthesis u close parenthesis to the power of 2 plus 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=3*x+2",
+          "spoken_text": "g open parenthesis x close parenthesis equals 3 times x plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The complete output of g becomes the input u of f.",
+          "revealing": false
+        },
+        {
+          "text": "Replace u with the parenthesized affine expression and keep the outer square and scale attached.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -2*(3*x+2)^2+5.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-2*(3*x+2)^2+5",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.checkin.01",
+        "source_revision": 1,
+        "source_digest": "f81fc389e0cde366765f2c3b28bd6c92c28a83b2f6dd895e53f1a5f1c8caed56",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-2*(x)^2+5)*(3*x+2)",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        },
+        {
+          "expected_wrong": "-2*(3*x)^2+2+5",
+          "misconception_id": "m.composition.drops_inner_grouping",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.checkin.02",
+      "revision": 1,
+      "family_id": "family.crv2.composition.checkin.02",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate g(f(p)) at p=8."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=4*x+3",
+          "spoken_text": "f open parenthesis x close parenthesis equals 4 times x plus 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=5*x+16",
+          "spoken_text": "g open parenthesis x close parenthesis equals 5 times x plus 16"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Evaluate the inner function first; its output is the outer input.",
+          "revealing": false
+        },
+        {
+          "text": "Compute the inner output, then substitute it into the outer rule.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 191.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "191",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.checkin.02",
+        "source_revision": 1,
+        "source_digest": "be4dd0c5044b3948d5b1808f3cb6c338e0450daa3bf94fbda6d0722f98a75961",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "227",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.checkin.03",
+      "revision": 1,
+      "family_id": "family.crv2.composition.checkin.03",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Follow the table path for f(g(p)), then find f(g(-3))-g(-3)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of g",
+          "column_headers": [
+            "input",
+            "g(input)"
+          ],
+          "rows": [
+            [
+              "-3",
+              "38"
+            ]
+          ],
+          "spoken_text": "The table gives g(-3)=38."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of f",
+          "column_headers": [
+            "input",
+            "f(input)"
+          ],
+          "rows": [
+            [
+              "38",
+              "-93"
+            ],
+            [
+              "4",
+              "13"
+            ]
+          ],
+          "spoken_text": "The table gives f(38)=-93 and f(4)=13."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The output from the g table becomes the input used in the f table.",
+          "revealing": false
+        },
+        {
+          "text": "Find the final outer output, then subtract the inner output.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -131.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-131",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.checkin.03",
+        "source_revision": 1,
+        "source_digest": "71277b9f2689cdcc79dac7fb0daa45602c7dd3ae1b0428b75c4d96852a85bb7a",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.checkin.04",
+      "revision": 1,
+      "family_id": "family.crv2.composition.checkin.04",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "At x=6, enter the ordered tuple (f(g(x)), g(f(x)))."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=5*x+2",
+          "spoken_text": "f open parenthesis x close parenthesis equals 5 times x plus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=-4*x+3",
+          "spoken_text": "g open parenthesis x close parenthesis equals minus 4 times x plus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The two tuple entries use opposite inner functions.",
+          "revealing": false
+        },
+        {
+          "text": "Complete f after g first, then restart and complete g after f.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is (-103, -125).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-103",
+          "-125"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.checkin.04",
+        "source_revision": 1,
+        "source_digest": "6a24454bd1dc60d9ac5ce3d5232ae21cfb6a69e6b0dd16ad69081691b067b074",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-125, -103)",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.checkin.05",
+      "revision": 1,
+      "family_id": "family.crv2.composition.checkin.05",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the exact plot data to find f(g(2))+g(f(2))."
+        },
+        {
+          "kind": "plot",
+          "role": "given",
+          "title": "Exact values of f and g",
+          "x_label": "input",
+          "y_label": "output",
+          "series": [
+            {
+              "label": "f",
+              "points": [
+                {
+                  "x": "2",
+                  "y": "-3"
+                },
+                {
+                  "x": "4",
+                  "y": "94"
+                }
+              ]
+            },
+            {
+              "label": "g",
+              "points": [
+                {
+                  "x": "2",
+                  "y": "4"
+                },
+                {
+                  "x": "-3",
+                  "y": "99"
+                }
+              ]
+            }
+          ],
+          "spoken_text": "At input 2, g outputs 4 and f outputs -3. At input 4, f outputs 94. At input -3, g outputs 99.",
+          "equivalent_table": {
+            "kind": "table",
+            "role": "context",
+            "caption": "Exact points shown in both plots",
+            "column_headers": [
+              "function",
+              "input",
+              "output"
+            ],
+            "rows": [
+              [
+                "f",
+                "2",
+                "-3"
+              ],
+              [
+                "f",
+                "4",
+                "94"
+              ],
+              [
+                "g",
+                "2",
+                "4"
+              ],
+              [
+                "g",
+                "-3",
+                "99"
+              ]
+            ],
+            "spoken_text": "The table lists every exact point used from the two static plots."
+          }
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Trace each composition from its inner output to the other graph.",
+          "revealing": false
+        },
+        {
+          "text": "Find the two final composition outputs, then add them.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 193.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "193",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.checkin.05",
+        "source_revision": 1,
+        "source_digest": "54b3f7094ca7dc6ed65242de57c3e77dc6b2adddc2527ed12e1c00253b133468",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-12",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.crv2.composition.diagnostic.01",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Build f(g(x)) and simplify it as an expression in x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=2*u+7",
+          "spoken_text": "f open parenthesis u close parenthesis equals 2 times u plus 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(v)=3*v+5",
+          "spoken_text": "g open parenthesis v close parenthesis equals 3 times v plus 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Read composition from the inside outward.",
+          "revealing": false
+        },
+        {
+          "text": "Use g(x) as the complete input to f. Distribute, then combine constants.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 6*x+17.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "6*x+17",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "95f2d2e3967eb02a795b44d4ed6e0853fe4e0da46c97c8eb7d53630556d4a537",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "6*x+26",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        },
+        {
+          "expected_wrong": "(2*x+7)*(3*x+5)",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.crv2.composition.diagnostic.02",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Build f(g(x)). Keep the squared inner expression grouped."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=2*(u)^2+3",
+          "spoken_text": "f open parenthesis u close parenthesis equals 2 times open parenthesis u close parenthesis to the power of 2 plus 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=2*x-4",
+          "spoken_text": "g open parenthesis x close parenthesis equals 2 times x minus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The complete output of g becomes the input u of f.",
+          "revealing": false
+        },
+        {
+          "text": "Replace u with the parenthesized affine expression and keep the outer square and scale attached.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 2*(2*x-4)^2+3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "2*(2*x-4)^2+3",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "a209bd72152876c1da74f10eb25673b86ae48e225ba34bae02de85e3135c0659",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(2*(x)^2+3)*(2*x-4)",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        },
+        {
+          "expected_wrong": "2*(2*x)^2+-4+3",
+          "misconception_id": "m.composition.drops_inner_grouping",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.crv2.composition.diagnostic.03",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(g(p)) at p=10."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=6*x+2",
+          "spoken_text": "f open parenthesis x close parenthesis equals 6 times x plus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=3*x+2",
+          "spoken_text": "g open parenthesis x close parenthesis equals 3 times x plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Evaluate the inner function first; its output is the outer input.",
+          "revealing": false
+        },
+        {
+          "text": "Compute the inner output, then substitute it into the outer rule.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 194.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "194",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "53bc207932e341a18162c0451f33db38df00d9e88a906bb786d93f44e53423c4",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "188",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.crv2.composition.diagnostic.04",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Follow the table path for f(g(p)), then find f(g(2))-g(2)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of g",
+          "column_headers": [
+            "input",
+            "g(input)"
+          ],
+          "rows": [
+            [
+              "2",
+              "-31"
+            ]
+          ],
+          "spoken_text": "The table gives g(2)=-31."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of f",
+          "column_headers": [
+            "input",
+            "f(input)"
+          ],
+          "rows": [
+            [
+              "-31",
+              "83"
+            ],
+            [
+              "6",
+              "11"
+            ]
+          ],
+          "spoken_text": "The table gives f(-31)=83 and f(6)=11."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The output from the g table becomes the input used in the f table.",
+          "revealing": false
+        },
+        {
+          "text": "Find the final outer output, then subtract the inner output.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 114.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "114",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "8d250d95a19132ca069d46b7a4c9cc6697be3b3663b3b84a64dab5f2c522a22b",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.composition.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.crv2.composition.guided_widget.01",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or its equivalent text fallback. Evaluate f(g(p)) at p=3."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=-2*x-2",
+          "spoken_text": "f open parenthesis x close parenthesis equals minus 2 times x minus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=2*x+2",
+          "spoken_text": "g open parenthesis x close parenthesis equals 2 times x plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Evaluate the inner function first; its output is the outer input.",
+          "revealing": false
+        },
+        {
+          "text": "Compute the inner output, then substitute it into the outer rule.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -18.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-18",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "22f11db8b948bb6054d1cc8c61bbbd023665a88edb49051178780ba394176260",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-14",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": {
+        "kind": "slider_v1",
+        "presentation": {
+          "prompt": "Choose the numeric answer to the exact problem shown above.",
+          "label": "Your answer",
+          "help_text": "Use the arrow keys or slider in steps of one. The text fallback asks for the same numeric answer.",
+          "minimum": -20.0,
+          "maximum": 20.0,
+          "step": 1.0,
+          "initial_value": 0.0,
+          "value_label": "Selected answer",
+          "result_template": "The selected answer is {value}.",
+          "visual_summary": null
+        },
+        "scoring": {
+          "target": -18.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "item_id": "item.crv2.composition.worked_example.01",
+      "revision": 1,
+      "family_id": "family.crv2.composition.worked_example.01",
+      "kc_id": "kc.fun.composition",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Build g(f(x)) and simplify it as an expression in x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=4*u-2",
+          "spoken_text": "f open parenthesis u close parenthesis equals 4 times u minus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(v)=2*v+6",
+          "spoken_text": "g open parenthesis v close parenthesis equals 2 times v plus 6"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Use f(x) as the complete input to g. Distribute, then combine constants."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "2*(4*x-2)+6",
+          "spoken_text": "2 times open parenthesis 4 times x minus 2 close parenthesis plus 6"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Therefore, the final answer is"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "8*x+2",
+          "spoken_text": "8 times x plus 2"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Read composition from the inside outward.",
+          "revealing": false
+        },
+        {
+          "text": "Use f(x) as the complete input to g. Distribute, then combine constants.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 8*x+2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "8*x+2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.composition.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "ec1990e280f07c010ca1b639091674517eb0a4ff5e02f8759e68b39e3bf74291",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "8*x+22",
+          "misconception_id": "m.composition.reverses_order",
+          "implicated_prereq": "kc.fun.function_notation"
+        },
+        {
+          "expected_wrong": "(4*x-2)*(2*x+6)",
+          "misconception_id": "m.composition.multiplies_functions",
+          "implicated_prereq": "kc.fun.function_notation"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.capstone.01",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.capstone.01",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(p(x)) and simplify the result in x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(t)=5*t-2",
+          "spoken_text": "f open parenthesis t close parenthesis equals 5 times t minus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=-2*x+3",
+          "spoken_text": "p open parenthesis x close parenthesis equals minus 2 times x plus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Treat the entire supplied expression as one input for t.",
+          "revealing": false
+        },
+        {
+          "text": "Place the input expression in parentheses, multiply it by the function coefficient, and then combine constants.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -10*x+13.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-10*x+13",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.capstone.01",
+        "source_revision": 1,
+        "source_digest": "fa42cb0187f0dfcf2f516c32f5922cbfad71b6efa37fb2180eac70384565919e",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-10*x+1",
+          "misconception_id": "m.function_notation.drops_input_grouping",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.capstone.02",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.capstone.02",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate both requested inputs and enter the ordered tuple (f(19), f(-16))."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=-11*x-3",
+          "spoken_text": "f open parenthesis x close parenthesis equals minus 11 times x minus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The first tuple entry belongs to the first listed input.",
+          "revealing": false
+        },
+        {
+          "text": "Substitute and simplify each input separately, then keep their order.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is (-212, 173).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-212",
+          "173"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.capstone.02",
+        "source_revision": 1,
+        "source_digest": "e7c2c803719ce1b71b5172be4176b7cf21d7699ea221b3d66038bfc240eed2fd",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.checkin.01",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.checkin.01",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(5) from the polynomial rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=5*x^2+3*x+11",
+          "spoken_text": "f open parenthesis x close parenthesis equals 5 times x to the power of 2 plus 3 times x plus 11"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The same input replaces every occurrence of x in the function rule.",
+          "revealing": false
+        },
+        {
+          "text": "Substitute the input into both the squared and linear terms before combining the signed values.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 151.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "151",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.checkin.01",
+        "source_revision": 1,
+        "source_digest": "f295b8a5930bad9501488440c1f3fee067d1a2181812fb34beb0774efaa379ff",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "139",
+          "misconception_id": "m.function_notation.substitutes_one_occurrence",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.checkin.02",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.checkin.02",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(p(x)) and simplify the result in x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(t)=-3*t+5",
+          "spoken_text": "f open parenthesis t close parenthesis equals minus 3 times t plus 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=2*x+4",
+          "spoken_text": "p open parenthesis x close parenthesis equals 2 times x plus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Treat the entire supplied expression as one input for t.",
+          "revealing": false
+        },
+        {
+          "text": "Place the input expression in parentheses, multiply it by the function coefficient, and then combine constants.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -6*x-7.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-6*x-7",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.checkin.02",
+        "source_revision": 1,
+        "source_digest": "df7a1598619d6c6fbe0af0014cfd5821b253c6cd0616cc0590bacdae40734100",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-6*x+9",
+          "misconception_id": "m.function_notation.drops_input_grouping",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.checkin.03",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.checkin.03",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the table to find the sum f(-6) + f(9)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of f",
+          "column_headers": [
+            "input x",
+            "output f(x)"
+          ],
+          "rows": [
+            [
+              "-6",
+              "78"
+            ],
+            [
+              "9",
+              "79"
+            ]
+          ],
+          "spoken_text": "The table gives f of -6 as 78 and f of 9 as 79."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Each table row pairs one input with its function output.",
+          "revealing": false
+        },
+        {
+          "text": "Read both requested outputs first, then combine them in the order shown in the expression.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 157.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "157",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.checkin.03",
+        "source_revision": 1,
+        "source_digest": "0cb985db10473fbc5f949fc144f7297b6a9c58ff5b7d2892e6fbd07edbfae4d6",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.checkin.04",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.checkin.04",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the exact plotted values to find the output change f(4)-f(-5)."
+        },
+        {
+          "kind": "plot",
+          "role": "given",
+          "title": "Two exact values of f",
+          "x_label": "input x",
+          "y_label": "output f(x)",
+          "series": [
+            {
+              "label": "f",
+              "points": [
+                {
+                  "x": "-5",
+                  "y": "-83"
+                },
+                {
+                  "x": "4",
+                  "y": "80"
+                }
+              ]
+            }
+          ],
+          "spoken_text": "The static plot shows f(-5)=-83 and f(4)=80.",
+          "equivalent_table": {
+            "kind": "table",
+            "role": "context",
+            "caption": "Exact plotted points",
+            "column_headers": [
+              "input x",
+              "output f(x)"
+            ],
+            "rows": [
+              [
+                "-5",
+                "-83"
+              ],
+              [
+                "4",
+                "80"
+              ]
+            ],
+            "spoken_text": "The plot contains the points -5, -83 and 4, 80."
+          }
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A plotted point (x,y) says that f(x)=y.",
+          "revealing": false
+        },
+        {
+          "text": "Read the ending output and subtract the starting output.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 163.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "163",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.checkin.04",
+        "source_revision": 1,
+        "source_digest": "bc7eb14a43e95c6c8c2eb52954e833441016be7e0bb30cb5d1714908b7548d78",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.checkin.05",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.checkin.05",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate both requested inputs and enter the ordered tuple (f(12), f(17))."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=11*x",
+          "spoken_text": "f open parenthesis x close parenthesis equals 11 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "The first tuple entry belongs to the first listed input.",
+          "revealing": false
+        },
+        {
+          "text": "Substitute and simplify each input separately, then keep their order.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is (132, 187).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "132",
+          "187"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.checkin.05",
+        "source_revision": 1,
+        "source_digest": "1b812c89aaedd53916cfa342176628890cd8dcfc8d4051f8d5896343e07aaf39",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.diagnostic.01",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(20) by replacing x in the rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=7*x-3",
+          "spoken_text": "f open parenthesis x close parenthesis equals 7 times x minus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Function notation names the input to substitute; it is not multiplication.",
+          "revealing": false
+        },
+        {
+          "text": "Replace x with 20, keep the grouping, and then simplify.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 137.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "137",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "60e10e0c7cff0316a8e8ae89b6ca1eb9e103d0b1bf1faca1945d5a434e3d7b27",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.diagnostic.02",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Evaluate f(p(x)) and simplify the result in x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(t)=4*t+2",
+          "spoken_text": "f open parenthesis t close parenthesis equals 4 times t plus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=3*x-2",
+          "spoken_text": "p open parenthesis x close parenthesis equals 3 times x minus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Treat the entire supplied expression as one input for t.",
+          "revealing": false
+        },
+        {
+          "text": "Place the input expression in parentheses, multiply it by the function coefficient, and then combine constants.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 12*x-6.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "12*x-6",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "4c037266964b7ea7f07e68e51bc8e08c9b4b82260be0016c9a055b5638b6658e",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "12*x",
+          "misconception_id": "m.function_notation.drops_input_grouping",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.diagnostic.03",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the table to find the difference f(-4) - f(7)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Selected values of f",
+          "column_headers": [
+            "input x",
+            "output f(x)"
+          ],
+          "rows": [
+            [
+              "-4",
+              "-59"
+            ],
+            [
+              "7",
+              "80"
+            ]
+          ],
+          "spoken_text": "The table gives f of -4 as -59 and f of 7 as 80."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Each table row pairs one input with its function output.",
+          "revealing": false
+        },
+        {
+          "text": "Read both requested outputs first, then combine them in the order shown in the expression.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -139.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-139",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "8eda87421dc2db44bf75cd869ac607d579f1fe2008bdfff9cab31a2f48c85653",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.diagnostic.04",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the exact plotted values to find the output change f(6)-f(-3)."
+        },
+        {
+          "kind": "plot",
+          "role": "given",
+          "title": "Two exact values of f",
+          "x_label": "input x",
+          "y_label": "output f(x)",
+          "series": [
+            {
+              "label": "f",
+              "points": [
+                {
+                  "x": "-3",
+                  "y": "-69"
+                },
+                {
+                  "x": "6",
+                  "y": "80"
+                }
+              ]
+            }
+          ],
+          "spoken_text": "The static plot shows f(-3)=-69 and f(6)=80.",
+          "equivalent_table": {
+            "kind": "table",
+            "role": "context",
+            "caption": "Exact plotted points",
+            "column_headers": [
+              "input x",
+              "output f(x)"
+            ],
+            "rows": [
+              [
+                "-3",
+                "-69"
+              ],
+              [
+                "6",
+                "80"
+              ]
+            ],
+            "spoken_text": "The plot contains the points -3, -69 and 6, 80."
+          }
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A plotted point (x,y) says that f(x)=y.",
+          "revealing": false
+        },
+        {
+          "text": "Read the ending output and subtract the starting output.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 149.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "149",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "c12695fcee00eb8ec89869328444b14c42ddffdd9daa023cffc8ca8f32607e73",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.crv2.function_notation.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.guided_widget.01",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or its equivalent text fallback. Evaluate f(4) by replacing x in the rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=-4*x+2",
+          "spoken_text": "f open parenthesis x close parenthesis equals minus 4 times x plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Function notation names the input to substitute; it is not multiplication.",
+          "revealing": false
+        },
+        {
+          "text": "Replace x with 4, keep the grouping, and then simplify.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -14.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-14",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "a689d22a04fb73a6e5be8aed09f0f794cd80a7f97f2129cd2d0c7bdb0f45d71f",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "slider_v1",
+        "presentation": {
+          "prompt": "Choose the numeric answer to the exact problem shown above.",
+          "label": "Your answer",
+          "help_text": "Use the arrow keys or slider in steps of one. The text fallback asks for the same numeric answer.",
+          "minimum": -20.0,
+          "maximum": 20.0,
+          "step": 1.0,
+          "initial_value": 0.0,
+          "value_label": "Selected answer",
+          "result_template": "The selected answer is {value}.",
+          "visual_summary": null
+        },
+        "scoring": {
+          "target": -14.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "item_id": "item.crv2.function_notation.worked_example.01",
+      "revision": 1,
+      "family_id": "family.crv2.function_notation.worked_example.01",
+      "kc_id": "kc.fun.function_notation",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Evaluate f(6) by replacing x in the rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=-2*x+3",
+          "spoken_text": "f open parenthesis x close parenthesis equals minus 2 times x plus 3"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Replace x with 6, keep the grouping, and then simplify."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "-2*(6)+3",
+          "spoken_text": "minus 2 times open parenthesis 6 close parenthesis plus 3"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Therefore, the final answer is"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "-9",
+          "spoken_text": "minus 9"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Function notation names the input to substitute; it is not multiplication.",
+          "revealing": false
+        },
+        {
+          "text": "Replace x with 6, keep the grouping, and then simplify.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -9.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-9",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/chain-rule-wave-v2.1",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.crv2.function_notation.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "9c14d49d84619f3af520f9343215309a73f80351a0ccf67c6cd65a7fa8675fa4",
+        "compiler_version": "chain-rule-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    }
+  ]
+}
