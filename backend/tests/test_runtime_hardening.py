@@ -632,6 +632,13 @@ def test_quarantine_reset_moves_an_old_episode_to_a_distinct_safe_release():
     assert blocked.status_code == 410
     recovery = blocked.json()["quarantine_recovery"]
     assert set(recovery) == {"revision", "reset_key"}
+    bypass_attempt = new_client.post(
+        "/api/v2/sessions",
+        json={"request_id": str(uuid4()), "goal_id": "goal.der.power_rule"},
+    )
+    assert bypass_attempt.status_code == 410
+    assert bypass_attempt.json()["code"] == "release_quarantined"
+    assert "session" not in bypass_attempt.json()
 
     reset_payload = {
         "request_id": str(uuid4()),

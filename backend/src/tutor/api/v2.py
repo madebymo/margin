@@ -1059,6 +1059,7 @@ def install_v2_routes(
         *,
         measure_resume: bool = False,
         allow_quarantined: bool = False,
+        quarantine_snapshot: ReleaseQuarantineSnapshot | None = None,
     ) -> tuple[V2SessionHandle | None, str | None, JSONResponse | None]:
         def outside_eligible_failure(outcome: str) -> None:
             if not measure_resume:
@@ -1218,7 +1219,10 @@ def install_v2_routes(
         ):
             outside_eligible_failure("session_mismatch")
             return None, hashed, _error(404, "session_not_found", "unknown session")
-        safety_error = handle_release_safety_error(handle)
+        safety_error = handle_release_safety_error(
+            handle,
+            snapshot=quarantine_snapshot,
+        )
         if safety_error is not None:
             if not (
                 allow_quarantined
@@ -1327,9 +1331,6 @@ def install_v2_routes(
 
         if not _origin_allowed(request):
             return _error(403, "origin_not_allowed", "cross-origin mutation rejected")
-        limited = request_admission_error("recover", request)
-        if limited is not None:
-            return limited
         quarantine_snapshot = observe_release_quarantine()
         if not quarantine_snapshot.available:
             return release_safety_error(
@@ -1366,6 +1367,9 @@ def install_v2_routes(
                 "the committed session could not be checked; retry shortly",
             )
         if replacement_session_id is None:
+            limited = request_admission_error("recover", request)
+            if limited is not None:
+                return limited
             return _error(
                 409,
                 "recovery_not_committed",
@@ -1387,6 +1391,9 @@ def install_v2_routes(
         if handle is None or not hmac.compare_digest(
             handle.session_id, replacement_session_id
         ):
+            limited = request_admission_error("recover", request)
+            if limited is not None:
+                return limited
             return _error(
                 409,
                 "recovery_not_committed",
@@ -1398,6 +1405,9 @@ def install_v2_routes(
         )
         if safety_error is not None:
             return safety_error
+        limited = request_admission_error("recover", request, handle)
+        if limited is not None:
+            return limited
         try:
             active = store.refresh_token(replacement_token_hash)
         except SessionUnavailable:
@@ -1441,6 +1451,12 @@ def install_v2_routes(
                 active_release_digest,
                 snapshot=quarantine_snapshot,
             )
+        release_error = release_safety_error(
+            active_release_digest,
+            snapshot=quarantine_snapshot,
+        )
+        if release_error is not None:
+            return release_error
         request_payload = {
             "type": "create",
             **request_body.model_dump(mode="json"),
@@ -1550,9 +1566,12 @@ def install_v2_routes(
         current_raw = request.cookies.get(_COOKIE_NAME)
         if current_raw:
             current_hash = _token_hash(current_raw)
-            current, _, current_error = authorized_handle(request)
+            current, _, current_error = authorized_handle(
+                request,
+                quarantine_snapshot=quarantine_snapshot,
+            )
             if current_error is not None:
-                if current_error.status_code >= 500:
+                if current_error.status_code in {410, 503}:
                     return current_error
                 current = None
             if current is not None:
@@ -1706,17 +1725,28 @@ def install_v2_routes(
     def get_current(
         request: Request, response: Response
     ) -> SessionView | JSONResponse:
-        limited = request_admission_error("read", request)
-        if limited is not None:
-            return limited
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
         handle, token_hash, error = authorized_handle(
             request,
             measure_resume=True,
+            quarantine_snapshot=quarantine_snapshot,
         )
         if error is not None:
+            if error.status_code not in {410, 503}:
+                limited = request_admission_error("read", request)
+                if limited is not None:
+                    return limited
             return error
         assert handle is not None
         assert token_hash is not None
+        limited = request_admission_error("read", request, handle)
+        if limited is not None:
+            return limited
         refresh_error = refresh_resume(
             request,
             response,
@@ -1799,6 +1829,7 @@ def install_v2_routes(
         handle, token_hash, error = authorized_handle(
             request,
             allow_quarantined=True,
+            quarantine_snapshot=quarantine_snapshot,
         )
         if error is not None:
             if error.status_code >= 500:
@@ -2022,18 +2053,29 @@ def install_v2_routes(
     def get_session(
         session_id: str, request: Request, response: Response
     ) -> SessionView | JSONResponse:
-        limited = request_admission_error("read", request)
-        if limited is not None:
-            return limited
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
         handle, token_hash, error = authorized_handle(
             request,
             session_id,
             measure_resume=True,
+            quarantine_snapshot=quarantine_snapshot,
         )
         if error is not None:
+            if error.status_code not in {410, 503}:
+                limited = request_admission_error("read", request)
+                if limited is not None:
+                    return limited
             return error
         assert handle is not None
         assert token_hash is not None
+        limited = request_admission_error("read", request, handle)
+        if limited is not None:
+            return limited
         refresh_error = refresh_resume(
             request,
             response,
@@ -2062,7 +2104,17 @@ def install_v2_routes(
     ) -> SessionView | JSONResponse:
         if not _origin_allowed(request):
             return _error(403, "origin_not_allowed", "cross-origin mutation rejected")
-        handle, token_hash, error = authorized_handle(request, session_id)
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
+        handle, token_hash, error = authorized_handle(
+            request,
+            session_id,
+            quarantine_snapshot=quarantine_snapshot,
+        )
         if error is not None:
             return error
         assert handle is not None
@@ -2092,13 +2144,25 @@ def install_v2_routes(
         except DurableReceiptReplay as replay:
             if token_hash is not None:
                 try:
-                    restore_durable(token_hash)
+                    restored = restore_durable(token_hash)
                 except SessionUnavailable:
                     return _error(
                         503,
                         "session_restore_unavailable",
                         "the committed action could not be restored; retry shortly",
                     )
+                if restored is None:
+                    return _error(
+                        503,
+                        "session_restore_unavailable",
+                        "the committed action could not be restored; retry shortly",
+                    )
+                safety_error = handle_release_safety_error(
+                    restored,
+                    snapshot=quarantine_snapshot,
+                )
+                if safety_error is not None:
+                    return safety_error
             raw_token = request.cookies[_COOKIE_NAME]
             _set_resume_cookie(response, raw_token, request)
             return replay.view
