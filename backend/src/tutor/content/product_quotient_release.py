@@ -42,6 +42,14 @@ from tutor.schemas.assessment import (
     AssessmentSurface,
     AssessmentTaskKind,
     BlankPromptSegment,
+    GuidedInteractionSpec,
+    GuidedMappingEntry,
+    GuidedMappingPresentation,
+    GuidedMappingScoring,
+    GuidedMappingSpec,
+    GuidedSliderPresentation,
+    GuidedSliderScoring,
+    GuidedSliderSpec,
     ItemBankDocument,
     MathPromptSegment,
     NumericAnswerSpec,
@@ -76,7 +84,7 @@ from tutor.schemas.product_quotient_authoring import (
 )
 from tutor.verify.checker import VerificationStatus, parse_restricted, verify_answer
 
-COMPILER_VERSION = "product-quotient-item-compiler-v2"
+COMPILER_VERSION = "product-quotient-item-compiler-v3"
 TARGET_KC = "kc.der.product_quotient"
 TARGET_CLOSURE = frozenset(
     {
@@ -116,27 +124,25 @@ EXPECTED_CONSTRUCT_ORDER: dict[
         AssessmentSurface.WORKED_EXAMPLE: ("exponent.compound",),
     },
     "kc.der.power_rule": {
-        # Diagnosis may stop after two successes. The first two families
-        # deliberately span rational/radical and signed-exponent scope.
         AssessmentSurface.DIAGNOSTIC: (
-            "power.rational",
-            "power.reciprocal_radical",
+            "power.positive_integer",
+            "power.negative_integer",
             "power.negative_integer",
             "power.positive_integer",
         ),
         AssessmentSurface.CHECKIN: (
-            "power.rational",
-            "power.reciprocal_radical",
             "power.positive_integer",
-            "power.sqrt",
+            "power.negative_integer",
+            "power.positive_integer",
+            "power.negative_integer",
             "power.negative_integer",
         ),
-        AssessmentSurface.GUIDED_WIDGET: ("power.sqrt",),
+        AssessmentSurface.GUIDED_WIDGET: ("power.positive_integer",),
         AssessmentSurface.CAPSTONE: (
-            "power.rational",
-            "power.reciprocal_radical",
+            "power.negative_integer",
+            "power.positive_integer",
         ),
-        AssessmentSurface.WORKED_EXAMPLE: ("power.sqrt",),
+        AssessmentSurface.WORKED_EXAMPLE: ("power.positive_integer",),
     },
     "kc.der.sum_constant_rules": {
         surface: tuple("sum.polynomial_termwise" for _ in range(count))
@@ -170,8 +176,8 @@ EXPECTED_CONSTRUCT_ORDER: dict[
 }
 
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
-DEFAULT_SOURCE_PATH = SEED_DIR / "item_blueprints_product_quotient_v1.json"
-DEFAULT_MANIFEST_PATH = SEED_DIR / "item_reviews_product_quotient_v1.json"
+DEFAULT_SOURCE_PATH = SEED_DIR / "item_blueprints_product_quotient_v2.json"
+DEFAULT_MANIFEST_PATH = SEED_DIR / "item_reviews_product_quotient_v2.json"
 DEFAULT_GRAPH_PATH = SEED_DIR / "kc_graph_calc1.json"
 
 
@@ -482,6 +488,154 @@ class _DerivedTask:
     numeric_answer: bool = False
     functions: tuple[str, ...] = ()
     variables: tuple[str, ...] = ("x",)
+
+
+def _spoken_math(expression: str) -> str:
+    """Produce deterministic draft speech that is bound into human review."""
+    spoken = expression
+    for source, replacement in (
+        ("'", " prime "),
+        ("^", " to the power of "),
+        ("*", " times "),
+        ("/", " divided by "),
+        ("+", " plus "),
+        ("-", " minus "),
+        ("=", " equals "),
+        ("(", " open parenthesis "),
+        (")", " close parenthesis "),
+    ):
+        spoken = spoken.replace(source, replacement)
+    return " ".join(spoken.split())
+
+
+def _mapping_entry(entry_id: str, label: str) -> GuidedMappingEntry:
+    return GuidedMappingEntry(
+        entry_id=entry_id,
+        label=label,
+        spoken_text=_spoken_math(label),
+    )
+
+
+def _guided_interaction_for(
+    family: ReleaseFamilyBlueprint,
+    derived: _DerivedTask,
+) -> GuidedInteractionSpec | None:
+    """Derive public guided state and private truth from the typed math task."""
+    if family.surface != AssessmentSurface.GUIDED_WIDGET:
+        return None
+    task = family.task
+    if isinstance(task, ExponentCompoundTask):
+        rows = (
+            _mapping_entry("row.zero", "zero exponent"),
+            _mapping_entry("row.negative", "negative exponent"),
+            _mapping_entry("row.power", "power of a power"),
+            _mapping_entry("row.quotient", "same-base quotient"),
+        )
+        # Ordering is authored and deterministic; it is never shuffled at runtime.
+        options = (
+            _mapping_entry("option.subtract", "subtract the denominator exponent"),
+            _mapping_entry("option.one", "replace the power with one"),
+            _mapping_entry("option.multiply", "multiply the nested exponents"),
+            _mapping_entry(
+                "option.reciprocal",
+                "move the factor across the fraction bar",
+            ),
+        )
+        return GuidedMappingSpec(
+            presentation=GuidedMappingPresentation(
+                prompt="Match each exponent pattern with the operation it requires.",
+                rows=rows,
+                options=options,
+            ),
+            scoring=GuidedMappingScoring(
+                correct_pairs=(
+                    ("row.zero", "option.one"),
+                    ("row.negative", "option.reciprocal"),
+                    ("row.power", "option.multiply"),
+                    ("row.quotient", "option.subtract"),
+                )
+            ),
+        )
+    if isinstance(task, PowerDerivativeTask):
+        target = float(task.exponent - 1)
+        minimum = float(min(-6, task.exponent - 4))
+        maximum = float(max(6, task.exponent + 3))
+        initial = target - 2 if target - 2 >= minimum else target + 2
+        return GuidedSliderSpec(
+            presentation=GuidedSliderPresentation(
+                prompt=(
+                    "Use the power-rule exponent step. Choose the exponent on x "
+                    "after differentiation."
+                ),
+                label="Exponent after differentiating",
+                help_text="Use the arrow keys or the slider; the value changes by one.",
+                minimum=minimum,
+                maximum=maximum,
+                step=1,
+                initial_value=initial,
+                value_label="Selected exponent",
+                result_template="The exponent on x becomes {value}.",
+            ),
+            scoring=GuidedSliderScoring(target=target, tolerance=0),
+        )
+    if isinstance(task, PolynomialDerivativeTask):
+        derivative_terms = [
+            (term.coefficient * term.exponent, term.exponent - 1)
+            for term in task.polynomial.terms
+        ]
+        rows = tuple(
+            _mapping_entry(
+                f"row.term{index}",
+                _render_monomial(term.coefficient, term.exponent),
+            )
+            for index, term in enumerate(task.polynomial.terms, start=1)
+        )
+        options = tuple(
+            _mapping_entry(
+                f"option.term{index}",
+                _render_monomial(coefficient, exponent),
+            )
+            for index, (coefficient, exponent) in reversed(
+                list(enumerate(derivative_terms, start=1))
+            )
+        )
+        return GuidedMappingSpec(
+            presentation=GuidedMappingPresentation(
+                prompt="Match each polynomial term with its derivative.",
+                rows=rows,
+                options=options,
+            ),
+            scoring=GuidedMappingScoring(
+                correct_pairs=tuple(
+                    (f"row.term{index}", f"option.term{index}")
+                    for index in range(1, len(rows) + 1)
+                )
+            ),
+        )
+    if isinstance(task, (ProductAtPointTask, QuotientAtPointTask)):
+        target = float(Fraction(derived.expected))
+        spread = max(6.0, abs(target) * 0.5)
+        minimum = float(int(target - spread) - 1)
+        maximum = float(int(target + spread) + 1)
+        step = 0.5 if not target.is_integer() else 1.0
+        initial = minimum if abs(minimum - target) > 1e-9 else minimum + step
+        return GuidedSliderSpec(
+            presentation=GuidedSliderPresentation(
+                prompt="Combine the supplied values to choose the derivative at the point.",
+                label="Derivative value",
+                help_text="Use the arrow keys or the slider, then check your value.",
+                minimum=minimum,
+                maximum=maximum,
+                step=step,
+                initial_value=initial,
+                value_label="Selected derivative",
+                result_template="The selected derivative is {value}.",
+            ),
+            scoring=GuidedSliderScoring(target=target, tolerance=0),
+        )
+    raise ProductQuotientCompilationError(
+        f"guided item {family.item_id!r} has no supported interaction compiler"
+    )
 
 
 def _derive_task_unregistered(task: ReleaseMathTask) -> _DerivedTask:
@@ -846,18 +1000,22 @@ def _build_family_item(
 ) -> AssessmentItem:
     derived = _derive_task(family.task)
     given_segments = [
-        MathPromptSegment(role=PromptSemanticRole.GIVEN, expression=given)
+        MathPromptSegment(
+            role=PromptSemanticRole.GIVEN,
+            expression=given,
+            spoken_text=_spoken_math(given),
+        )
         for given in derived.givens
     ]
     if family.surface == AssessmentSurface.WORKED_EXAMPLE:
         worked_instruction = (
-            "Study this worked example before trying an independent family. "
+            "Study this worked example before trying a new problem. "
             + derived.instruction
         )
         if isinstance(family.task, QuotientAtPointTask):
             worked_instruction += (
                 " This quotient example and the guided product practice that follows "
-                "use the same opaque point-data model."
+                "use the same supplied function values and derivative values."
             )
         prompt = [
             TextPromptSegment(
@@ -872,6 +1030,7 @@ def _build_family_item(
             MathPromptSegment(
                 role=PromptSemanticRole.WORKED_ANSWER,
                 expression=derived.expected,
+                spoken_text=_spoken_math(derived.expected),
             ),
         ]
     else:
@@ -934,6 +1093,7 @@ def _build_family_item(
         answer=answer,
         review_status=review_status,
         provenance=provenance,
+        guided_interaction=_guided_interaction_for(family, derived),
     )
 
 
@@ -1230,6 +1390,7 @@ def compile_release_inventory(
         )
 
     bank = ItemBankDocument(
+        schema_version=3,
         bank_version=source.output_bank_version,
         graph_version=source.graph_version,
         released_kcs=source.released_kcs,

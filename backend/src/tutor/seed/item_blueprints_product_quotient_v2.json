@@ -1,0 +1,1132 @@
+{
+  "schema_version": 2,
+  "blueprint_version": "product-quotient-release-v2.0.0",
+  "output_bank_version": "draft-product-quotient-release-v2.0.0",
+  "graph_version": 2,
+  "authoring_source": "assessment-draft/product-quotient-release-v2",
+  "author": "AI-assisted implementation draft (unreviewed)",
+  "target_kcs": [
+    "kc.alg.exponent_rules",
+    "kc.der.power_rule",
+    "kc.der.sum_constant_rules",
+    "kc.der.product_quotient"
+  ],
+  "released_kcs": [],
+  "families": [
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.01",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.diagnostic.01",
+      "family_id": "family.pqv1.exponent_rules.diagnostic.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_product",
+        "base": "z",
+        "left_exponent": 2,
+        "right_exponent": 3
+      },
+      "construct_id": "exponent.product"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.02",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.diagnostic.02",
+      "family_id": "family.pqv1.exponent_rules.diagnostic.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_quotient",
+        "base": "z",
+        "numerator_exponent": 11,
+        "denominator_exponent": 4
+      },
+      "construct_id": "exponent.quotient"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.03",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.diagnostic.03",
+      "family_id": "family.pqv1.exponent_rules.diagnostic.03",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "exponent_power",
+        "base": "z",
+        "inner_exponent": 2,
+        "outer_exponent": 4
+      },
+      "construct_id": "exponent.power"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.04",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.diagnostic.04",
+      "family_id": "family.pqv1.exponent_rules.diagnostic.04",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "exponent_negative",
+        "base": "z",
+        "magnitude": 3
+      },
+      "construct_id": "exponent.negative"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.01",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.checkin.01",
+      "family_id": "family.pqv1.exponent_rules.checkin.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_compound",
+        "base": "z",
+        "negative_magnitude": 2,
+        "inner_exponent": 2,
+        "outer_exponent": 3,
+        "product_exponent": 10,
+        "denominator_exponent": 1
+      },
+      "construct_id": "exponent.compound"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.02",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.checkin.02",
+      "family_id": "family.pqv1.exponent_rules.checkin.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "exponent_quotient",
+        "base": "z",
+        "numerator_exponent": 3,
+        "denominator_exponent": 9
+      },
+      "construct_id": "exponent.quotient"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.03",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.checkin.03",
+      "family_id": "family.pqv1.exponent_rules.checkin.03",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "exponent_power",
+        "base": "z",
+        "inner_exponent": 3,
+        "outer_exponent": 4
+      },
+      "construct_id": "exponent.power"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.04",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.checkin.04",
+      "family_id": "family.pqv1.exponent_rules.checkin.04",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "exponent_negative",
+        "base": "z",
+        "magnitude": 9
+      },
+      "construct_id": "exponent.negative"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.05",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.checkin.05",
+      "family_id": "family.pqv1.exponent_rules.checkin.05",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_zero",
+        "base": "z"
+      },
+      "construct_id": "exponent.zero"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.guided_widget.01",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.guided_widget.01",
+      "family_id": "family.pqv1.exponent_rules.guided_widget.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_compound",
+        "base": "z",
+        "negative_magnitude": 4,
+        "inner_exponent": 2,
+        "outer_exponent": 5,
+        "product_exponent": 10,
+        "denominator_exponent": 2
+      },
+      "construct_id": "exponent.compound"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.capstone.01",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.capstone.01",
+      "family_id": "family.pqv1.exponent_rules.capstone.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "exponent_compound",
+        "base": "z",
+        "negative_magnitude": 5,
+        "inner_exponent": 3,
+        "outer_exponent": 3,
+        "product_exponent": 15,
+        "denominator_exponent": 3
+      },
+      "construct_id": "exponent.compound"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.capstone.02",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.capstone.02",
+      "family_id": "family.pqv1.exponent_rules.capstone.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "exponent_compound",
+        "base": "z",
+        "negative_magnitude": 7,
+        "inner_exponent": 2,
+        "outer_exponent": 5,
+        "product_exponent": 20,
+        "denominator_exponent": 6
+      },
+      "construct_id": "exponent.compound"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.worked_example.01",
+      "revision": 2,
+      "item_id": "item.pqv1.exponent_rules.worked_example.01",
+      "family_id": "family.pqv1.exponent_rules.worked_example.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "exponent_compound",
+        "base": "z",
+        "negative_magnitude": 8,
+        "inner_exponent": 2,
+        "outer_exponent": 5,
+        "product_exponent": 20,
+        "denominator_exponent": 3
+      },
+      "construct_id": "exponent.compound"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.01",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.diagnostic.01",
+      "family_id": "family.pqv1.power_rule.diagnostic.01",
+      "kc_id": "kc.der.power_rule",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 20,
+        "exponent": 15
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.02",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.diagnostic.02",
+      "family_id": "family.pqv1.power_rule.diagnostic.02",
+      "kc_id": "kc.der.power_rule",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 20,
+        "exponent": -8
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.03",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.diagnostic.03",
+      "family_id": "family.pqv1.power_rule.diagnostic.03",
+      "kc_id": "kc.der.power_rule",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": -19,
+        "exponent": -7
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.04",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.diagnostic.04",
+      "family_id": "family.pqv1.power_rule.diagnostic.04",
+      "kc_id": "kc.der.power_rule",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 19,
+        "exponent": 14
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.01",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.checkin.01",
+      "family_id": "family.pqv1.power_rule.checkin.01",
+      "kc_id": "kc.der.power_rule",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": -20,
+        "exponent": 13
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.02",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.checkin.02",
+      "family_id": "family.pqv1.power_rule.checkin.02",
+      "kc_id": "kc.der.power_rule",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 18,
+        "exponent": -6
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.03",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.checkin.03",
+      "family_id": "family.pqv1.power_rule.checkin.03",
+      "kc_id": "kc.der.power_rule",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 17,
+        "exponent": 12
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.04",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.checkin.04",
+      "family_id": "family.pqv1.power_rule.checkin.04",
+      "kc_id": "kc.der.power_rule",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": -17,
+        "exponent": -5
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.05",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.checkin.05",
+      "family_id": "family.pqv1.power_rule.checkin.05",
+      "kc_id": "kc.der.power_rule",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 16,
+        "exponent": -4
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.guided_widget.01",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.guided_widget.01",
+      "family_id": "family.pqv1.power_rule.guided_widget.01",
+      "kc_id": "kc.der.power_rule",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 18,
+        "exponent": 14
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.capstone.01",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.capstone.01",
+      "family_id": "family.pqv1.power_rule.capstone.01",
+      "kc_id": "kc.der.power_rule",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": -15,
+        "exponent": -3
+      },
+      "construct_id": "power.negative_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.capstone.02",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.capstone.02",
+      "family_id": "family.pqv1.power_rule.capstone.02",
+      "kc_id": "kc.der.power_rule",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": 16,
+        "exponent": 13
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.worked_example.01",
+      "revision": 2,
+      "item_id": "item.pqv1.power_rule.worked_example.01",
+      "family_id": "family.pqv1.power_rule.worked_example.01",
+      "kc_id": "kc.der.power_rule",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "power_derivative",
+        "coefficient": -19,
+        "exponent": 15
+      },
+      "construct_id": "power.positive_integer"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.01",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.01",
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 2,
+              "exponent": 3
+            },
+            {
+              "coefficient": 5,
+              "exponent": 2
+            },
+            {
+              "coefficient": 7,
+              "exponent": 0
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.02",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.02",
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 4,
+              "exponent": 4
+            },
+            {
+              "coefficient": -3,
+              "exponent": 2
+            },
+            {
+              "coefficient": 8,
+              "exponent": 1
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.03",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.03",
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.03",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -2,
+              "exponent": 5
+            },
+            {
+              "coefficient": 6,
+              "exponent": 3
+            },
+            {
+              "coefficient": -9,
+              "exponent": 0
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.04",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.04",
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.04",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 3,
+              "exponent": 6
+            },
+            {
+              "coefficient": -4,
+              "exponent": 3
+            },
+            {
+              "coefficient": 2,
+              "exponent": 1
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.01",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.checkin.01",
+      "family_id": "family.pqv1.sum_constant_rules.checkin.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 5,
+              "exponent": 7
+            },
+            {
+              "coefficient": 2,
+              "exponent": 4
+            },
+            {
+              "coefficient": -6,
+              "exponent": 1
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.02",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.checkin.02",
+      "family_id": "family.pqv1.sum_constant_rules.checkin.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -3,
+              "exponent": 8
+            },
+            {
+              "coefficient": 7,
+              "exponent": 5
+            },
+            {
+              "coefficient": 4,
+              "exponent": 0
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.03",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.checkin.03",
+      "family_id": "family.pqv1.sum_constant_rules.checkin.03",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 6,
+              "exponent": 9
+            },
+            {
+              "coefficient": -5,
+              "exponent": 6
+            },
+            {
+              "coefficient": 3,
+              "exponent": 2
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.04",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.checkin.04",
+      "family_id": "family.pqv1.sum_constant_rules.checkin.04",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 2,
+              "exponent": 10
+            },
+            {
+              "coefficient": 9,
+              "exponent": 3
+            },
+            {
+              "coefficient": -11,
+              "exponent": 1
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.05",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.checkin.05",
+      "family_id": "family.pqv1.sum_constant_rules.checkin.05",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -4,
+              "exponent": 11
+            },
+            {
+              "coefficient": 3,
+              "exponent": 7
+            },
+            {
+              "coefficient": 8,
+              "exponent": 2
+            },
+            {
+              "coefficient": -5,
+              "exponent": 0
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.guided_widget.01",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.guided_widget.01",
+      "family_id": "family.pqv1.sum_constant_rules.guided_widget.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 7,
+              "exponent": 12
+            },
+            {
+              "coefficient": -2,
+              "exponent": 8
+            },
+            {
+              "coefficient": 5,
+              "exponent": 4
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.capstone.01",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.capstone.01",
+      "family_id": "family.pqv1.sum_constant_rules.capstone.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 3,
+              "exponent": 12
+            },
+            {
+              "coefficient": 4,
+              "exponent": 9
+            },
+            {
+              "coefficient": -6,
+              "exponent": 5
+            },
+            {
+              "coefficient": 2,
+              "exponent": 0
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.capstone.02",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.capstone.02",
+      "family_id": "family.pqv1.sum_constant_rules.capstone.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -2,
+              "exponent": 12
+            },
+            {
+              "coefficient": 5,
+              "exponent": 10
+            },
+            {
+              "coefficient": 7,
+              "exponent": 3
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.worked_example.01",
+      "revision": 2,
+      "item_id": "item.pqv1.sum_constant_rules.worked_example.01",
+      "family_id": "family.pqv1.sum_constant_rules.worked_example.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "polynomial_derivative",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 4,
+              "exponent": 12
+            },
+            {
+              "coefficient": -3,
+              "exponent": 11
+            },
+            {
+              "coefficient": 2,
+              "exponent": 6
+            },
+            {
+              "coefficient": -9,
+              "exponent": 1
+            }
+          ]
+        }
+      },
+      "construct_id": "sum.polynomial_termwise"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.01",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.diagnostic.01",
+      "family_id": "family.pqv1.product_quotient.diagnostic.01",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": 0,
+          "f_value": 2,
+          "g_value": 3,
+          "f_derivative": 4,
+          "g_derivative": 5
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.02",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.diagnostic.02",
+      "family_id": "family.pqv1.product_quotient.diagnostic.02",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": 9,
+          "f_value": 2,
+          "g_value": 3,
+          "f_derivative": 5,
+          "g_derivative": 4
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.03",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.diagnostic.03",
+      "family_id": "family.pqv1.product_quotient.diagnostic.03",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": -1,
+          "f_value": 3,
+          "g_value": 4,
+          "f_derivative": 3,
+          "g_derivative": 5
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.04",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.diagnostic.04",
+      "family_id": "family.pqv1.product_quotient.diagnostic.04",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": 2,
+          "f_value": 3,
+          "g_value": 4,
+          "f_derivative": 2,
+          "g_derivative": 5
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.01",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.checkin.01",
+      "family_id": "family.pqv1.product_quotient.checkin.01",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": 3,
+          "f_value": 2,
+          "g_value": 3,
+          "f_derivative": 5,
+          "g_derivative": 8
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.02",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.checkin.02",
+      "family_id": "family.pqv1.product_quotient.checkin.02",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": -2,
+          "f_value": 4,
+          "g_value": 5,
+          "f_derivative": 6,
+          "g_derivative": 3
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.03",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.checkin.03",
+      "family_id": "family.pqv1.product_quotient.checkin.03",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": 4,
+          "f_value": 2,
+          "g_value": 5,
+          "f_derivative": 4,
+          "g_derivative": 7
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.04",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.checkin.04",
+      "family_id": "family.pqv1.product_quotient.checkin.04",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": 5,
+          "f_value": 5,
+          "g_value": 6,
+          "f_derivative": 3,
+          "g_derivative": 4
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.05",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.checkin.05",
+      "family_id": "family.pqv1.product_quotient.checkin.05",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": -3,
+          "f_value": 3,
+          "g_value": 5,
+          "f_derivative": 5,
+          "g_derivative": 4
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.guided_widget.01",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.guided_widget.01",
+      "family_id": "family.pqv1.product_quotient.guided_widget.01",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": 7,
+          "f_value": 2,
+          "g_value": 5,
+          "f_derivative": 7,
+          "g_derivative": 3
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.capstone.01",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.capstone.01",
+      "family_id": "family.pqv1.product_quotient.capstone.01",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": 6,
+          "f_value": 6,
+          "g_value": 7,
+          "f_derivative": 4,
+          "g_derivative": 5
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.capstone.02",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.capstone.02",
+      "family_id": "family.pqv1.product_quotient.capstone.02",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "product_at_point",
+        "data": {
+          "point": 8,
+          "f_value": 2,
+          "g_value": 7,
+          "f_derivative": 5,
+          "g_derivative": 4
+        }
+      },
+      "construct_id": "product_quotient.product_at_point"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.worked_example.01",
+      "revision": 2,
+      "item_id": "item.pqv1.product_quotient.worked_example.01",
+      "family_id": "family.pqv1.product_quotient.worked_example.01",
+      "kc_id": "kc.der.product_quotient",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "quotient_at_point",
+        "data": {
+          "point": -4,
+          "f_value": 7,
+          "g_value": 8,
+          "f_derivative": 5,
+          "g_derivative": 3
+        }
+      },
+      "construct_id": "product_quotient.quotient_at_point"
+    }
+  ]
+}

@@ -31,6 +31,8 @@ from tutor.schemas.assessment import (
     AssessmentSurface,
     AssessmentTaskKind,
     BlankPromptSegment,
+    GuidedMappingSpec,
+    GuidedSliderSpec,
     MathPromptSegment,
     NumericAnswerSpec,
     PromptSemanticRole,
@@ -152,7 +154,8 @@ def test_packaged_inventory_is_exactly_52_pending_candidate_families(
     assert {item.review_status for item in bank.items} == {ReviewStatus.DRAFT}
     assert all(item.provenance.reviewed_by is None for item in bank.items)
     assert all(item.provenance.source_id for item in bank.items)
-    assert all(item.provenance.source_revision == 1 for item in bank.items)
+    assert bank.schema_version == 3
+    assert all(item.provenance.source_revision == 2 for item in bank.items)
     assert all(item.provenance.source_digest for item in bank.items)
     assert all(
         item.provenance.compiler_version == COMPILER_VERSION
@@ -161,7 +164,7 @@ def test_packaged_inventory_is_exactly_52_pending_candidate_families(
     assert report.errors == ()
     assert report.answer_pairs_checked == 52 * 51 // 2 == 1326
     assert report.literal_visible_pairs_checked == 52 * 51 == 2652
-    assert report.visible_candidate_comparisons_checked == 5541
+    assert report.visible_candidate_comparisons_checked == 5601
 
 
 def test_exact_surface_matrix_exists_for_every_kc(source):
@@ -175,6 +178,31 @@ def test_exact_surface_matrix_exists_for_every_kc(source):
             for surface, count in EXPECTED_FAMILY_COUNTS.items()
         }
     )
+
+
+def test_guided_families_compile_two_accessible_private_truth_contracts(compiled):
+    bank, _report = compiled
+    guided = [
+        item
+        for item in bank.items
+        if item.eligible_surfaces == [AssessmentSurface.GUIDED_WIDGET]
+    ]
+
+    assert bank.schema_version == 3
+    assert sum(isinstance(item.guided_interaction, GuidedMappingSpec) for item in guided) == 2
+    assert sum(isinstance(item.guided_interaction, GuidedSliderSpec) for item in guided) == 2
+    assert all(
+        segment.spoken_text
+        for item in bank.items
+        for segment in item.prompt
+        if isinstance(segment, MathPromptSegment)
+    )
+    for item in guided:
+        interaction = item.guided_interaction
+        assert interaction is not None
+        public_json = interaction.presentation.model_dump_json()
+        assert "correct_pairs" not in public_json
+        assert '"target"' not in public_json
 
 
 def test_exact_construct_and_order_taxonomy_is_explicit(source):
@@ -268,7 +296,7 @@ def test_exponent_prompts_preserve_nonzero_domain_on_every_affected_surface(
         assert f"Assume {family.task.base} is non-zero." in instruction
 
 
-def test_power_diagnosis_spans_broad_scope_before_easy_integer_repetition(source):
+def test_power_inventory_stays_inside_the_fixed_integer_power_scope(source):
     diagnostics = sorted(
         (
             family
@@ -280,15 +308,14 @@ def test_power_diagnosis_spans_broad_scope_before_easy_integer_repetition(source
     )
 
     assert [family.construct_id for family in diagnostics] == [
-        "power.rational",
-        "power.reciprocal_radical",
+        "power.positive_integer",
+        "power.negative_integer",
         "power.negative_integer",
         "power.positive_integer",
     ]
-    assert isinstance(diagnostics[0].task, RationalPowerDerivativeTask)
-    assert isinstance(diagnostics[1].task, RadicalPowerDerivativeTask)
-    assert diagnostics[1].task.form == "reciprocal_sqrt"
-    assert isinstance(diagnostics[2].task, PowerDerivativeTask)
+    assert all(isinstance(family.task, PowerDerivativeTask) for family in diagnostics)
+    assert diagnostics[0].task.exponent > 0
+    assert diagnostics[1].task.exponent < 0
     assert diagnostics[2].task.exponent < 0
 
     checkins = sorted(
@@ -301,9 +328,10 @@ def test_power_diagnosis_spans_broad_scope_before_easy_integer_repetition(source
         key=lambda family: family.allocation_order,
     )
     assert [family.construct_id for family in checkins[:2]] == [
-        "power.rational",
-        "power.reciprocal_radical",
+        "power.positive_integer",
+        "power.negative_integer",
     ]
+    assert all(isinstance(family.task, PowerDerivativeTask) for family in checkins)
 
 
 def test_product_quotient_items_use_only_opaque_point_data_and_numeric_truth(
@@ -367,14 +395,9 @@ def test_compiler_derives_representative_truth_for_each_typed_builder(compiled):
 
     assert expected_by_id["item.pqv1.exponent_rules.diagnostic.01"] == "z^5"
     assert expected_by_id["item.pqv1.exponent_rules.checkin.01"] == "z^13"
-    assert (
-        expected_by_id["item.pqv1.power_rule.diagnostic.01"]
-        == "(15/4)*x^(-1/4)"
-    )
-    assert expected_by_id["item.pqv1.power_rule.diagnostic.02"] == (
-        "-3/(2*x*sqrt(x))"
-    )
-    assert expected_by_id["item.pqv1.power_rule.diagnostic.04"] == "28*x^3"
+    assert expected_by_id["item.pqv1.power_rule.diagnostic.01"] == "300*x^14"
+    assert expected_by_id["item.pqv1.power_rule.diagnostic.02"] == "-160*x^-9"
+    assert expected_by_id["item.pqv1.power_rule.diagnostic.04"] == "266*x^13"
     assert (
         expected_by_id["item.pqv1.sum_constant_rules.diagnostic.01"]
         == "6*x^2+10*x"
@@ -732,11 +755,11 @@ def test_exhaustive_gate_detects_adjacent_implicit_group_leakage(compiled, graph
     bank, _report = compiled
     changed = list(bank.items)
     source_item = changed[0]
-    target = next(item for item in changed if item.answer.expected == "28*x^3")
+    target = next(item for item in changed if item.answer.expected == "266*x^13")
     changed[0] = source_item.model_copy(
         update={
             "hints": [
-                AssessmentHint(text="An unrelated result is (4*x^2)(7*x)."),
+                AssessmentHint(text="An unrelated result is (14*x^2)(19*x^11)."),
                 source_item.hints[1],
                 source_item.hints[2],
             ]
@@ -816,7 +839,7 @@ def test_cli_check_reports_actual_qualification_work(capsys):
     output = capsys.readouterr().out
     assert "52 total families, 52 draft, 0 approved" in output
     assert "1326 answer comparisons" in output
-    assert "5541 visible candidate comparisons" in output
+    assert "5601 visible candidate comparisons" in output
     assert "2652 literal cross-family scans" in output
     assert "released KCs=0" in output
 

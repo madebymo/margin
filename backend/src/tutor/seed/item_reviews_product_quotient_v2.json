@@ -1,0 +1,372 @@
+{
+  "compiler_version": "product-quotient-item-compiler-v3",
+  "entries": [
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "6468e030f11aa92ff15018eef48891030584e62501ba95cbdcd19360a471c7c9"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "affeb469fa43fcbda1454ac03b86f0107fb460b1ebc7b35982ae80f514fbbbb9"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "ee9a18a74f428b60280fe0c1979b8978cd49cd54c9441f38c4157e2f827265dd"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.diagnostic.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "cb48bf01604e73a27f80f0889f26c1c408e0e67def4cfdcc48d95b1156dbcc76"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "576cf1c95f6a0466d67b4546b0801b477492d21891ff77a88e62b88192c33115"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "e7b813df9d6a00a56f460d52ce671c25e0b281d61305a192372b29fc31d5c728"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "d70a2b415b01a4929e016df540903079aaec42b62af696fecf649c4380cacc4c"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "79a2aad9b754ffaa37cb8ce5f13260711ea203496a4a33845457f9d7b5c795f7"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.05",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "1e6c48b2fee762155ba2b0f7a96371f06ff3541735837ae4180d73cc667aa6ea"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.guided_widget.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "028ec4a2419d2299dfd6cd31fff122393bef3e16e9aa05dd2fc04c595ee60a6d"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.capstone.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "3c7f9d80f593e199c11cecf04aac7e3a29b7f2c84617e91f96b93667a1b59a23"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.capstone.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "7577bac7c8f4fcad52e8f8a9f590c22ee09aaf5c554302d521a209e7cb16bf71"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.exponent_rules.worked_example.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "5bf000dddec08bc4f8d2b617f0969aba6416be2619d33813d97346dc2c700c3f"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "30f1038543fabe98d9f9622d80d83ccbe82aab78fb53641659a3bd6e13d24311"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "c6a4f1f3f57e449053c4fd53e7436611500401c2d8394c5fcf1619e974e42e1c"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "73fc070eece63a5dc48538b4c1be63a7cef888a0feb7ec903dd73da865fe8073"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.diagnostic.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "9017df8eb7a551abfca739fc043f93fa64fbb2f59f24971927e65135504f1da9"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "afbf5780b55a79d0c18d66c1ca91b6116b6ca4dd8c01a3309b422c4342b736e4"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "f38a05208be2d449d4b8dda8181dbc8e3e4c391816377cbe8fc9d01dd4da74cb"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "3ee1283e9cd5f6a19fa0cb4976b412f792fb75f5e4f21cae846f9f5271589e6f"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "7945dc5f16c84fc0146309a932b3e52d947eab7bfe0113f822f3cc6d6ed1bb88"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.checkin.05",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "bafefd7e7d99743f66f5529744ae800e5f64772766b20683e270edc0d017d5b7"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.guided_widget.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "a50a9c85a12e67e86bf4bd2ebb02dc4510a51815014f571e2d2470545c32ee17"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.capstone.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "5785a2bf94744fe927abbd98ac11a5384cd2f0b2274d6f7cab1e62cf203c0bfd"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.capstone.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "7f8bc6507f2d13b2599c361cb3a26794e78ec5ee67fd9ec03e922090bcc61747"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.power_rule.worked_example.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "0ebd1c0ba9d5561f8512b91ee5ab003b8f93466a4f6031881a9a1ae9075a770d"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "f8fbdb7eeee42c24627380d24396898bba1a24211263e3b16865e206d60421f1"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "1f229051c820a896af3f32ddce9bda6ee7c627ed6e0bee477b4b59aa78f6dd8c"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "4ff103eee5943ded8c851c20cb3a81743acf8fefe9879fb41a5e0705c4d94738"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.diagnostic.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "84b19ed925c4ce68d62f9cf6bf4f97adc1af684391ccfc7b33166a5190d1181f"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "c1e71e4413eb4ecd12eca9442ac7dbf214c0044200a18a667b6b0e7629c40f81"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "13a3314f763ff128b41a59b2c8df1777d7f3bc401c0c66209b028dbd27c62c2f"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "e95ead7138eee44edd3ca75cca44e3b20b52e3654286bc1813a5c9b2eb331e7d"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "dfc9f7181d47eda38c6d85fa83888335af5b9a6965f0387f93f3c0a0f06c9a9b"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.checkin.05",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "f5fc8e66e695be4d6d735886b873db13428e2a211e42239946a9798603461439"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.guided_widget.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "373582128f96bcf32a366ea3b31bb4743d67cd78c1398b6f9533b2031534f76c"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.capstone.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "4d754a4b4441745f62c0b2a04f7ec76b5829747ebd596ff70dffe4617d2ef8a3"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.capstone.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "ff91536efc4817f7a8ca004634f3ed71ae172c8d654209f583abf0a1fdf39e90"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.sum_constant_rules.worked_example.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "cd7221f489b4e9b61a735c123c3be80cca7df0f98f94bd4b8935f033745d718d"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "7a0b5c4b0e0f9bc06bdd3ce435c2bac2748bafad9c9bd917c8609b152fc0be94"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "f5a5c5d7fa8ff3675f6af3b3a374368ae1bd123f83063374d58c679af3d75374"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "80d696dfb9e42cc6af3c01106116c399ac491f9cd439b4bebe9eb19342587d00"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.diagnostic.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "4c798f95c027fa60ddb85b51acd367414f6b00e868143c55ba222dc2ccf34c36"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "c2a44eb748bdb8ffa3f37d75740a4b0eca39f2fbbf2d17b6369fd46d532d9832"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "3a62599fcd171880eaf76c9d84ce91ec9f6ee477bbd1b1095db7ceff25371494"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.03",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "22ad8fc991137cd193e08f34d1960fac55bcf824d33ec45eb09e89d18fb0a922"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.04",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "cab9cbba6c9d06de367b0e83e1a7e4602d719c9bebb8493414b46c0fc994f169"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.checkin.05",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "6229b58efd12a9f963c01ed8b87a22741f4189d77538ae3a1faddef4fec798cc"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.guided_widget.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "c5aa040cdd0d85e88af7a5d9a1c15dcba8eba87c78a4c4687f43094b31a00257"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.capstone.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "eca9b6f269d1e3949781cefb64d89f4fbb0fc2615ce53b38094f215f133a1a80"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.capstone.02",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "952e499174205ec3dc4a8a3783619518a1a26ea55f86135b7308f7c063616782"
+    },
+    {
+      "blueprint_id": "blueprint.pqv1.product_quotient.worked_example.01",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, and pedagogy review.",
+      "revision": 2,
+      "source_digest": "7b7a9535282095995bc90ada3a506cff9886f1dda400b07f830449ecb289735b"
+    }
+  ],
+  "graph_version": 2,
+  "manifest_version": "product-quotient-review-v2.0.0",
+  "schema_version": 1
+}
