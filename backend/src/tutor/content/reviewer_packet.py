@@ -42,6 +42,11 @@ def _parameter_shape(item: AssessmentItem) -> str:
         "prompt": [segment.model_dump(mode="json") for segment in item.prompt],
         "hints": [hint.model_dump(mode="json") for hint in item.hints],
         "answer_kind": item.answer.kind,
+        "guided_interaction": (
+            item.guided_interaction.model_dump(mode="json")
+            if item.guided_interaction is not None
+            else None
+        ),
     }
     text = json.dumps(payload, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
     text = re.sub(r"(?<![A-Za-z_])[+-]?\d+(?:\.\d+)?(?:/\d+)?", "<n>", text)
@@ -101,6 +106,13 @@ def build_reviewer_packet(
                     signature.model_dump(mode="json")
                     for signature in item.error_signatures
                 ],
+                # This packet is offline and explicitly truth-bearing: reviewers
+                # must see both the learner presentation and private scorer bytes.
+                "guided_interaction": (
+                    item.guided_interaction.model_dump(mode="json")
+                    if item.guided_interaction is not None
+                    else None
+                ),
             }
             for item in items
         ]

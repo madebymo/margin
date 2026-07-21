@@ -23,6 +23,13 @@ from tutor.schemas.assessment import (
     BlankPromptSegment,
     ContentExposureState,
     FiniteSetAnswerSpec,
+    GuidedMappingEntry,
+    GuidedMappingPresentation,
+    GuidedMappingScoring,
+    GuidedMappingSpec,
+    GuidedSliderPresentation,
+    GuidedSliderScoring,
+    GuidedSliderSpec,
     ItemBankDocument,
     MathPromptSegment,
     NumericAnswerSpec,
@@ -157,6 +164,71 @@ def test_legacy_prompt_and_task_fields_receive_safe_defaults():
     assert math.role == PromptSemanticRole.GIVEN
     assert blank.role == PromptSemanticRole.RESPONSE
     assert all(item.task_kind == AssessmentTaskKind.SOLVE for item in load_item_bank().items)
+
+
+def test_guided_mapping_requires_complete_private_one_to_one_truth():
+    presentation = GuidedMappingPresentation(
+        prompt="Match each expression to its derivative.",
+        rows=(
+            GuidedMappingEntry(entry_id="row.x2", label="x^2", spoken_text="x squared"),
+            GuidedMappingEntry(entry_id="row.x3", label="x^3", spoken_text="x cubed"),
+        ),
+        options=(
+            GuidedMappingEntry(entry_id="option.2x", label="2*x", spoken_text="two x"),
+            GuidedMappingEntry(entry_id="option.3x2", label="3*x^2", spoken_text="three x squared"),
+        ),
+    )
+    mapping = GuidedMappingSpec(
+        presentation=presentation,
+        scoring=GuidedMappingScoring(
+            correct_pairs=(("row.x2", "option.2x"), ("row.x3", "option.3x2"))
+        ),
+    )
+
+    assert mapping.kind == "mapping_v1"
+    with pytest.raises(ValueError, match="every public row"):
+        GuidedMappingSpec(
+            presentation=presentation,
+            scoring=GuidedMappingScoring(
+                correct_pairs=(("row.x2", "option.2x"), ("row.missing", "option.3x2"))
+            ),
+        )
+
+
+def test_guided_slider_target_must_be_reachable_but_truth_stays_separate():
+    presentation = GuidedSliderPresentation(
+        prompt="Choose the new exponent.",
+        label="New exponent",
+        help_text="Use arrow keys or the slider.",
+        minimum=-4,
+        maximum=4,
+        step=1,
+        initial_value=0,
+        value_label="Selected exponent",
+        result_template="The exponent becomes {value}.",
+    )
+    slider = GuidedSliderSpec(
+        presentation=presentation,
+        scoring=GuidedSliderScoring(target=2),
+    )
+
+    assert slider.presentation.model_dump(mode="json") == {
+        "prompt": "Choose the new exponent.",
+        "label": "New exponent",
+        "help_text": "Use arrow keys or the slider.",
+        "minimum": -4.0,
+        "maximum": 4.0,
+        "step": 1.0,
+        "initial_value": 0.0,
+        "value_label": "Selected exponent",
+        "result_template": "The exponent becomes {value}.",
+        "visual_summary": None,
+    }
+    with pytest.raises(ValueError, match="reachable"):
+        GuidedSliderSpec(
+            presentation=presentation.model_copy(update={"step": 4}),
+            scoring=GuidedSliderScoring(target=2),
+        )
 
 
 @pytest.mark.parametrize(

@@ -232,6 +232,130 @@ class BlankPromptSegment(StrictFrozenModel):
         return self
 
 
+class GuidedMappingEntry(StrictFrozenModel):
+    """One stable, accessible row or option in a guided mapping activity."""
+
+    entry_id: str = Field(max_length=64, pattern=_CONTENT_ID_PATTERN)
+    label: str = Field(min_length=1, max_length=256)
+    spoken_text: str = Field(min_length=1, max_length=512)
+
+    @field_validator("label", "spoken_text", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class GuidedMappingPresentation(StrictFrozenModel):
+    """The safe, deterministic portion of a mapping interaction."""
+
+    prompt: str = Field(min_length=1, max_length=512)
+    rows: tuple[GuidedMappingEntry, ...] = Field(min_length=2, max_length=12)
+    options: tuple[GuidedMappingEntry, ...] = Field(min_length=2, max_length=12)
+
+    @model_validator(mode="after")
+    def _unique_entries(self) -> "GuidedMappingPresentation":
+        row_ids = [entry.entry_id for entry in self.rows]
+        option_ids = [entry.entry_id for entry in self.options]
+        if len(row_ids) != len(set(row_ids)):
+            raise ValueError("mapping row ids must be unique")
+        if len(option_ids) != len(set(option_ids)):
+            raise ValueError("mapping option ids must be unique")
+        if set(row_ids) & set(option_ids):
+            raise ValueError("mapping row and option ids must be disjoint")
+        return self
+
+
+class GuidedMappingScoring(StrictFrozenModel):
+    """Private mapping truth; this model must never enter a SessionView."""
+
+    correct_pairs: tuple[tuple[str, str], ...] = Field(min_length=2, max_length=12)
+
+
+class GuidedMappingSpec(StrictFrozenModel):
+    """A keyboard-operable, one-to-one mapping interaction."""
+
+    kind: Literal["mapping_v1"] = "mapping_v1"
+    presentation: GuidedMappingPresentation
+    scoring: GuidedMappingScoring
+
+    @model_validator(mode="after")
+    def _complete_one_to_one_mapping(self) -> "GuidedMappingSpec":
+        row_ids = {entry.entry_id for entry in self.presentation.rows}
+        option_ids = {entry.entry_id for entry in self.presentation.options}
+        pairs = self.scoring.correct_pairs
+        paired_rows = [row_id for row_id, _ in pairs]
+        paired_options = [option_id for _, option_id in pairs]
+        if set(paired_rows) != row_ids:
+            raise ValueError("mapping scoring must pair every public row exactly once")
+        if len(paired_rows) != len(set(paired_rows)):
+            raise ValueError("mapping scoring repeats a row")
+        if len(paired_options) != len(set(paired_options)):
+            raise ValueError("mapping scoring repeats an option")
+        if not set(paired_options).issubset(option_ids):
+            raise ValueError("mapping scoring references an unknown public option")
+        return self
+
+
+class GuidedSliderPresentation(StrictFrozenModel):
+    """The public bounded state and accessible labels for a slider activity."""
+
+    prompt: str = Field(min_length=1, max_length=512)
+    label: str = Field(min_length=1, max_length=128)
+    help_text: str = Field(min_length=1, max_length=512)
+    minimum: float = Field(allow_inf_nan=False)
+    maximum: float = Field(allow_inf_nan=False)
+    step: float = Field(gt=0, allow_inf_nan=False)
+    initial_value: float = Field(allow_inf_nan=False)
+    value_label: str = Field(min_length=1, max_length=128)
+    result_template: str | None = Field(default=None, min_length=1, max_length=256)
+    visual_summary: PlotPromptSegment | None = None
+
+    @model_validator(mode="after")
+    def _valid_range(self) -> "GuidedSliderPresentation":
+        if self.maximum <= self.minimum:
+            raise ValueError("slider maximum must be greater than its minimum")
+        if not self.minimum <= self.initial_value <= self.maximum:
+            raise ValueError("slider initial value must lie within its bounds")
+        if self.result_template is not None and "{value}" not in self.result_template:
+            raise ValueError("slider result_template must contain the {value} placeholder")
+        return self
+
+
+class GuidedSliderScoring(StrictFrozenModel):
+    """Private slider truth; this model must never enter a SessionView."""
+
+    target: float = Field(allow_inf_nan=False)
+    tolerance: float = Field(default=0, ge=0, allow_inf_nan=False)
+
+
+class GuidedSliderSpec(StrictFrozenModel):
+    """A bounded numeric slider with private success conditions."""
+
+    kind: Literal["slider_v1"] = "slider_v1"
+    presentation: GuidedSliderPresentation
+    scoring: GuidedSliderScoring
+
+    @model_validator(mode="after")
+    def _target_is_reachable(self) -> "GuidedSliderSpec":
+        presentation = self.presentation
+        target = self.scoring.target
+        if not presentation.minimum <= target <= presentation.maximum:
+            raise ValueError("slider target must lie within its public bounds")
+        steps = (target - presentation.minimum) / presentation.step
+        if abs(steps - round(steps)) > 1e-9:
+            raise ValueError("slider target must be reachable on the public step grid")
+        return self
+
+
+GuidedInteractionSpec = Annotated[
+    Union[GuidedMappingSpec, GuidedSliderSpec],
+    Field(discriminator="kind"),
+]
+guided_interaction_spec_adapter: TypeAdapter[GuidedInteractionSpec] = TypeAdapter(
+    GuidedInteractionSpec
+)
+
+
 DisplayPromptSegment = Annotated[
     Union[
         TextPromptSegment,
@@ -482,6 +606,9 @@ class AssessmentItem(StrictFrozenModel):
     review_status: ReviewStatus
     provenance: AssessmentProvenance
     error_signatures: list[ErrorSignature] = Field(default_factory=list)
+    # The scoring branch is private release content. Runtime projections expose
+    # only ``presentation`` and never serialize this object wholesale.
+    guided_interaction: GuidedInteractionSpec | None = None
 
     @model_validator(mode="after")
     def _content_invariants(self) -> "AssessmentItem":
@@ -505,6 +632,11 @@ class AssessmentItem(StrictFrozenModel):
             )
             if givens != 1:
                 raise ValueError("a transform task must contain exactly one math given")
+        guided = AssessmentSurface.GUIDED_WIDGET in self.eligible_surfaces
+        if not guided and self.guided_interaction is not None:
+            raise ValueError(
+                "only guided_widget items may carry a guided_interaction"
+            )
         return self
 
 
@@ -554,6 +686,11 @@ class ItemBankDocument(StrictFrozenModel):
                         raise ValueError(
                             f"schema-v3 item {item.item_id!r} has math without spoken_text"
                         )
+                is_guided = AssessmentSurface.GUIDED_WIDGET in item.eligible_surfaces
+                if is_guided and item.guided_interaction is None:
+                    raise ValueError(
+                        f"schema-v3 guided item {item.item_id!r} lacks guided_interaction"
+                    )
             previous = family_kcs.setdefault(item.family_id, item.kc_id)
             if previous != item.kc_id:
                 raise ValueError(

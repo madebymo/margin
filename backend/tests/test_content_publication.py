@@ -8,6 +8,7 @@ from copy import deepcopy
 
 import pytest
 
+from tutor.content.item_bank import load_item_bank
 from tutor.content.publication import (
     ReleasePublicationError,
     prepare_release_candidate,
@@ -51,6 +52,10 @@ _PUBLISHED_AT = "2026-07-21T12:00:00Z"
 
 def _modern_bank() -> ItemBankDocument:
     payload = approved_power_rule_bank().model_dump(mode="json")
+    packaged_item_ids = {item.item_id for item in load_item_bank().items}
+    payload["items"] = [
+        item for item in payload["items"] if item["item_id"] in packaged_item_ids
+    ]
     payload["schema_version"] = 3
     payload["bank_version"] = "test-publish-power-v3"
     additions = []
@@ -80,6 +85,22 @@ def _modern_bank() -> ItemBankDocument:
         for segment in item["prompt"]:
             if segment["kind"] == "math":
                 segment["spoken_text"] = f"Math expression: {segment['expression']}"
+        if item["eligible_surfaces"] == ["guided_widget"]:
+            item["guided_interaction"] = {
+                "kind": "slider_v1",
+                "presentation": {
+                    "prompt": "Choose the new exponent after differentiating.",
+                    "label": "New exponent",
+                    "help_text": "Use the arrow keys or slider control.",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "step": 1,
+                    "initial_value": 0,
+                    "value_label": "Selected exponent",
+                    "result_template": "The new exponent is {value}.",
+                },
+                "scoring": {"target": 3, "tolerance": 0},
+            }
         family_digest = hashlib.sha256(item["family_id"].encode("utf-8")).hexdigest()
         item["provenance"].update(
             {
@@ -247,6 +268,13 @@ def test_accessible_table_plot_and_schema_v3_math_contracts():
 
     payload = approved_power_rule_bank().model_dump(mode="json")
     payload["schema_version"] = 3
+    first_math = next(
+        segment
+        for item in payload["items"]
+        for segment in item["prompt"]
+        if segment["kind"] == "math"
+    )
+    first_math["spoken_text"] = None
     with pytest.raises(ValueError, match="math without spoken_text"):
         ItemBankDocument.model_validate(payload)
 
@@ -317,7 +345,9 @@ def test_publication_rejects_tampered_family_and_legacy_contracts(
         )
     assert not (tmp_path / "tampered").exists()
 
-    legacy = approved_power_rule_bank()
+    legacy_payload = approved_power_rule_bank().model_dump(mode="json")
+    legacy_payload["schema_version"] = 2
+    legacy = ItemBankDocument.model_validate(legacy_payload)
     with pytest.raises(ReleasePublicationError, match="schema-v3"):
         publish_release(
             tmp_path / "legacy",
