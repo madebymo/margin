@@ -1,0 +1,4948 @@
+{
+  "schema_version": 3,
+  "bank_version": "solve-quadratics-wave-draft-v2",
+  "graph_version": 2,
+  "released_kcs": [],
+  "items": [
+    {
+      "item_id": "item.sqv2.factoring.capstone.01",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.capstone.01",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The tasks include signed, mixed-sign, and repeated-factor cases. Normalize and factor all three, then enter the eight parameters."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=x^2-64",
+          "spoken_text": "D equals x to the power of 2 minus 64"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+3*x-18",
+          "spoken_text": "M equals x to the power of 2 plus 3 times x minus 18"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=15*x^3+40*x^2",
+          "spoken_text": "G equals 15 times x to the power of 3 plus 40 times x to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (5, 2, 3, 8, -6, 3, 1, 8).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "5",
+          "2",
+          "3",
+          "8",
+          "-6",
+          "3",
+          "1",
+          "8"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.capstone.01",
+        "source_revision": 1,
+        "source_digest": "e952703c16b72f4309a3ac17318972edad9be0c8cdce190f847f899e03098374",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 15, 40, -6, 3, 1, 8)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(5, 2, 3, 8, -3, -18, 1, 8)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(5, 2, 3, 8, -6, 3, 1, -8)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.capstone.02",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.capstone.02",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Factor G, M, and D, then verify each reconstruction at x=3. Enter the eight factor parameters followed by the three check values."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=-30*x+42",
+          "spoken_text": "G equals minus 30 times x plus 42"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2-10*x+16",
+          "spoken_text": "M equals x to the power of 2 minus 10 times x plus 16"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=-2*x^2+72",
+          "spoken_text": "D equals minus 2 times x to the power of 2 plus 72"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-6, 0, 5, -7, 2, 8, -2, 6, -48, -5, 54).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-6",
+          "0",
+          "5",
+          "-7",
+          "2",
+          "8",
+          "-2",
+          "6",
+          "-48",
+          "-5",
+          "54"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.capstone.02",
+        "source_revision": 1,
+        "source_digest": "1f1d0b526e97de4e18b367da74ae64db06680f3c22256db32f485202a19401f4",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.checkin.01",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.checkin.01",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Factor G, M, and D, then verify each reconstruction at x=-2. Enter the eight factor parameters followed by the three check values."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=42*x^3+54*x^2",
+          "spoken_text": "G equals 42 times x to the power of 3 plus 54 times x to the power of 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+4*x-5",
+          "spoken_text": "M equals x to the power of 2 plus 4 times x minus 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=5*x^2-20",
+          "spoken_text": "D equals 5 times x to the power of 2 minus 20"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (6, 2, 7, 9, -5, 1, 5, 2, -120, -9, 0).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "6",
+          "2",
+          "7",
+          "9",
+          "-5",
+          "1",
+          "5",
+          "2",
+          "-120",
+          "-9",
+          "0"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.checkin.01",
+        "source_revision": 1,
+        "source_digest": "9ee804f48c606e8fe5c7fd9cf637b613501b80c992210dbecf88e7569095b89d",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.checkin.02",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.checkin.02",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The tasks include signed, mixed-sign, and repeated-factor cases. Normalize and factor all three, then enter the eight parameters."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=-6*x^2+54",
+          "spoken_text": "D equals minus 6 times x to the power of 2 plus 54"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2-6*x",
+          "spoken_text": "M equals x to the power of 2 minus 6 times x"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=-21*x+28",
+          "spoken_text": "G equals minus 21 times x plus 28"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-7, 0, 3, -4, 0, 6, -6, 3).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-7",
+          "0",
+          "3",
+          "-4",
+          "0",
+          "6",
+          "-6",
+          "3"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.checkin.02",
+        "source_revision": 1,
+        "source_digest": "db1d077912bcc26ef3906d0e29326cff2b7b4acd43d75d0b1258606c1bd4af29",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, -21, 28, 0, 6, -6, 3)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(-7, 0, 3, -4, 6, 0, -6, 3)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-7, 0, 3, -4, 0, 6, -6, -3)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.checkin.03",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.checkin.03",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Recover all three factorizations from the table and enter (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Expanded coefficient forms for G, M, and D",
+          "column_headers": [
+            "task",
+            "expanded polynomial"
+          ],
+          "rows": [
+            [
+              "G",
+              "40*x^2+48*x"
+            ],
+            [
+              "M",
+              "x^2+5*x-14"
+            ],
+            [
+              "D",
+              "2*x^2-32"
+            ]
+          ],
+          "spoken_text": "The table gives each exact expanded polynomial."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (8, 1, 5, 6, -7, 2, 2, 4).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "8",
+          "1",
+          "5",
+          "6",
+          "-7",
+          "2",
+          "2",
+          "4"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.checkin.03",
+        "source_revision": 1,
+        "source_digest": "3de19d4b24e7a274a6e77b47af538553c16d84fe242abfa0ec4cdc6958cd0683",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 40, 48, -7, 2, 2, 4)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(8, 1, 5, 6, -5, -14, 2, 4)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(8, 1, 5, 6, -7, 2, 2, -4)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.checkin.04",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.checkin.04",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Complete the named parameters in all three forms, then enter (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=-18*x^3+63*x^2",
+          "spoken_text": "G equals minus 18 times x to the power of 3 plus 63 times x to the power of 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+4*x+3",
+          "spoken_text": "M equals x to the power of 2 plus 4 times x plus 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=-3*x^2+75",
+          "spoken_text": "D equals minus 3 times x to the power of 2 plus 75"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=g*x^k*(a*x+b)",
+          "spoken_text": "G equals g times x to the power of k times open parenthesis a times x plus b close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=(x-r)*(x-s)",
+          "spoken_text": "M equals open parenthesis x minus r close parenthesis times open parenthesis x minus s close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=d*(x-m)*(x+m)",
+          "spoken_text": "D equals d times open parenthesis x minus m close parenthesis times open parenthesis x plus m close parenthesis"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "Use the leading sign in g, keep a positive, order r before s, and use a positive m."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-9, 2, 2, -7, -3, -1, -3, 5).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-9",
+          "2",
+          "2",
+          "-7",
+          "-3",
+          "-1",
+          "-3",
+          "5"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.checkin.04",
+        "source_revision": 1,
+        "source_digest": "230fe6a8fb3f176af42146f49ccee0a12f72cae960269fc3e170469e4f875858",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, -18, 63, -3, -1, -3, 5)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(-9, 2, 2, -7, -4, 3, -3, 5)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-9, 2, 2, -7, -3, -1, -3, -5)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.checkin.05",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.checkin.05",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the GCF omission, sum-product error, and conjugate-sign error. Return one normalized eight-entry tuple."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=21*x+15",
+          "spoken_text": "G equals 21 times x plus 15"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2-8*x+7",
+          "spoken_text": "M equals x to the power of 2 minus 8 times x plus 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=3*x^2-108",
+          "spoken_text": "D equals 3 times x to the power of 2 minus 108"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The three attempted parameter tuples are:"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "1, 0, 21, 15, 1, 7, 3, 6, 3, 0, 7, 5, 8, 7, 3, 6, 3, 0, 7, 5, 1, 7, 3, -6",
+          "spoken_text": "1 comma 0 comma 21 comma 15 comma 1 comma 7 comma 3 comma 6 comma 3 comma 0 comma 7 comma 5 comma 8 comma 7 comma 3 comma 6 comma 3 comma 0 comma 7 comma 5 comma 1 comma 7 comma 3 comma minus 6"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (3, 0, 7, 5, 1, 7, 3, 6).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "3",
+          "0",
+          "7",
+          "5",
+          "1",
+          "7",
+          "3",
+          "6"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.checkin.05",
+        "source_revision": 1,
+        "source_digest": "93f3a722c800d927d55786d06ed665c6ed103e52d6e03f495a842db163f49eb2",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 21, 15, 1, 7, 3, 6)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(3, 0, 7, 5, 8, 7, 3, 6)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(3, 0, 7, 5, 1, 7, 3, -6)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.diagnostic.01",
+      "revision": 2,
+      "family_id": "family.sqv2.factoring.diagnostic.01",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Factor all three polynomials and enter the normalized tuple (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=6*x^2+14*x",
+          "spoken_text": "G equals 6 times x to the power of 2 plus 14 times x"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+x-12",
+          "spoken_text": "M equals x to the power of 2 plus x minus 12"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=x^2-4",
+          "spoken_text": "D equals x to the power of 2 minus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (2, 1, 3, 7, -4, 3, 1, 2).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "2",
+          "1",
+          "3",
+          "7",
+          "-4",
+          "3",
+          "1",
+          "2"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.diagnostic.01",
+        "source_revision": 2,
+        "source_digest": "e9c0eddf44ba92f40ed3e8d883605b66944364bc16ab2f98a47354334826ffb1",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 6, 14, -4, 3, 1, 2)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(2, 1, 3, 7, -1, -12, 1, 2)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(2, 1, 3, 7, -4, 3, 1, -2)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.diagnostic.02",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the GCF omission, sum-product error, and conjugate-sign error. Return one normalized eight-entry tuple."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=-6*x^3+9*x^2",
+          "spoken_text": "G equals minus 6 times x to the power of 3 plus 9 times x to the power of 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2-7*x+10",
+          "spoken_text": "M equals x to the power of 2 minus 7 times x plus 10"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=-2*x^2+18",
+          "spoken_text": "D equals minus 2 times x to the power of 2 plus 18"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The three attempted parameter tuples are:"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "1, 0, -6, 9, 2, 5, -2, 3, -3, 2, 2, -3, 7, 10, -2, 3, -3, 2, 2, -3, 2, 5, -2, -3",
+          "spoken_text": "1 comma 0 comma minus 6 comma 9 comma 2 comma 5 comma minus 2 comma 3 comma minus 3 comma 2 comma 2 comma minus 3 comma 7 comma 10 comma minus 2 comma 3 comma minus 3 comma 2 comma 2 comma minus 3 comma 2 comma 5 comma minus 2 comma minus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-3, 2, 2, -3, 2, 5, -2, 3).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-3",
+          "2",
+          "2",
+          "-3",
+          "2",
+          "5",
+          "-2",
+          "3"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "2b16a90be838671c2a4c7c5134bc12b5df5111898c633bf0dbd6bb649eea61e1",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, -6, 9, 2, 5, -2, 3)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(-3, 2, 2, -3, 7, 10, -2, 3)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-3, 2, 2, -3, 2, 5, -2, -3)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.diagnostic.03",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Complete the named parameters in all three forms, then enter (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=20*x+28",
+          "spoken_text": "G equals 20 times x plus 28"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+8*x+12",
+          "spoken_text": "M equals x to the power of 2 plus 8 times x plus 12"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=3*x^2-48",
+          "spoken_text": "D equals 3 times x to the power of 2 minus 48"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=g*x^k*(a*x+b)",
+          "spoken_text": "G equals g times x to the power of k times open parenthesis a times x plus b close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=(x-r)*(x-s)",
+          "spoken_text": "M equals open parenthesis x minus r close parenthesis times open parenthesis x minus s close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=d*(x-m)*(x+m)",
+          "spoken_text": "D equals d times open parenthesis x minus m close parenthesis times open parenthesis x plus m close parenthesis"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "Use the leading sign in g, keep a positive, order r before s, and use a positive m."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (4, 0, 5, 7, -6, -2, 3, 4).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "4",
+          "0",
+          "5",
+          "7",
+          "-6",
+          "-2",
+          "3",
+          "4"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "3845f74425c1b9b25e919c0cbd3da12edd59ec45cfbeb35e0abc8355b7b017b4",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 20, 28, -6, -2, 3, 4)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(4, 0, 5, 7, -8, 12, 3, 4)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(4, 0, 5, 7, -6, -2, 3, -4)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.diagnostic.04",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Recover all three factorizations from the table and enter (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Expanded coefficient forms for G, M, and D",
+          "column_headers": [
+            "task",
+            "expanded polynomial"
+          ],
+          "rows": [
+            [
+              "G",
+              "-20*x^2+25*x"
+            ],
+            [
+              "M",
+              "x^2-8*x+16"
+            ],
+            [
+              "D",
+              "-4*x^2+100"
+            ]
+          ],
+          "spoken_text": "The table gives each exact expanded polynomial."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-5, 1, 4, -5, 4, 4, -4, 5).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-5",
+          "1",
+          "4",
+          "-5",
+          "4",
+          "4",
+          "-4",
+          "5"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "32b5e1e067f6c59b200c45612de928d6551ef737fbff2604de10d32c923cbf92",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, -20, 25, 4, 4, -4, 5)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(-5, 1, 4, -5, 8, 16, -4, 5)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-5, 1, 4, -5, 4, 4, -4, -5)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.factoring.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.guided_widget.01",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or enter its equivalent text answer. Match each exact factoring parameter to its value. Text fallback: enter (signed GCF coefficient, GCF exponent, smaller monic root, difference-square magnitude)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=-16*x^2+12*x",
+          "spoken_text": "G equals minus 16 times x to the power of 2 plus 12 times x"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2-3*x-10",
+          "spoken_text": "M equals x to the power of 2 minus 3 times x minus 10"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=-2*x^2+98",
+          "spoken_text": "D equals minus 2 times x to the power of 2 plus 98"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-4, 1, -2, 7).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-4",
+          "1",
+          "-2",
+          "7"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "480826be14912ec844e6d563aa72225711d86aee299a2dc9dab7a147b07abd04",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match every row to the value that completes the exact task above. Keyboard selection and the text answer solve the same problem.",
+          "rows": [
+            {
+              "entry_id": "entry.f75730733b74e8cf",
+              "label": "Lowest common exponent of x in G",
+              "spoken_text": "Lowest common exponent of x in G"
+            },
+            {
+              "entry_id": "entry.71537658b89155d1",
+              "label": "Signed common coefficient in G=-16*x^2+12*x",
+              "spoken_text": "Signed common coefficient in G=-16*x^2+12*x"
+            },
+            {
+              "entry_id": "entry.c2c437bb952279df",
+              "label": "Positive square magnitude in D=-2*x^2+98",
+              "spoken_text": "Positive square magnitude in D=-2*x^2+98"
+            },
+            {
+              "entry_id": "entry.a81e15626dd78f4f",
+              "label": "Smaller root parameter in M=x^2-3*x-10",
+              "spoken_text": "Smaller root parameter in M=x^2-3*x-10"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "entry.8d042b23a81c8573",
+              "label": "7",
+              "spoken_text": "7"
+            },
+            {
+              "entry_id": "entry.ef5f303d04237c3c",
+              "label": "-2",
+              "spoken_text": "-2"
+            },
+            {
+              "entry_id": "entry.14ded21f4b8c8aa3",
+              "label": "-4",
+              "spoken_text": "-4"
+            },
+            {
+              "entry_id": "entry.ded8731a378ba433",
+              "label": "1",
+              "spoken_text": "1"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "entry.71537658b89155d1",
+              "entry.14ded21f4b8c8aa3"
+            ],
+            [
+              "entry.f75730733b74e8cf",
+              "entry.ded8731a378ba433"
+            ],
+            [
+              "entry.a81e15626dd78f4f",
+              "entry.ef5f303d04237c3c"
+            ],
+            [
+              "entry.c2c437bb952279df",
+              "entry.8d042b23a81c8573"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.sqv2.factoring.worked_example.01",
+      "revision": 1,
+      "family_id": "family.sqv2.factoring.worked_example.01",
+      "kc_id": "kc.alg.factoring",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Factor all three polynomials and enter the normalized tuple (g, k, a, b, r, s, d, m)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "G=14*x^2+35*x",
+          "spoken_text": "G equals 14 times x to the power of 2 plus 35 times x"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "M=x^2+11*x+24",
+          "spoken_text": "M equals x to the power of 2 plus 11 times x plus 24"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "D=2*x^2-98",
+          "spoken_text": "D equals 2 times x to the power of 2 minus 98"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Follow the intermediate steps before reading the result."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "G=7*x^1*(2*x+5)",
+          "spoken_text": "G equals 7 times x to the power of 1 times open parenthesis 2 times x plus 5 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "M=(x+8)*(x+3)",
+          "spoken_text": "M equals open parenthesis x plus 8 close parenthesis times open parenthesis x plus 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "D=2*(x-7)*(x+7)",
+          "spoken_text": "D equals 2 times open parenthesis x minus 7 close parenthesis times open parenthesis x plus 7 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "(7, 1, 2, 5, -8, -3, 2, 7)",
+          "spoken_text": "open parenthesis 7 comma 1 comma 2 comma 5 comma minus 8 comma minus 3 comma 2 comma 7 close parenthesis"
+        }
+      ],
+      "hints": [
+        {
+          "text": "For G remove the signed common monomial; for M use the root sum and product; for D use conjugate factors.",
+          "revealing": false
+        },
+        {
+          "text": "Return (g, k, a, b, r, s, d, m), where G=g*x^k*(a*x+b), M=(x-r)*(x-s), r is no greater than s, and D=d*(x-m)*(x+m).",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (7, 1, 2, 5, -8, -3, 2, 7).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "7",
+          "1",
+          "2",
+          "5",
+          "-8",
+          "-3",
+          "2",
+          "7"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.factoring.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "fdbe96705c8a12c08ec26a7a78f2a164b14815ac5b2418d63ee33cf635200dde",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(1, 0, 14, 35, -8, -3, 2, 7)",
+          "misconception_id": "m.factoring.skips_gcf",
+          "implicated_prereq": "kc.alg.polynomial_ops"
+        },
+        {
+          "expected_wrong": "(7, 1, 2, 5, -11, 24, 2, 7)",
+          "misconception_id": "m.factoring.sum_product_reversed",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(7, 1, 2, 5, -8, -3, 2, -7)",
+          "misconception_id": "m.factoring.same_sign_difference",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.capstone.01",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.capstone.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Reverse the operations. Enter (P(x), Q(x), b), where P is the missing addend, Q is the missing subtrahend, and b completes the factor."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-5+5*x-x^2-2*x^3+P(x)=-3*x^3-5*x^2+x-2",
+          "spoken_text": "minus 5 plus 5 times x minus x to the power of 2 minus 2 times x to the power of 3 plus P open parenthesis x close parenthesis equals minus 3 times x to the power of 3 minus 5 times x to the power of 2 plus x minus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^3+6*x^2+2*x+1-Q(x)=-2*x^3+7*x^2+8*x+1",
+          "spoken_text": "x to the power of 3 plus 6 times x to the power of 2 plus 2 times x plus 1 minus Q open parenthesis x close parenthesis equals minus 2 times x to the power of 3 plus 7 times x to the power of 2 plus 8 times x plus 1"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(-5*x+5)*(3*x+b)=-15*x^2+35*x-20",
+          "spoken_text": "open parenthesis minus 5 times x plus 5 close parenthesis times open parenthesis 3 times x plus b close parenthesis equals minus 15 times x to the power of 2 plus 35 times x minus 20"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-4*x^2+3-x^3-4*x, -6*x-x^2+3*x^3, -4).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-4*x^2+3-x^3-4*x",
+          "-6*x-x^2+3*x^3",
+          "-4"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.capstone.01",
+        "source_revision": 1,
+        "source_digest": "3dc8da406ebe698382695adea31ca9bc923e8baadf3f88e8c3aa9a1ccd4b2ff5",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.capstone.02",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.capstone.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify A-B+C as one polynomial. All three core operations contribute to the final result."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(x^2-x^3-3*x)+(x^3-x^2+5)",
+          "spoken_text": "A equals open parenthesis x to the power of 2 minus x to the power of 3 minus 3 times x close parenthesis plus open parenthesis x to the power of 3 minus x to the power of 2 plus 5 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(5+4*x-2*x^2+4*x^3)-(x^2+3-2*x^3-x)",
+          "spoken_text": "B equals open parenthesis 5 plus 4 times x minus 2 times x to the power of 2 plus 4 times x to the power of 3 close parenthesis minus open parenthesis x to the power of 2 plus 3 minus 2 times x to the power of 3 minus x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(2*x-6)*(-6*x+3)",
+          "spoken_text": "C equals open parenthesis 2 times x minus 6 close parenthesis times open parenthesis minus 6 times x plus 3 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -6*x^3-9*x^2+34*x-15.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-6*x^3-9*x^2+34*x-15",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.capstone.02",
+        "source_revision": 1,
+        "source_digest": "0c266b3a3a72ac1c0c11f23573e9003cbc296d842709a5ee3d69a073646cf627",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-6*x^3-12*x^2+37*x-15",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.checkin.01",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.checkin.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Compute only the requested coefficients and enter (x^2 coefficient in A, x^1 coefficient in B, x^0 coefficient in C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(4-2*x-4*x^2+2*x^3)+(6+x^3-2*x)",
+          "spoken_text": "A equals open parenthesis 4 minus 2 times x minus 4 times x to the power of 2 plus 2 times x to the power of 3 close parenthesis plus open parenthesis 6 plus x to the power of 3 minus 2 times x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(x^3+2*x^2+5*x-6)-(-3+3*x-2*x^2-2*x^3)",
+          "spoken_text": "B equals open parenthesis x to the power of 3 plus 2 times x to the power of 2 plus 5 times x minus 6 close parenthesis minus open parenthesis minus 3 plus 3 times x minus 2 times x to the power of 2 minus 2 times x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(-2*x+6)*(5*x-5)",
+          "spoken_text": "C equals open parenthesis minus 2 times x plus 6 close parenthesis times open parenthesis 5 times x minus 5 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-4, 2, -30).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-4",
+          "2",
+          "-30"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.checkin.01",
+        "source_revision": 1,
+        "source_digest": "6c0014704e720fc9d992a1fcf81c2a06df408897dfffdc58fde21dd0d1707069",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.checkin.02",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.checkin.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Reverse the operations. Enter (P(x), Q(x), b), where P is the missing addend, Q is the missing subtrahend, and b completes the factor."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-2*x^2-4-2*x^3+x+P(x)=x^3+x^2+3*x-11",
+          "spoken_text": "minus 2 times x to the power of 2 minus 4 minus 2 times x to the power of 3 plus x plus P open parenthesis x close parenthesis equals x to the power of 3 plus x to the power of 2 plus 3 times x minus 11"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-2+7*x-6*x^2+4*x^3-Q(x)=7*x^3-6*x^2+12*x-2",
+          "spoken_text": "minus 2 plus 7 times x minus 6 times x to the power of 2 plus 4 times x to the power of 3 minus Q open parenthesis x close parenthesis equals 7 times x to the power of 3 minus 6 times x to the power of 2 plus 12 times x minus 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(4*x-7)*(-4*x+b)=-16*x^2+52*x-42",
+          "spoken_text": "open parenthesis 4 times x minus 7 close parenthesis times open parenthesis minus 4 times x plus b close parenthesis equals minus 16 times x to the power of 2 plus 52 times x minus 42"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (3*x^3+3*x^2+2*x-7, -3*x^3-5*x, 6).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "3*x^3+3*x^2+2*x-7",
+          "-3*x^3-5*x",
+          "6"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.checkin.02",
+        "source_revision": 1,
+        "source_digest": "135424127bdbab07a308b4f911f142ff4d649c6d95ffc035f4369fb28e1c9b33",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.checkin.03",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.checkin.03",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the table for A and the expressions for B and C. Enter the complete tuple (A, B, C)."
+        },
+        {
+          "kind": "table",
+          "role": "given",
+          "caption": "Coefficients for addition task A",
+          "column_headers": [
+            "power",
+            "first polynomial",
+            "second polynomial"
+          ],
+          "rows": [
+            [
+              "x^3",
+              "-1",
+              "-2"
+            ],
+            [
+              "x^2",
+              "0",
+              "-5"
+            ],
+            [
+              "x",
+              "4",
+              "6"
+            ],
+            [
+              "constant",
+              "1",
+              "-5"
+            ]
+          ],
+          "spoken_text": "The table lists both coefficients for each power in A."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(-x^2+2-2*x^3-6*x)-(x^3+2*x^2+3)",
+          "spoken_text": "B equals open parenthesis minus x to the power of 2 plus 2 minus 2 times x to the power of 3 minus 6 times x close parenthesis minus open parenthesis x to the power of 3 plus 2 times x to the power of 2 plus 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(-3*x+8)*(6*x-7)",
+          "spoken_text": "C equals open parenthesis minus 3 times x plus 8 close parenthesis times open parenthesis 6 times x minus 7 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-3*x^3-5*x^2+10*x-4, -3*x^3-3*x^2-6*x-1, -18*x^2+69*x-56).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-3*x^3-5*x^2+10*x-4",
+          "-3*x^3-3*x^2-6*x-1",
+          "-18*x^2+69*x-56"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.checkin.03",
+        "source_revision": 1,
+        "source_digest": "bb9682292f7278ef57e23ccd82ca50be6f5e4d74fbe50eba319e89402fa6cfa1",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-3*x^3+5*x^2-4, -3*x^3-3*x^2-6*x-1, -18*x^2+69*x-56)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-3*x^3-5*x^2+10*x-4, -x^3+x^2-6*x+5, -18*x^2+69*x-56)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-3*x^3-5*x^2+10*x-4, -3*x^3-3*x^2-6*x-1, -18*x^2+21*x-56)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.checkin.04",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.checkin.04",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The terms are intentionally sparse and reordered. Enter the ordered tuple of complete results (A, B, C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(6-4*x+x^3)+(-2*x^2-3-x^3)",
+          "spoken_text": "A equals open parenthesis 6 minus 4 times x plus x to the power of 3 close parenthesis plus open parenthesis minus 2 times x to the power of 2 minus 3 minus x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(x^3+4*x^2-4*x)-(4*x^2+6-2*x^3+5*x)",
+          "spoken_text": "B equals open parenthesis x to the power of 3 plus 4 times x to the power of 2 minus 4 times x close parenthesis minus open parenthesis 4 times x to the power of 2 plus 6 minus 2 times x to the power of 3 plus 5 times x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(5*x-9)*(-5*x+8)",
+          "spoken_text": "C equals open parenthesis 5 times x minus 9 close parenthesis times open parenthesis minus 5 times x plus 8 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-2*x^2-4*x+3, 3*x^3-9*x-6, -25*x^2+85*x-72).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-2*x^2-4*x+3",
+          "3*x^3-9*x-6",
+          "-25*x^2+85*x-72"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.checkin.04",
+        "source_revision": 1,
+        "source_digest": "7a465a11bdb460f989f79f1f0a9b7906b59815746767607def448bb92931cea7",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-6*x^2+3, 3*x^3-9*x-6, -25*x^2+85*x-72)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-2*x^2-4*x+3, -x^3+8*x^2+x+6, -25*x^2+85*x-72)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-2*x^2-4*x+3, 3*x^3-9*x-6, -25*x^2+40*x-72)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.checkin.05",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.checkin.05",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify A-B+C as one polynomial. All three core operations contribute to the final result."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(4*x^2-2+x^3-x)+(2*x^3+x^2+x-1)",
+          "spoken_text": "A equals open parenthesis 4 times x to the power of 2 minus 2 plus x to the power of 3 minus x close parenthesis plus open parenthesis 2 times x to the power of 3 plus x to the power of 2 plus x minus 1 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(-7-2*x-4*x^2+4*x^3)-(-5*x^2-6+2*x^3-3*x)",
+          "spoken_text": "B equals open parenthesis minus 7 minus 2 times x minus 4 times x to the power of 2 plus 4 times x to the power of 3 close parenthesis minus open parenthesis minus 5 times x to the power of 2 minus 6 plus 2 times x to the power of 3 minus 3 times x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(-4*x+3)*(2*x-9)",
+          "spoken_text": "C equals open parenthesis minus 4 times x plus 3 close parenthesis times open parenthesis 2 times x minus 9 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: x^3-4*x^2+41*x-29.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "x^3-4*x^2+41*x-29",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.checkin.05",
+        "source_revision": 1,
+        "source_digest": "884f575804c6fa3b6a6e9d0ad2338578a13b57668ed4e9571d2dddafbb7e2d5b",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "x^3-4*x^2+41*x-28",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Enter the ordered tuple of complete results (A, B, C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(-2*x^3-3*x^2-3*x-3)+(-2-5*x-x^2-x^3)",
+          "spoken_text": "A equals open parenthesis minus 2 times x to the power of 3 minus 3 times x to the power of 2 minus 3 times x minus 3 close parenthesis plus open parenthesis minus 2 minus 5 times x minus x to the power of 2 minus x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(-5*x^2-5-2*x^3-3*x)-(-2*x^3+x^2-4*x)",
+          "spoken_text": "B equals open parenthesis minus 5 times x to the power of 2 minus 5 minus 2 times x to the power of 3 minus 3 times x close parenthesis minus open parenthesis minus 2 times x to the power of 3 plus x to the power of 2 minus 4 times x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(x+2)*(3*x-1)",
+          "spoken_text": "C equals open parenthesis x plus 2 close parenthesis times open parenthesis 3 times x minus 1 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-3*x^3-4*x^2-8*x-5, -6*x^2+x-5, 3*x^2+5*x-2).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-3*x^3-4*x^2-8*x-5",
+          "-6*x^2+x-5",
+          "3*x^2+5*x-2"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "3892304c611eb3c59f901835e499e612a73d71d71be458a90d2dbdcfc9794beb",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-3*x^3-12*x^2-5, -6*x^2+x-5, 3*x^2+5*x-2)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-3*x^3-4*x^2-8*x-5, -4*x^3-4*x^2-7*x-5, 3*x^2+5*x-2)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-3*x^3-4*x^2-8*x-5, -6*x^2+x-5, 3*x^2-x-2)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the three structural errors in the attempted tuple and return the complete results (A, B, C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(2-x^2-x^3)+(2*x^2+2*x^3-x)",
+          "spoken_text": "A equals open parenthesis 2 minus x to the power of 2 minus x to the power of 3 close parenthesis plus open parenthesis 2 times x to the power of 2 plus 2 times x to the power of 3 minus x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(x^3-x-1)-(3+x+3*x^2+2*x^3)",
+          "spoken_text": "B equals open parenthesis x to the power of 3 minus x minus 1 close parenthesis minus open parenthesis 3 plus x plus 3 times x to the power of 2 plus 2 times x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(2*x-3)*(-2*x+2)",
+          "spoken_text": "C equals open parenthesis 2 times x minus 3 close parenthesis times open parenthesis minus 2 times x plus 2 close parenthesis"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "A learner supplied this attempted tuple:"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(x^3+2, 3*x^3+3*x^2+2, -4*x^2+4*x-6)",
+          "spoken_text": "open parenthesis x to the power of 3 plus 2 comma 3 times x to the power of 3 plus 3 times x to the power of 2 plus 2 comma minus 4 times x to the power of 2 plus 4 times x minus 6 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (x^3+x^2-x+2, -x^3-3*x^2-2*x-4, -4*x^2+10*x-6).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "x^3+x^2-x+2",
+          "-x^3-3*x^2-2*x-4",
+          "-4*x^2+10*x-6"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "bcc26316fcc0c94bf0328a6019ce1a6ef24b20e24dbaa6fd8baf0118f62b3aff",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(x^3+2, -x^3-3*x^2-2*x-4, -4*x^2+10*x-6)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(x^3+x^2-x+2, 3*x^3+3*x^2+2, -4*x^2+10*x-6)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(x^3+x^2-x+2, -x^3-3*x^2-2*x-4, -4*x^2+4*x-6)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.03",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The terms are intentionally sparse and reordered. Enter the ordered tuple of complete results (A, B, C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(-6+3*x+x^3)+(-3*x^3+5*x^2+2)",
+          "spoken_text": "A equals open parenthesis minus 6 plus 3 times x plus x to the power of 3 close parenthesis plus open parenthesis minus 3 times x to the power of 3 plus 5 times x to the power of 2 plus 2 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(x+5*x^2+4*x^3)-(5*x^2+6-x^3+6*x)",
+          "spoken_text": "B equals open parenthesis x plus 5 times x to the power of 2 plus 4 times x to the power of 3 close parenthesis minus open parenthesis 5 times x to the power of 2 plus 6 minus x to the power of 3 plus 6 times x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(-x+4)*(4*x-3)",
+          "spoken_text": "C equals open parenthesis minus x plus 4 close parenthesis times open parenthesis 4 times x minus 3 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-2*x^3+5*x^2+3*x-4, 5*x^3-5*x-6, -4*x^2+19*x-12).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-2*x^3+5*x^2+3*x-4",
+          "5*x^3-5*x-6",
+          "-4*x^2+19*x-12"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "1b9e9a496186229453c4f0bc234fad1a949adf5074f7c929dc3858e3b04703ff",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(-2*x^3+8*x^2-4, 5*x^3-5*x-6, -4*x^2+19*x-12)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-2*x^3+5*x^2+3*x-4, 3*x^3+10*x^2+7*x+6, -4*x^2+19*x-12)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(-2*x^3+5*x^2+3*x-4, 5*x^3-5*x-6, -4*x^2+3*x-12)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.04",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify A-B+C as one polynomial. All three core operations contribute to the final result."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(x^3+3*x^2-5*x-1)+(4-6*x-3*x^2-x^3)",
+          "spoken_text": "A equals open parenthesis x to the power of 3 plus 3 times x to the power of 2 minus 5 times x minus 1 close parenthesis plus open parenthesis 4 minus 6 times x minus 3 times x to the power of 2 minus x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(-3*x^2+7-2*x^3+3*x)-(3*x^3-4*x^2-2*x-6)",
+          "spoken_text": "B equals open parenthesis minus 3 times x to the power of 2 plus 7 minus 2 times x to the power of 3 plus 3 times x close parenthesis minus open parenthesis 3 times x to the power of 3 minus 4 times x to the power of 2 minus 2 times x minus 6 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(3*x-5)*(-3*x+4)",
+          "spoken_text": "C equals open parenthesis 3 times x minus 5 close parenthesis times open parenthesis minus 3 times x plus 4 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 5*x^3-10*x^2+11*x-30.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "5*x^3-10*x^2+11*x-30",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "e880cd7df4bc78540e2a7eebee84afcfac94b87fff50a56216db80e8f4ee0630",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "5*x^3-21*x^2+22*x-30",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.guided_widget.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or enter its equivalent text answer. Match each exact task to its result. Text fallback: enter (A, B, C, D) in that named order."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(2*x^3-3*x^2+2*x+3)+(1+5*x+4*x^2-3*x^3)",
+          "spoken_text": "A equals open parenthesis 2 times x to the power of 3 minus 3 times x to the power of 2 plus 2 times x plus 3 close parenthesis plus open parenthesis 1 plus 5 times x plus 4 times x to the power of 2 minus 3 times x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(x^2-3-2*x^3)-(-x^3-3*x^2+2*x-3)",
+          "spoken_text": "B equals open parenthesis x to the power of 2 minus 3 minus 2 times x to the power of 3 close parenthesis minus open parenthesis minus x to the power of 3 minus 3 times x to the power of 2 plus 2 times x minus 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(6*x-4)*(-x+5)",
+          "spoken_text": "C equals open parenthesis 6 times x minus 4 close parenthesis times open parenthesis minus x plus 5 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (-x^3+x^2+7*x+4, -x^3+4*x^2-2*x, -6*x^2+34*x-20, -9*x^2+43*x-16).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "-x^3+x^2+7*x+4",
+          "-x^3+4*x^2-2*x",
+          "-6*x^2+34*x-20",
+          "-9*x^2+43*x-16"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "554f55cf4f63d7de2a0e49dc6d62e9bc2cdb0ecdea01922fc9533371d4f9230b",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match every row to the value that completes the exact task above. Keyboard selection and the text answer solve the same problem.",
+          "rows": [
+            {
+              "entry_id": "entry.89795925c7fc278e",
+              "label": "B: B=(x^2-3-2*x^3)-(-x^3-3*x^2+2*x-3)",
+              "spoken_text": "B: B=(x^2-3-2*x^3)-(-x^3-3*x^2+2*x-3)"
+            },
+            {
+              "entry_id": "entry.82a610c8405a96d6",
+              "label": "C: C=(6*x-4)*(-x+5)",
+              "spoken_text": "C: C=(6*x-4)*(-x+5)"
+            },
+            {
+              "entry_id": "entry.f3666cae89b75c9f",
+              "label": "A: A=(2*x^3-3*x^2+2*x+3)+(1+5*x+4*x^2-3*x^3)",
+              "spoken_text": "A: A=(2*x^3-3*x^2+2*x+3)+(1+5*x+4*x^2-3*x^3)"
+            },
+            {
+              "entry_id": "entry.5dfa851ddaa7cf1b",
+              "label": "D: simplify A-B+C",
+              "spoken_text": "D: simplify A-B+C"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "entry.ef6aa6c3b4e4b4d8",
+              "label": "-6*x^2+34*x-20",
+              "spoken_text": "-6*x^2+34*x-20"
+            },
+            {
+              "entry_id": "entry.0091af9d33f7c63f",
+              "label": "-x^3+4*x^2-2*x",
+              "spoken_text": "-x^3+4*x^2-2*x"
+            },
+            {
+              "entry_id": "entry.5fe9f464fb4edda8",
+              "label": "-9*x^2+43*x-16",
+              "spoken_text": "-9*x^2+43*x-16"
+            },
+            {
+              "entry_id": "entry.b95249073d6c8dc5",
+              "label": "-x^3+x^2+7*x+4",
+              "spoken_text": "-x^3+x^2+7*x+4"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "entry.f3666cae89b75c9f",
+              "entry.b95249073d6c8dc5"
+            ],
+            [
+              "entry.89795925c7fc278e",
+              "entry.0091af9d33f7c63f"
+            ],
+            [
+              "entry.82a610c8405a96d6",
+              "entry.ef6aa6c3b4e4b4d8"
+            ],
+            [
+              "entry.5dfa851ddaa7cf1b",
+              "entry.5fe9f464fb4edda8"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.sqv2.polynomial_ops.worked_example.01",
+      "revision": 1,
+      "family_id": "family.sqv2.polynomial_ops.worked_example.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Enter the ordered tuple of complete results (A, B, C)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "A=(x^3+3*x^2+5)+(7+4*x+2*x^2+3*x^3)",
+          "spoken_text": "A equals open parenthesis x to the power of 3 plus 3 times x to the power of 2 plus 5 close parenthesis plus open parenthesis 7 plus 4 times x plus 2 times x to the power of 2 plus 3 times x to the power of 3 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "B=(3*x^2-8-2*x^3+6*x)-(-3*x^3+3*x^2+4*x+6)",
+          "spoken_text": "B equals open parenthesis 3 times x to the power of 2 minus 8 minus 2 times x to the power of 3 plus 6 times x close parenthesis minus open parenthesis minus 3 times x to the power of 3 plus 3 times x to the power of 2 plus 4 times x plus 6 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "C=(-2*x+7)*(4*x-2)",
+          "spoken_text": "C equals open parenthesis minus 2 times x plus 7 close parenthesis times open parenthesis 4 times x minus 2 close parenthesis"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Follow the intermediate steps before reading the result."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "A=4*x^3+5*x^2+4*x+12",
+          "spoken_text": "A equals 4 times x to the power of 3 plus 5 times x to the power of 2 plus 4 times x plus 12"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "B=x^3+2*x-14",
+          "spoken_text": "B equals x to the power of 3 plus 2 times x minus 14"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "C=-8*x^2+(4+28)*x+-14",
+          "spoken_text": "C equals minus 8 times x to the power of 2 plus open parenthesis 4 plus 28 close parenthesis times x plus minus 14"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "C=-8*x^2+32*x-14",
+          "spoken_text": "C equals minus 8 times x to the power of 2 plus 32 times x minus 14"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "(4*x^3+5*x^2+4*x+12, x^3+2*x-14, -8*x^2+32*x-14)",
+          "spoken_text": "open parenthesis 4 times x to the power of 3 plus 5 times x to the power of 2 plus 4 times x plus 12 comma x to the power of 3 plus 2 times x minus 14 comma minus 8 times x to the power of 2 plus 32 times x minus 14 close parenthesis"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Align like powers, distribute subtraction to every term, and form every binomial cross-product before collecting.",
+          "revealing": false
+        },
+        {
+          "text": "Complete A, B, and C independently, then place their results in the requested order.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (4*x^3+5*x^2+4*x+12, x^3+2*x-14, -8*x^2+32*x-14).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "4*x^3+5*x^2+4*x+12",
+          "x^3+2*x-14",
+          "-8*x^2+32*x-14"
+        ],
+        "variables": [
+          "x"
+        ],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.polynomial_ops.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "5355138c8d896410db085f3468164cf843c7de44acac2c113ffe99b5663046c0",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "(4*x^3+9*x^2+12, x^3+2*x-14, -8*x^2+32*x-14)",
+          "misconception_id": "m.polynomial_ops.unlike_terms",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(4*x^3+5*x^2+4*x+12, -5*x^3+6*x^2+10*x-2, -8*x^2+32*x-14)",
+          "misconception_id": "m.polynomial_ops.subtraction_sign",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "(4*x^3+5*x^2+4*x+12, x^3+2*x-14, -8*x^2+4*x-14)",
+          "misconception_id": "m.polynomial_ops.incomplete_distribution",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.capstone.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.capstone.01",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Distribute both sides, collect the signed terms, and solve for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*(3*x+4)=5*(x-3)",
+          "spoken_text": "2 times open parenthesis 3 times x plus 4 close parenthesis equals 5 times open parenthesis x minus 3 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -23.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-23",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.capstone.01",
+        "source_revision": 1,
+        "source_digest": "b2303ad38d082e7d68ef9f11f74378ca38b697de911393219d53d5043a34d450",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-23/6",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "23",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-20",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.capstone.02",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.capstone.02",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find and correct the balancing error, then solve the original equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x-1=28",
+          "spoken_text": "x minus 1 equals 28"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The attempted final value was x=32."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 29.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "29",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.capstone.02",
+        "source_revision": 1,
+        "source_digest": "406b00959bc9e8a2650256eb5175d4915073507413a77dff559add380d2d8c35",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "30",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-29",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "32",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.checkin.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.checkin.01",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solve for x from the equation written with its sides reversed."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "17=x-2",
+          "spoken_text": "17 equals x minus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 19.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "19",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.checkin.01",
+        "source_revision": 1,
+        "source_digest": "d4a39125b884a223206ca1708661ea2e0356f9ba7d4dd60876b6db79408a6ec4",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "20",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-19",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "22",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.checkin.02",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.checkin.02",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Expand both grouped sides, collect terms, and solve for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*(x+7)=1*(x+1)",
+          "spoken_text": "2 times open parenthesis x plus 7 close parenthesis equals 1 times open parenthesis x plus 1 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -13.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-13",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.checkin.02",
+        "source_revision": 1,
+        "source_digest": "4ad6fcfe00c96f1a867aebf2163a4767651e6684e0bcf4b98e47d24a675661ba",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-13/2",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "13",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-10",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.checkin.03",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.checkin.03",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Distribute both sides, collect the signed terms, and solve for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*(3*x-4)=5*(x+3)",
+          "spoken_text": "2 times open parenthesis 3 times x minus 4 close parenthesis equals 5 times open parenthesis x plus 3 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 23.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "23",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.checkin.03",
+        "source_revision": 1,
+        "source_digest": "25e568bd56c4d610aa8a11f1b18133a299189dd5674389fa288f0b725b45cedd",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "23/6",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-23",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "26",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.checkin.04",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.checkin.04",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solve the one-variable equation; the variable may appear on either side."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*x+1=-37",
+          "spoken_text": "2 times x plus 1 equals minus 37"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -19.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-19",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.checkin.04",
+        "source_revision": 1,
+        "source_digest": "ce2c1cbcf3b04033ce8bf1a60e6c48f52263efe5626471d5f7ad95000f00e74b",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-18",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "19",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-38",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.checkin.05",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.checkin.05",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Distribute first, then solve the resulting linear equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*(2*x+1)-1=2*x+35",
+          "spoken_text": "2 times open parenthesis 2 times x plus 1 close parenthesis minus 1 equals 2 times x plus 35"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 17.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "17",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.checkin.05",
+        "source_revision": 1,
+        "source_digest": "7476c023ad5d2cb76983ac0c58710fe69bdf42bfe3c266528cc2518b6a6e0b47",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "17/2",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-17",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "34",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.diagnostic.01",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solve the two-sided linear equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*x+1=-21",
+          "spoken_text": "2 times x plus 1 equals minus 21"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -11.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-11",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "13e346d8aa8547e00c299bcd178e93a2e0fc4d31b736d9fc6c2495fdae62b217",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-10",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "11",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-22",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.diagnostic.02",
+      "revision": 2,
+      "family_id": "family.sqv2.solve_linear.diagnostic.02",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Distribute first, then solve the resulting linear equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*(2*x-1)+1=3*x+24",
+          "spoken_text": "2 times open parenthesis 2 times x minus 1 close parenthesis plus 1 equals 3 times x plus 24"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: 25.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "25",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.diagnostic.02",
+        "source_revision": 2,
+        "source_digest": "d5dfe269ef456827f954b0cf931d1eebb88744e6a64548b89ef83a3af979d0d4",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "25/4",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "-25",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "28",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.diagnostic.03",
+      "revision": 2,
+      "family_id": "family.sqv2.solve_linear.diagnostic.03",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Solve the one-variable equation; the variable may appear on either side."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-32=x-7",
+          "spoken_text": "minus 32 equals x minus 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -25.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-25",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.diagnostic.03",
+        "source_revision": 2,
+        "source_digest": "44490c267c23dd7bf32705d2b00fdcb87a5ae0bd6bfc46678170265238778ddc",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "25",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "27",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "28",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.diagnostic.04",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find and correct the balancing error, then solve the original equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-x+2=19",
+          "spoken_text": "minus x plus 2 equals 19"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The attempted final value was x=17."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -17.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-17",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "1e666ede1cbad37c9d5e7f8530b754ce49b0bc97d992bbf601a9be631b085e93",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-16",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "17",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "20",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.guided_widget.01",
+      "revision": 2,
+      "family_id": "family.sqv2.solve_linear.guided_widget.01",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or enter its equivalent text answer. Match the four stages to their exact values. Text fallback: enter (collected x coefficient, collected constant, x, substitution check)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "5*x-5=2*x+25",
+          "spoken_text": "5 times x minus 5 equals 2 times x plus 25"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (3, 30, 10, 45).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "3",
+          "30",
+          "10",
+          "45"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.guided_widget.01",
+        "source_revision": 2,
+        "source_digest": "fdc55f825a80eca127a7094b117ce534f66575f78959abfdb17349e2c6bb42c3",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match every row to the value that completes the exact task above. Keyboard selection and the text answer solve the same problem.",
+          "rows": [
+            {
+              "entry_id": "entry.c81ed0c7d18bee8b",
+              "label": "Constant after collecting constants",
+              "spoken_text": "Constant after collecting constants"
+            },
+            {
+              "entry_id": "entry.5f4a90a52e1e4293",
+              "label": "Coefficient after collecting x terms",
+              "spoken_text": "Coefficient after collecting x terms"
+            },
+            {
+              "entry_id": "entry.6eb2a53271de258d",
+              "label": "Value of x after division",
+              "spoken_text": "Value of x after division"
+            },
+            {
+              "entry_id": "entry.a0736ae97218767b",
+              "label": "Value of either side after substitution",
+              "spoken_text": "Value of either side after substitution"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "entry.4a5f981ab47c49b0",
+              "label": "3",
+              "spoken_text": "3"
+            },
+            {
+              "entry_id": "entry.d1c1d6ec29ef9a56",
+              "label": "45",
+              "spoken_text": "45"
+            },
+            {
+              "entry_id": "entry.6a9f28ceb89d5e83",
+              "label": "30",
+              "spoken_text": "30"
+            },
+            {
+              "entry_id": "entry.75815ae16bf2ede8",
+              "label": "10",
+              "spoken_text": "10"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "entry.5f4a90a52e1e4293",
+              "entry.4a5f981ab47c49b0"
+            ],
+            [
+              "entry.c81ed0c7d18bee8b",
+              "entry.6a9f28ceb89d5e83"
+            ],
+            [
+              "entry.6eb2a53271de258d",
+              "entry.75815ae16bf2ede8"
+            ],
+            [
+              "entry.a0736ae97218767b",
+              "entry.d1c1d6ec29ef9a56"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.sqv2.solve_linear.worked_example.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_linear.worked_example.01",
+      "kc_id": "kc.alg.solve_linear",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Solve the two-sided linear equation for x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-x=29",
+          "spoken_text": "minus x equals 29"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Follow the intermediate steps before reading the result."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "-1*x=29",
+          "spoken_text": "minus 1 times x equals 29"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x=29/-1",
+          "spoken_text": "x equals 29 divided by minus 1"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "-29",
+          "spoken_text": "minus 29"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Preserve equality while collecting variable terms on one side and constants on the other.",
+          "revealing": false
+        },
+        {
+          "text": "Apply each inverse operation to both complete sides, then divide by the remaining coefficient of x.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: -29.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-29",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_linear.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "ba993cf8374df083aabc16baf68979cba14b64ec9d07f592a2ca9020cf5e0424",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "-28",
+          "misconception_id": "m.solve_linear.one_sided_balance",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "29",
+          "misconception_id": "m.solve_linear.sign_transfer",
+          "implicated_prereq": null
+        },
+        {
+          "expected_wrong": "32",
+          "misconception_id": "m.solve_linear.divides_one_term",
+          "implicated_prereq": null
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.capstone.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.capstone.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Collect the linear expression from the right, then factor the resulting monic quadratic and solve."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^2+2*x-14=-x+4",
+          "spoken_text": "x to the power of 2 plus 2 times x minus 14 equals minus x plus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-6, 3}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-6",
+          "3"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.capstone.01",
+        "source_revision": 1,
+        "source_digest": "652fc78af3564b56c4a446c4faf6ab6f421b8e2010ba39887a681c7d1fef7fd3",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-4, 5}",
+          "misconception_id": "m.solve_quadratic.not_zero",
+          "implicated_prereq": "kc.alg.factoring"
+        },
+        {
+          "expected_wrong": "{-6}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-3, 6}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.capstone.02",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.capstone.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the attempted root set, then report every root of the original polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2-10*x+16",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 minus 10 times x plus 16"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The attempted root set was {-8, -2}."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {2, 8}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "2",
+          "8"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.capstone.02",
+        "source_revision": 1,
+        "source_digest": "d0b7526a6a29752ac7262ff9cb1e21487b86a8f22d3b2b24c506e9e38fa310bc",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{4, 10}",
+          "misconception_id": "m.solve_quadratic.not_zero",
+          "implicated_prereq": "kc.alg.factoring"
+        },
+        {
+          "expected_wrong": "{2}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-8, -2}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.checkin.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.checkin.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The zero-value condition is written in reverse. Factor the polynomial and find every root."
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The polynomial on the right has value zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^2-3*x",
+          "spoken_text": "x to the power of 2 minus 3 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {0, 3}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "0",
+          "3"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.checkin.01",
+        "source_revision": 1,
+        "source_digest": "832c7498ac781f1ca3d380b08f14c4ef79892376ee3d3bc58f5599e1477bc124",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{0}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-3, 0}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.checkin.02",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.checkin.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the displayed factorization to find the complete zero set."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=(x+5)*(x-2)",
+          "spoken_text": "p open parenthesis x close parenthesis equals open parenthesis x plus 5 close parenthesis times open parenthesis x minus 2 close parenthesis"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-5, 2}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-5",
+          "2"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.checkin.02",
+        "source_revision": 1,
+        "source_digest": "3195a4c9ed37fbc81b32c09c959bfcb1ab3de92d13cc273f504aa3af4282fe15",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-5}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-2, 5}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.checkin.03",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.checkin.03",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find the finite zero set of the repeated linear factor. Report the repeated root only once."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=(x-4)^2",
+          "spoken_text": "p open parenthesis x close parenthesis equals open parenthesis x minus 4 close parenthesis to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {4}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "4"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.checkin.03",
+        "source_revision": 1,
+        "source_digest": "885a334df72d470673e4e4198f32194a0de839497d8a7d7257c20a7ef73a4fd1",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{5}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-4}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.checkin.04",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.checkin.04",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Collect the linear expression from the right, then factor the resulting monic quadratic and solve."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^2-2*x-9=2*x+3",
+          "spoken_text": "x to the power of 2 minus 2 times x minus 9 equals 2 times x plus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-2, 6}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-2",
+          "6"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.checkin.04",
+        "source_revision": 1,
+        "source_digest": "72d2ada7a84324fcd9d6188a7791b371bf54f4bfaa1e6b2b3f914f30cf718f52",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{0, 8}",
+          "misconception_id": "m.solve_quadratic.not_zero",
+          "implicated_prereq": "kc.alg.factoring"
+        },
+        {
+          "expected_wrong": "{-2}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-6, 2}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.checkin.05",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.checkin.05",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find every real zero of the expanded monic polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2-8*x+7",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 minus 8 times x plus 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {1, 7}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "1",
+          "7"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.checkin.05",
+        "source_revision": 1,
+        "source_digest": "7045872d5bb0dc09a14e8977aa5e820a00f064d529f007973b796e55b7f89771",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{1}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-7, -1}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find every real zero of the expanded monic polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2-x-12",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 minus x minus 12"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-3, 4}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-3",
+          "4"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.diagnostic.01",
+        "source_revision": 1,
+        "source_digest": "dab3693881b6c77b9862edd8bf2201e81d32f170bc8350221bae51f5df202276",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-3}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-4, 3}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.02",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Move the nonzero right side first, then factor and solve for every root."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "x^2-7*x+17=7",
+          "spoken_text": "x to the power of 2 minus 7 times x plus 17 equals 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {2, 5}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "2",
+          "5"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.diagnostic.02",
+        "source_revision": 1,
+        "source_digest": "f5f46f0d804cbd838a7785e1b0d6ee92037af16d2dd14e783c9ba7e2846669b7",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{4, 7}",
+          "misconception_id": "m.solve_quadratic.not_zero",
+          "implicated_prereq": "kc.alg.factoring"
+        },
+        {
+          "expected_wrong": "{2}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-5, -2}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.03",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.03",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Find the zeros of the sparse difference-of-squares polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2-36",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 minus 36"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-6, 6}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-6",
+          "6"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.diagnostic.03",
+        "source_revision": 1,
+        "source_digest": "21fceeb9b88b22eb91f2a4d4167e31445f3bfd4fb47ce047dd2441ab4eb59f22",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-6}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{-5, 7}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.04",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.04",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Correct the attempted root set, then report every root of the original polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2+5*x+4",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 plus 5 times x plus 4"
+        },
+        {
+          "kind": "text",
+          "role": "context",
+          "text": "The attempted root set was {-2, 1}."
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-4, -1}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-4",
+          "-1"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.diagnostic.04",
+        "source_revision": 1,
+        "source_digest": "5f21ceab93400ae8ea32e84f39ab5abd77b650c750917b7eb6194ad8af2d426f",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-2, 1}",
+          "misconception_id": "m.solve_quadratic.not_zero",
+          "implicated_prereq": "kc.alg.factoring"
+        },
+        {
+          "expected_wrong": "{-4}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{1, 4}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.guided_widget.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.guided_widget.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided activity or enter its equivalent text answer. Match each factor or root role to its exact value. Text fallback: enter (first factor constant, second factor constant, first root, second root)."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2-2*x-15",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 minus 2 times x minus 15"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: (3, -5, -3, 5).",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "ordered_tuple",
+        "expected": [
+          "3",
+          "-5",
+          "-3",
+          "5"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.guided_widget.01",
+        "source_revision": 1,
+        "source_digest": "1bc7025279433b943998d701942b4cff41178daafe4e06bd84f9dee37583e932",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match every row to the value that completes the exact task above. Keyboard selection and the text answer solve the same problem.",
+          "rows": [
+            {
+              "entry_id": "entry.c196025f9cbcb83d",
+              "label": "Constant in the second factor x+c",
+              "spoken_text": "Constant in the second factor x+c"
+            },
+            {
+              "entry_id": "entry.ba3946dea2f76c78",
+              "label": "Constant in the first factor x+c",
+              "spoken_text": "Constant in the first factor x+c"
+            },
+            {
+              "entry_id": "entry.d78e624e556a0060",
+              "label": "Root produced by the first factor",
+              "spoken_text": "Root produced by the first factor"
+            },
+            {
+              "entry_id": "entry.7a26d6a3b4665f75",
+              "label": "Root produced by the second factor",
+              "spoken_text": "Root produced by the second factor"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "entry.c60fb3bedbe4a7a6",
+              "label": "5",
+              "spoken_text": "5"
+            },
+            {
+              "entry_id": "entry.c1bd1eb4200351cc",
+              "label": "-5",
+              "spoken_text": "-5"
+            },
+            {
+              "entry_id": "entry.aa05e73a8856a978",
+              "label": "3",
+              "spoken_text": "3"
+            },
+            {
+              "entry_id": "entry.205f7c49caa1be66",
+              "label": "-3",
+              "spoken_text": "-3"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "entry.ba3946dea2f76c78",
+              "entry.aa05e73a8856a978"
+            ],
+            [
+              "entry.c196025f9cbcb83d",
+              "entry.c1bd1eb4200351cc"
+            ],
+            [
+              "entry.d78e624e556a0060",
+              "entry.205f7c49caa1be66"
+            ],
+            [
+              "entry.7a26d6a3b4665f75",
+              "entry.c60fb3bedbe4a7a6"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.sqv2.solve_quadratic.worked_example.01",
+      "revision": 1,
+      "family_id": "family.sqv2.solve_quadratic.worked_example.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example. Find every real zero of the expanded monic polynomial."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=x^2+9*x+14",
+          "spoken_text": "p open parenthesis x close parenthesis equals x to the power of 2 plus 9 times x plus 14"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Follow the intermediate steps before reading the result."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "p(x)=(x+7)*(x+2)",
+          "spoken_text": "p open parenthesis x close parenthesis equals open parenthesis x plus 7 close parenthesis times open parenthesis x plus 2 close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "x+7=0 and x+2=0",
+          "spoken_text": "x plus 7 equals 0 and x plus 2 equals 0"
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "{-7, -2}",
+          "spoken_text": "set containing minus 7 comma minus 2 end set"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Rewrite the zero-value condition as a product of integer linear factors, then use the zero-product property.",
+          "revealing": false
+        },
+        {
+          "text": "Set every distinct linear factor equal to zero, solve each linear equation, and report the complete set without duplicates.",
+          "revealing": false
+        },
+        {
+          "text": "Reveal the answer and move to a new problem: {-7, -2}.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "finite_set",
+        "expected": [
+          "-7",
+          "-2"
+        ],
+        "variables": [],
+        "functions": []
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "curated-solve-quadratics-wave-source-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.sqv2.solve_quadratic.worked_example.01",
+        "source_revision": 1,
+        "source_digest": "1c8da08b99a9062b18e52a16d0432d84227a342593a9c8764a4041aceb8ca060",
+        "compiler_version": "solve-quadratics-item-compiler-v2"
+      },
+      "error_signatures": [
+        {
+          "expected_wrong": "{-7}",
+          "misconception_id": "m.solve_quadratic.one_root",
+          "implicated_prereq": "kc.alg.solve_linear"
+        },
+        {
+          "expected_wrong": "{2, 7}",
+          "misconception_id": "m.solve_quadratic.factor_sign",
+          "implicated_prereq": "kc.alg.solve_linear"
+        }
+      ],
+      "guided_interaction": null
+    }
+  ]
+}
