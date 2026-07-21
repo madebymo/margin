@@ -1836,12 +1836,16 @@ def test_persistence_is_atomic_and_tokens_are_hashed(monkeypatch):
         json=_hint(before_failure),
     )
     assert failure.status_code == 503
+    assert failure.json()["code"] == "persistence_unavailable"
+    assert failure.json()["retryable"] is True
     after_failure = client.get("/api/v2/sessions/current").json()
     assert after_failure == before_failure
     failed_reset = client.post(
         "/api/v2/sessions/current/reset", json=_reset(before_failure)
     )
     assert failed_reset.status_code == 503
+    assert failed_reset.json()["code"] == "persistence_unavailable"
+    assert failed_reset.json()["retryable"] is True
     assert client.get("/api/v2/sessions/current").json() == before_failure
 
 

@@ -1256,6 +1256,7 @@ def install_v2_routes(
                 503,
                 "persistence_unavailable",
                 "the anonymous session expiry could not be refreshed; retry shortly",
+                retryable=True,
             )
         if not active:
             refresh_failure()
@@ -1537,12 +1538,14 @@ def install_v2_routes(
                 503,
                 "persistence_unavailable",
                 "the creation receipt could not be checked; retry with the same request_id",
+                retryable=True,
             )
         except Exception:
             return _error(
                 503,
                 "persistence_unavailable",
                 "the creation receipt could not be checked; retry with the same request_id",
+                retryable=True,
             )
 
         limited = request_admission_error("create", request)
@@ -1713,6 +1716,7 @@ def install_v2_routes(
                 503,
                 "persistence_unavailable",
                 "the session could not be durably created; retry with the same request_id",
+                retryable=True,
             )
         _set_resume_cookie(response, raw_token, request)
         return store.view(handle)
@@ -1792,6 +1796,7 @@ def install_v2_routes(
                 503,
                 "persistence_unavailable",
                 "the reset receipt could not be checked; retry with the same request_id",
+                retryable=True,
             )
         if replayed is not None:
             try:
@@ -2041,6 +2046,7 @@ def install_v2_routes(
                 503,
                 "persistence_unavailable",
                 "the reset could not be durably committed; retry with the same request_id",
+                retryable=True,
             )
         _set_resume_cookie(response, replacement_raw_token, request)
         return reset
@@ -2192,6 +2198,7 @@ def install_v2_routes(
                 "persistence_unavailable",
                 "the action was not committed; retry with the same request_id",
                 store.view(handle),
+                retryable=True,
             )
         except VerificationCapacityUnavailable:
             return _error(

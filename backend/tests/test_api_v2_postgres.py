@@ -62,6 +62,7 @@ def postgres_engine() -> Iterator[Engine]:
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=5,
+            pool_timeout=1,
         )
 
         @event.listens_for(test_engine, "connect")
@@ -450,6 +451,7 @@ def test_postgres_late_transaction_failure_rolls_back_and_replays_exactly(
         failed = client.post(url, json=action)
         assert failed.status_code == 503
         assert failed.json()["code"] == "persistence_unavailable"
+        assert failed.json()["retryable"] is True
         assert _durable_state(postgres_engine, session_id) == baseline
         assert client.get("/api/v2/sessions/current").json() == initial
 
@@ -484,6 +486,58 @@ def test_postgres_late_transaction_failure_rolls_back_and_replays_exactly(
         replayed = recovered_client.post(url, json=action)
         assert replayed.status_code == 200
         assert replayed.json() == committed.json()
+        _assert_one_answer_committed(
+            _durable_state(postgres_engine, session_id),
+            view=committed.json(),
+            request_id=request_id,
+        )
+
+
+def test_postgres_pool_exhaustion_does_not_advance_and_exact_retry_commits(
+    postgres_engine: Engine,
+) -> None:
+    app = _app(postgres_engine)
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/v2/sessions",
+            json={
+                "request_id": str(uuid4()),
+                "goal_id": "goal.der.power_rule",
+            },
+        )
+        assert created.status_code == 200
+        initial = created.json()
+        session_id = initial["session_id"]
+        baseline = _durable_state(postgres_engine, session_id)
+        expected = app.state.v2_store.get(
+            session_id
+        ).orchestrator.pending_expected
+        request_id = uuid4()
+        action = _answer(initial, expected, request_id)
+        action_url = f"/api/v2/sessions/{session_id}/actions"
+
+        # The fixture's bounded pool has five base and five overflow slots.
+        # Occupy every slot so checkout fails before the transaction starts.
+        held_connections = []
+        try:
+            for _ in range(10):
+                held_connections.append(postgres_engine.connect())
+            failed = client.post(action_url, json=action)
+        finally:
+            for connection in held_connections:
+                connection.close()
+
+        assert failed.status_code == 503
+        assert failed.json()["code"] == "persistence_unavailable"
+        assert failed.json()["retryable"] is True
+        assert failed.json()["session"] == initial
+        assert _durable_state(postgres_engine, session_id) == baseline
+        assert app.state.v2_store.view(
+            app.state.v2_store.get(session_id)
+        ).model_dump(mode="json") == initial
+
+        committed = client.post(action_url, json=action)
+        assert committed.status_code == 200
         _assert_one_answer_committed(
             _durable_state(postgres_engine, session_id),
             view=committed.json(),
