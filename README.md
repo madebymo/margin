@@ -1,14 +1,48 @@
-# Adaptive Math Tutor
+# Margin
 
-Adaptive Math Tutor is a deterministic, evidence-aware tutor for curated
-calculus goals. It probes prerequisite knowledge, keeps confirmed mastery,
-confirmed gaps, and uncertainty separate, teaches a short path of skills, and
-finishes with an independently authored goal problem.
+Margin is a deterministic, evidence-aware tutor for curated math goals spanning
+calculus and its prerequisites. It probes prerequisite knowledge, keeps
+confirmed mastery, confirmed gaps, and uncertainty separate, teaches a short
+path of skills, and finishes with an independently authored goal problem.
 
 The trustworthy-session v2 architecture keeps mathematical truth in reviewed,
 versioned content and deterministic verification. LLMs may eventually provide
 coaching language, but they do not author mastery evidence or choose the
 correct answer.
+
+## Built with Codex and GPT-5.6
+
+Margin was developed with Codex running GPT-5.6 as an engineering collaborator
+across discovery, architecture, implementation, verification, and
+documentation. Codex exercised the no-refresh learner journey, turned observed
+failures—including answer reuse, hint grading, duplicate advancement, unsafe
+symbolic parsing, widget traps, and recovery gaps—into explicit trust
+invariants, and helped carry those invariants through the FastAPI and Svelte
+implementation.
+
+Across the repository, Codex helped build and test the revision-checked session
+state machine, PostgreSQL checkpoints, Redis-backed safety controls, restricted
+symbolic verifier, typed content compilers and reviewer packets, accessible
+learner interface, deployment runbook, and diagnosis simulations. The work was
+split into reviewable commits and checked with focused unit, concurrency,
+recovery, browser, accessibility, and simulation suites.
+
+This is a build-process claim, not a scoring claim. GPT-5.6 is not Margin's
+mathematical judge: mastery-bearing items come from versioned curated content,
+expected answers remain server-side, and deterministic verification produces
+evidence. The optional runtime LLM adapters are separate from the Codex
+development workflow, and the pilot interface currently exposes curated mode
+only. The accompanying [hackathon video script](HACKATHON_VIDEO_SCRIPT.md)
+includes the on-screen evidence and disclosure beats for this workflow.
+
+## Repository
+
+**Submission URL:** _Pending—this checkout has no configured Git remote._
+
+A public repository, or a private repository accessible to the judges, must be
+connected before submission. The URL is intentionally not fabricated here;
+replace the pending line with the actual repository link after the remote is
+created or supplied.
 
 ## Release posture: fail closed
 
