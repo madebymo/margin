@@ -3,6 +3,12 @@
 
   import { api, ApiError, apiV2 } from "./api.js";
   import {
+    answerDraftScope,
+    clearAnswerDraft,
+    readAnswerDraft,
+    writeAnswerDraft,
+  } from "./drafts.js";
+  import {
     clearPendingRecovery,
     MutationCoordinator,
     readPendingRecovery,
@@ -124,7 +130,7 @@
 
     try {
       const payload = await apiV2.current(signal);
-      applySnapshot(payload);
+      applySnapshot(payload, { restoreDraft: true });
       statusMessage = "Your session was restored.";
     } catch (error) {
       if (error?.name === "AbortError") return;
@@ -159,18 +165,27 @@
 
   function applySnapshot(
     payload,
-    { clearRetry = true, preserveAnswer = false } = {},
+    {
+      clearRetry = true,
+      preserveAnswer = false,
+      restoreDraft = false,
+    } = {},
   ) {
     const previousAnswer = answerText;
     const previousView = view;
+    const previousScope = answerDraftScope(previousView);
     const next = normalizeSessionView(payload);
     if (!next.session_id) {
       throw new Error("The server returned a session without an id.");
     }
     view = next;
-    answerText =
-      preserveAnswer && canPreserveAnswerDraft(previousView, next)
-        ? previousAnswer
+    const canPreserve =
+      preserveAnswer && canPreserveAnswerDraft(previousView, next);
+    if (!canPreserve) clearAnswerDraft(previousScope);
+    answerText = canPreserve
+      ? previousAnswer
+      : restoreDraft && pendingAcceptsText(next.pending)
+        ? readAnswerDraft(answerDraftScope(next))
         : "";
     if (clearRetry) {
       coordinator.clearRetry();
@@ -383,6 +398,7 @@
     errorMessage = "";
     statusMessage = "";
     if (apiMode === "v1") {
+      clearAnswerDraft();
       view = null;
       legacyTranscript = [];
       legacySessionId = null;
@@ -398,6 +414,7 @@
       if (reset?.session) {
         applySnapshot(reset.session);
       } else {
+        clearAnswerDraft(answerDraftScope(view));
         view = null;
         answerText = "";
         lastFocusedPendingKey = null;
@@ -496,6 +513,10 @@
   }
 
   $: pendingKey = view?.pending?.key ?? null;
+  $: draftScope = answerDraftScope(view);
+  $: if (draftScope && pendingAcceptsText(view?.pending)) {
+    writeAnswerDraft(draftScope, answerText);
+  }
   $: if (pendingKey && pendingKey !== lastFocusedPendingKey) {
     focusPending(pendingKey);
   }
