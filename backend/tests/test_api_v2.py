@@ -321,6 +321,7 @@ def test_verifier_saturation_returns_retryable_snapshot_without_committing(
 
     assert failed.status_code == 503
     assert failed.json()["code"] == "verification_capacity_unavailable"
+    assert failed.json()["retryable"] is True
     assert failed.json()["session"] == before
     assert client.app.state.v2_store.view(handle).model_dump(mode="json") == before
 

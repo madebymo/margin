@@ -2108,6 +2108,7 @@ def install_v2_routes(
                 "verification_capacity_unavailable",
                 "answer checking is temporarily busy; retry with the same request_id",
                 store.view(handle),
+                retryable=True,
             )
         except SessionIntegrityError:
             return _error(
