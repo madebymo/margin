@@ -7,21 +7,21 @@
     {
       "blueprint_id": "blueprint.exponent.product_same_base",
       "revision": 1,
-      "source_digest": "3ad9e5579dce1bc37fa59d6b449426da99ceb7d52aba1a0e986cfe1c9d7869c5",
+      "source_digest": "153e928dd4d6cf801085ea39d89f627eccf1b824ed69140e2ba4f3831d91c2a5",
       "decision": "pending",
       "notes": "Awaiting independent human mathematics and pedagogy review."
     },
     {
       "blueprint_id": "blueprint.exponent.quotient_same_base",
       "revision": 1,
-      "source_digest": "4c69b60792951df28f2ca5229729abd467451e2d8f255edc17f3244e8e37c627",
+      "source_digest": "f7387015f127a5014120bf468f4f4509d55dc438d95f6ae27d07f69dff0ef2d9",
       "decision": "pending",
       "notes": "Awaiting independent human mathematics and pedagogy review."
     },
     {
       "blueprint_id": "blueprint.exponent.power_of_power",
       "revision": 1,
-      "source_digest": "d53c62a91aebf9122531354c9e32ea0fa7a0db68f11da8d2130ecdd3d220c1b6",
+      "source_digest": "004ac451964f24aefea34a16f4be4d9ad4cb042d5e3673ee49e53e1948fe3e31",
       "decision": "pending",
       "notes": "Awaiting independent human mathematics and pedagogy review."
     }

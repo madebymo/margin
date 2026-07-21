@@ -64,10 +64,27 @@ def load_review_manifest(path: Path | None = None) -> ContentReviewManifest:
     return ContentReviewManifest.model_validate_json(source.read_text(encoding="utf-8"))
 
 
-def blueprint_digest(blueprint: ItemFamilyBlueprint) -> str:
-    """Return the canonical SHA-256 digest used as the review identity."""
+def blueprint_digest(
+    source: ItemBlueprintDocument,
+    blueprint: ItemFamilyBlueprint,
+) -> str:
+    """Return the exact document-bound SHA-256 review identity.
+
+    Review approval covers more than the local parameter template. It also
+    binds the compiler, graph, output-bank version, and release declaration,
+    so changing a promotion switch or build coordinate invalidates the prior
+    review rather than silently reusing it.
+    """
     canonical = json.dumps(
-        blueprint.model_dump(mode="json"),
+        {
+            "blueprint": blueprint.model_dump(mode="json"),
+            "blueprint_version": source.blueprint_version,
+            "compiler_version": COMPILER_VERSION,
+            "graph_version": source.graph_version,
+            "output_bank_version": source.output_bank_version,
+            "released_kcs": sorted(source.released_kcs),
+            "schema_version": source.schema_version,
+        },
         ensure_ascii=True,
         separators=(",", ":"),
         sort_keys=True,
@@ -324,7 +341,7 @@ def compile_blueprints(
             raise CompilationError(
                 f"blueprint {blueprint.blueprint_id} names unknown KC {blueprint.kc_id}"
             )
-        digest = blueprint_digest(blueprint)
+        digest = blueprint_digest(source, blueprint)
         if review.source_digest != digest:
             raise CompilationError(
                 f"review digest mismatch for {blueprint.blueprint_id}@{blueprint.revision}"

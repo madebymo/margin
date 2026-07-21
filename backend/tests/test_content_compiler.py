@@ -176,10 +176,26 @@ def test_packaged_manifest_tracks_exact_source_digests(source, manifest):
     assert manifest.compiler_version == COMPILER_VERSION
     for blueprint in source.family_blueprints:
         review = reviews[(blueprint.blueprint_id, blueprint.revision)]
-        assert review.source_digest == blueprint_digest(blueprint)
+        assert review.source_digest == blueprint_digest(source, blueprint)
         assert review.decision.value == "pending"
         assert review.reviewed_by is None
         assert review.reviewed_at is None
+
+
+def test_review_digest_binds_release_and_build_coordinates(source):
+    blueprint = source.family_blueprints[0]
+    baseline = blueprint_digest(source, blueprint)
+
+    for field, changed in (
+        ("blueprint_version", "exponent-prototypes-v1.0.1"),
+        ("output_bank_version", "draft-exponent-prototypes-v1.0.1"),
+        ("graph_version", source.graph_version + 1),
+        ("released_kcs", ["kc.alg.exponent_rules"]),
+    ):
+        assert (
+            blueprint_digest(source.model_copy(update={field: changed}), blueprint)
+            != baseline
+        )
 
 
 def test_compiler_check_cli_accepts_packaged_pending_prototypes(capsys):
