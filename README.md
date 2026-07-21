@@ -237,6 +237,24 @@ python -m tutor.content.compiler --check \
 Do not add a KC to `released_kcs` merely to expose it in the UI. Author and
 review its complete family set and the complete hard-ancestor closure first.
 
+The pending Product/Quotient Rules pilot inventory has its own construct-aware,
+typed compiler and review manifest. It derives mathematical truth from bounded
+blueprints, compares all 1,326 family-answer pairs in a supervised worker,
+checks 5,541 answer-shaped visible candidates, and performs 2,652 deterministic
+literal cross-family scans:
+
+```bash
+python -m tutor.content.product_quotient_release --check
+```
+
+The packaged inventory is deliberately marked AI-assisted and unreviewed. It
+contains 52 independently reviewable candidate families across the exact
+four-KC hard closure and publishes zero KCs. These automated integrity checks
+do not establish instructional validity or psychometric family independence.
+Human reviewers must approve the construct coverage and ordering (including
+what two early successes establish), task coherence, accessibility, and every
+bound family digest before promotion.
+
 ## Persistence and deployment
 
 Development and tests can run memory-only. A production pilot must use
@@ -254,6 +272,8 @@ python -m tutor.db.migrate_session_v2
 
 # Generate once, store in a secret manager, and reuse across restarts.
 export TUTOR_RESUME_TOKEN_SECRET='replace-with-at-least-32-random-bytes'
+# Deployment-owned zero-argument factory returning the MetricsSink contract.
+export TUTOR_V2_METRICS_SINK_FACTORY='deployment.metrics:create_sink'
 export TUTOR_PILOT_PRODUCTION=1
 export TUTOR_ENABLE_API_SESSION_V2=1
 export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
@@ -266,11 +286,11 @@ uvicorn tutor.api.app:app
 ```
 
 Pilot mode fails startup if `DATABASE_URL` is not PostgreSQL, persistence
-cannot initialize, the v2 schema has not been migrated, or the resume secret is
-missing/too short. It also requires all six feature flags and the rollout
-percentage explicitly; the example starts closed before the reviewed 5/25/100
-canary progression. Non-pilot development reports `memory_only` durability
-when no database is configured.
+cannot initialize, the v2 schema has not been migrated, the resume secret is
+missing/too short, or a fleet metrics sink cannot be loaded. It also requires
+all six feature flags and the rollout percentage explicitly; the example starts
+closed before the reviewed 5/25/100 canary progression. Non-pilot development
+reports `memory_only` durability when no database is configured.
 
 Durable sessions restore only the exact registered graph, item-bank, and
 pedagogy-catalog triple pinned in their checkpoint and checkpoint row. Keep
@@ -281,6 +301,18 @@ the top-level keys `schema_version`, `graph`, `item_bank`, and
 ```bash
 export TUTOR_V2_RELEASE_REGISTRY_DIR=/srv/tutor/releases
 ```
+
+Once an exact release bundle has passed independent review, select it rather
+than relying on packaged draft content. Pilot deployments must pin the bytes by
+SHA-256 so a path replacement cannot silently change the active release:
+
+```bash
+export TUTOR_V2_ACTIVE_RELEASE_BUNDLE=/srv/tutor/releases/product-quotient-v1.json
+export TUTOR_V2_ACTIVE_RELEASE_SHA256='<64-character SHA-256 digest>'
+```
+
+Do not set these variables for the pending Product/Quotient draft: it contains
+no released KCs and is intentionally ineligible for active-session admission.
 
 Startup rejects malformed bundles, incompatible graph/bank/catalog triples,
 unregistered component cross-products, and reuse of any version identifier for
@@ -443,14 +475,18 @@ remain separate and do not dilute the reliability rate. An expiry already
 removed by retention is classified as invalid because no durable row remains.
 
 The process-local snapshot remains useful for tests and one-worker
-development, but is not a fleet aggregator. A deployment can pass a
-`MetricsSink` to `create_app(v2_metrics_sink=...)`; every exported increment is
-tagged only with the active graph, item-bank, pedagogy-catalog, and policy
-versions and, where applicable, a reviewed stable item ID. Sink failures
-increment the local `metrics_export_failures`
-counter and never fail a tutoring request. Raw answers, expected answers,
-session/learner IDs, prompts, and student context are excluded from the sink
-contract.
+development, but is not a fleet aggregator. Production loads the fleet adapter
+from `TUTOR_V2_METRICS_SINK_FACTORY=package.module:factory`; the zero-argument
+factory must return the runtime-checkable `MetricsSink` contract. Tests and
+embedded callers may instead pass `create_app(v2_metrics_sink=...)`, which
+takes precedence. A configured factory that cannot load fails startup, and
+pilot mode requires a sink. Every exported increment is tagged only with the
+active graph, item-bank, pedagogy-catalog, and policy versions and, where
+applicable, a reviewed stable item ID. Runtime sink failures increment the
+local `metrics_export_failures` counter and never fail a tutoring request. Raw
+answers, expected answers, session/learner IDs, prompts, and student context are
+excluded from the sink contract. Readiness reports
+`fleet_metrics_configured` without exposing provider configuration.
 
 ## Diagnosis simulation
 
@@ -534,9 +570,10 @@ headed visual review in the target deployment environment.
 - Configure and verify a shared edge/API request-rate limiter. Application
   action and episode quotas bound one anonymous learner, but a client that
   deliberately discards cookies must also be bounded before worker admission.
-- Configure a fleet-wide `MetricsSink`, verify active-version dimensions in
-  the target telemetry backend, and alert on `metrics_export_failures`; the
-  built-in health snapshot is intentionally process-local.
+- Deploy a fleet-wide `MetricsSink` through the implemented runtime factory,
+  verify active-version dimensions in the target telemetry backend, and alert
+  on `metrics_export_failures`; the built-in health snapshot is intentionally
+  process-local.
 - Keep `click_region` disabled until geometric hit testing and equivalent
   keyboard semantics are complete.
 
