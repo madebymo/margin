@@ -83,8 +83,12 @@ body limit at ingress too, and do not cache API or session-error responses.
 
 1. Back up PostgreSQL and verify the latest backup is restorable.
 2. Publish the reviewed bundle and verify its manifest, attestation, and SHA.
-3. Run database migrations as a one-shot pre-deploy job. Do not use application
-   startup to create or alter production tables.
+3. Run `alembic -c backend/alembic.ini upgrade head` as a one-shot pre-deploy
+   job. Verify `alembic -c backend/alembic.ini current` reports
+   `20260721_0004 (head)`. Do not use application startup to create, stamp, or
+   alter production tables. The revisions are additive and preserve the
+   historical `schema_migrations` table and legacy rows when adopting a
+   pre-Alembic database.
 4. Start the new image with rollout `0` and mutations paused.
 5. Require `/livez` to return 200 and `/readyz` to return 200 from every worker.
    Readiness includes fresh Redis controls, shared admission configuration, and

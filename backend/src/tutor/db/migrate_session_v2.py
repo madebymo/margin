@@ -1,269 +1,66 @@
-"""Deterministic additive migration for trustworthy-session v2.
+"""Alembic entry point and production schema-head readiness checks.
 
-The project does not currently carry Alembic.  This idempotent SQLAlchemy
-migration upgrades an existing pilot database without relying on ``create_all``
-to alter tables.  Run it before deploying API v2:
+The module name is retained so existing deployment commands keep working, but
+schema ownership now belongs to the Alembic revision chain in
+``tutor.db.alembic``.  The revisions are deliberately additive: an existing
+unversioned pilot database is adopted in place and legacy rows are preserved.
+
+Run before starting a production worker::
 
     python -m tutor.db.migrate_session_v2
+
+The standard Alembic CLI is equivalent::
+
+    alembic -c backend/alembic.ini upgrade head
 """
 
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, inspect, text
-from sqlalchemy.engine import Connection, Engine
-from sqlalchemy.schema import CreateColumn
+import os
+from pathlib import Path
 
-from tutor.db.base import Base
+from sqlalchemy import Engine, inspect
+
 from tutor.db.session import get_engine
 
-_MIGRATION_ID = "20260720_trustworthy_session_v2_1"
-_CATALOG_MIGRATION_ID = "20260720_pedagogy_catalog_pin_v2_2"
-_OPERATIONAL_INDEX_MIGRATION_ID = "20260720_operational_indexes_v2_3"
-REQUIRED_SCHEMA_HEAD = _OPERATIONAL_INDEX_MIGRATION_ID
-REQUIRED_MIGRATIONS = (
-    _MIGRATION_ID,
-    _CATALOG_MIGRATION_ID,
-    _OPERATIONAL_INDEX_MIGRATION_ID,
-)
-_NEW_TABLES = (
-    "session_checkpoints",
-    "session_mutation_receipts",
-    "transcript_entries",
-    "item_exposures",
-    "widget_attempts",
+# Keep this a literal, reviewable deployment contract.  Readiness compares the
+# database's Alembic revision to this exact value; it does not infer currency
+# from whichever revision files happen to be present at runtime.
+REQUIRED_SCHEMA_HEAD = "20260721_0004"
+
+# Historical identifiers are retained only as documentation for databases
+# upgraded by the pre-Alembic command.  Alembic leaves ``schema_migrations``
+# and its rows untouched while adopting those databases at the real head.
+LEGACY_CUSTOM_MIGRATIONS = (
+    "20260720_trustworthy_session_v2_1",
+    "20260720_pedagogy_catalog_pin_v2_2",
+    "20260720_operational_indexes_v2_3",
 )
 
 
-def _evidence_columns() -> tuple[Column, ...]:
-    return (
-        Column("episode_id", String(36), nullable=True),
-        Column("family_id", String(128), nullable=True),
-        Column(
-            "surface",
-            String(32),
-            nullable=False,
-            server_default=text("'legacy'"),
-        ),
-        Column(
-            "item_revision", Integer, nullable=False, server_default=text("1")
-        ),
-        Column(
-            "attempt_number", Integer, nullable=False, server_default=text("1")
-        ),
-        Column(
-            "policy_version",
-            String(64),
-            nullable=False,
-            server_default=text("'legacy'"),
-        ),
-        Column(
-            "learner_params_version",
-            String(64),
-            nullable=False,
-            server_default=text("'v1'"),
-        ),
-        Column(
-            "content_provenance",
-            String(128),
-            nullable=False,
-            server_default=text("'legacy'"),
-        ),
-        Column(
-            "learning_opportunity",
-            Boolean,
-            nullable=False,
-            server_default=text("FALSE"),
-        ),
-    )
+def _script_location() -> Path:
+    return Path(__file__).resolve().parent / "alembic"
 
 
-def _resume_token_columns() -> tuple[Column, ...]:
-    return (
-        Column(
-            "session_id",
-            String(36),
-            ForeignKey("session_checkpoints.session_id"),
-            nullable=True,
-        ),
-    )
+def _database_revisions(engine: Engine) -> set[str]:
+    """Return current Alembic revisions without importing Alembic at startup."""
 
-
-def _widget_attempt_columns() -> tuple[Column, ...]:
-    return (
-        Column(
-            "verification_status",
-            String(32),
-            nullable=False,
-            server_default=text("'incorrect'"),
-        ),
-        Column(
-            "counted",
-            Boolean,
-            nullable=False,
-            server_default=text("TRUE"),
-        ),
-    )
-
-
-def _catalog_evidence_columns() -> tuple[Column, ...]:
-    return (
-        Column(
-            "pedagogy_catalog_version",
-            String(128),
-            nullable=False,
-            server_default=text("'legacy'"),
-        ),
-    )
-
-
-def _catalog_checkpoint_columns() -> tuple[Column, ...]:
-    return (
-        Column(
-            "pedagogy_catalog_version",
-            String(128),
-            nullable=False,
-            server_default=text("'legacy'"),
-        ),
-    )
-
-
-def _migration_applied(connection: Connection, migration_id: str) -> bool:
-    return (
-        connection.exec_driver_sql(
-            "SELECT migration_id FROM schema_migrations WHERE migration_id = :id",
-            {"id": migration_id},
-        ).first()
-        is not None
-    )
-
-
-def _record_migration(connection: Connection, migration_id: str) -> None:
-    connection.exec_driver_sql(
-        "INSERT INTO schema_migrations (migration_id, applied_at) "
-        "VALUES (:id, CURRENT_TIMESTAMP)",
-        {"id": migration_id},
-    )
-
-
-def _add_missing_columns(
-    connection: Connection,
-    engine: Engine,
-    table_name: str,
-    columns: tuple[Column, ...],
-) -> bool:
-    inspector = inspect(connection)
-    if table_name not in inspector.get_table_names():
-        raise RuntimeError(f"base schema is missing {table_name}; initialize it first")
-    existing = {column["name"] for column in inspector.get_columns(table_name)}
-    changed = False
-    for column in columns:
-        if column.name in existing:
-            continue
-        ddl = str(CreateColumn(column).compile(dialect=engine.dialect))
-        connection.exec_driver_sql(f"ALTER TABLE {table_name} ADD COLUMN {ddl}")
-        changed = True
-    return changed
-
-
-def _apply_session_v2_base(connection: Connection, engine: Engine) -> bool:
-    changed = _add_missing_columns(
-        connection, engine, "evidence_events", _evidence_columns()
-    )
-    existing_tables = set(inspect(connection).get_table_names())
-    for table_name in _NEW_TABLES:
-        Base.metadata.tables[table_name].create(bind=connection, checkfirst=True)
-        changed = changed or table_name not in existing_tables
-
-    changed = (
-        _add_missing_columns(
-            connection, engine, "resume_tokens", _resume_token_columns()
-        )
-        or changed
-    )
-    # Freeze the old "latest checkpoint for learner" resolution once at
-    # migration time so already-issued v2 tokens resume one exact episode.
-    connection.exec_driver_sql(
-        "UPDATE resume_tokens SET session_id = ("
-        "SELECT session_id FROM session_checkpoints "
-        "WHERE session_checkpoints.learner_id = resume_tokens.learner_id "
-        "ORDER BY session_checkpoints.updated_at DESC LIMIT 1"
-        ") WHERE session_id IS NULL"
-    )
-    return (
-        _add_missing_columns(
-            connection, engine, "widget_attempts", _widget_attempt_columns()
-        )
-        or changed
-    )
-
-
-def _apply_catalog_pinning(connection: Connection, engine: Engine) -> bool:
-    evidence_changed = _add_missing_columns(
-        connection,
-        engine,
-        "evidence_events",
-        _catalog_evidence_columns(),
-    )
-    checkpoint_changed = _add_missing_columns(
-        connection,
-        engine,
-        "session_checkpoints",
-        _catalog_checkpoint_columns(),
-    )
-    return evidence_changed or checkpoint_changed
-
-
-def _apply_operational_indexes(connection: Connection) -> bool:
-    """Create the indexes used by replay, retention, and recovery queries."""
-
-    required_names = {
-        "ix_evidence_learner_time",
-        "ix_evidence_episode",
-        "ix_resume_tokens_expiry_revoked",
-        "ix_resume_tokens_session",
-        "ix_session_checkpoint_learner_started",
-        "ix_session_checkpoint_updated",
-        "ix_session_receipt_request",
-    }
-    inspector = inspect(connection)
-    existing = {
-        index["name"]
-        for table_name in (
-            "evidence_events",
-            "resume_tokens",
-            "session_checkpoints",
-            "session_mutation_receipts",
-        )
-        for index in inspector.get_indexes(table_name)
-        if index.get("name") is not None
-    }
-    for table_name in (
-        "evidence_events",
-        "resume_tokens",
-        "session_checkpoints",
-        "session_mutation_receipts",
-    ):
-        table = Base.metadata.tables[table_name]
-        for index in table.indexes:
-            if index.name in required_names:
-                index.create(bind=connection, checkfirst=True)
-    return not required_names <= existing
+    with engine.connect() as connection:
+        if "alembic_version" not in inspect(connection).get_table_names():
+            return set()
+        return {
+            str(row[0])
+            for row in connection.exec_driver_sql(
+                "SELECT version_num FROM alembic_version"
+            )
+        }
 
 
 def schema_migration_status(engine: Engine) -> dict[str, object]:
-    """Return a sanitized readiness snapshot for the explicit schema head."""
+    """Return a sanitized readiness snapshot for the explicit production head."""
 
     try:
-        with engine.connect() as connection:
-            if "schema_migrations" not in inspect(connection).get_table_names():
-                applied: set[str] = set()
-            else:
-                applied = {
-                    str(row[0])
-                    for row in connection.exec_driver_sql(
-                        "SELECT migration_id FROM schema_migrations"
-                    )
-                }
+        revisions = _database_revisions(engine)
     except Exception:
         return {
             "reachable": False,
@@ -272,35 +69,59 @@ def schema_migration_status(engine: Engine) -> dict[str, object]:
         }
     return {
         "reachable": True,
-        "current": all(migration in applied for migration in REQUIRED_MIGRATIONS),
+        "current": revisions == {REQUIRED_SCHEMA_HEAD},
         "head": REQUIRED_SCHEMA_HEAD,
     }
 
 
-def migrate(engine: Engine) -> bool:
-    """Apply every unapplied additive v2 migration in order."""
-    import tutor.db.models  # noqa: F401 — register all tables on Base.metadata
+def _alembic_config(*, connection=None):
+    """Build a location-stable Alembic config for CLI-compatible upgrades."""
 
-    changed = False
+    try:
+        from alembic.config import Config
+    except ImportError as exc:  # pragma: no cover - packaging/configuration guard
+        raise RuntimeError(
+            "Alembic is required for database migrations; install backend[pilot]"
+        ) from exc
+
+    config = Config()
+    config.set_main_option("script_location", str(_script_location()))
+    if connection is not None:
+        config.attributes["connection"] = connection
+    return config
+
+
+def migrate(engine: Engine) -> bool:
+    """Upgrade ``engine`` to the pinned Alembic head.
+
+    Returns ``True`` when the database revision changed and ``False`` for an
+    already-current database.  Migration scripts perform their own schema
+    introspection so empty, legacy-unversioned, pre-Alembic-v2, and current
+    databases all converge without deleting or rewriting legacy rows.
+    """
+
+    from alembic import command
+
+    before = _database_revisions(engine)
+    if before == {REQUIRED_SCHEMA_HEAD}:
+        return False
     with engine.begin() as connection:
-        connection.exec_driver_sql(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(migration_id VARCHAR(128) PRIMARY KEY, applied_at TIMESTAMP NOT NULL)"
+        command.upgrade(_alembic_config(connection=connection), "head")
+    after = _database_revisions(engine)
+    if after != {REQUIRED_SCHEMA_HEAD}:
+        raise RuntimeError(
+            "database migration completed without reaching the required schema head"
         )
-        if not _migration_applied(connection, _MIGRATION_ID):
-            changed = _apply_session_v2_base(connection, engine) or changed
-            _record_migration(connection, _MIGRATION_ID)
-        if not _migration_applied(connection, _CATALOG_MIGRATION_ID):
-            changed = _apply_catalog_pinning(connection, engine) or changed
-            _record_migration(connection, _CATALOG_MIGRATION_ID)
-        if not _migration_applied(connection, _OPERATIONAL_INDEX_MIGRATION_ID):
-            changed = _apply_operational_indexes(connection) or changed
-            _record_migration(connection, _OPERATIONAL_INDEX_MIGRATION_ID)
-    return changed
+    return before != after
 
 
 def main() -> None:
-    migrate(get_engine())
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise SystemExit(
+            "DATABASE_URL is required; refusing to migrate an ephemeral database"
+        )
+    migrate(get_engine(database_url))
 
 
 if __name__ == "__main__":

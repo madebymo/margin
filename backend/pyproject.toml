@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "alembic>=1.13",
     "pytest>=8",
     "hypothesis>=6",
     "psycopg[binary]>=3.1",
@@ -52,6 +53,7 @@ where = ["src"]
 ]
 "tutor.packs" = ["*.csv"]
 "tutor.seed" = ["*.json"]
+"tutor.db.alembic" = ["script.py.mako"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

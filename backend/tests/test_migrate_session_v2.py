@@ -1,11 +1,66 @@
-"""The additive v2 migration upgrades an existing database and is idempotent."""
+"""Alembic converges fresh and legacy databases on one production head."""
 
+from alembic.autogenerate import compare_metadata
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 import pytest
 from sqlalchemy import inspect
 
 from tutor.api.v2_persistence import V2PersistenceService
-from tutor.db.migrate_session_v2 import migrate
-from tutor.db.session import get_engine
+from tutor.db.base import Base
+from tutor.db.migrate_session_v2 import (
+    LEGACY_CUSTOM_MIGRATIONS,
+    REQUIRED_SCHEMA_HEAD,
+    _alembic_config,
+    migrate,
+    schema_migration_status,
+)
+from tutor.db.session import create_all, get_engine
+
+
+def test_revision_chain_has_one_explicit_production_head():
+    scripts = ScriptDirectory.from_config(_alembic_config())
+
+    assert scripts.get_heads() == [REQUIRED_SCHEMA_HEAD]
+
+
+def test_migration_builds_a_fresh_database_without_create_all():
+    engine = get_engine("sqlite+pysqlite:///:memory:")
+
+    assert migrate(engine) is True
+    assert schema_migration_status(engine) == {
+        "reachable": True,
+        "current": True,
+        "head": REQUIRED_SCHEMA_HEAD,
+    }
+    assert {
+        "alembic_version",
+        "learners",
+        "evidence_events",
+        "session_checkpoints",
+        "session_mutation_receipts",
+        "transcript_entries",
+        "item_exposures",
+        "widget_attempts",
+    } <= set(inspect(engine).get_table_names())
+    V2PersistenceService(engine)
+
+    with engine.connect() as connection:
+        context = MigrationContext.configure(
+            connection,
+            opts={"compare_type": True},
+        )
+        assert compare_metadata(context, Base.metadata) == []
+
+
+def test_current_unversioned_create_all_schema_is_adopted_in_place():
+    engine = get_engine("sqlite+pysqlite:///:memory:")
+    create_all(engine)
+
+    assert schema_migration_status(engine)["current"] is False
+    assert migrate(engine) is True
+    assert schema_migration_status(engine)["current"] is True
+    assert migrate(engine) is False
 
 
 def test_migration_adds_v2_columns_and_tables_to_legacy_schema():
@@ -32,6 +87,15 @@ def test_migration_adds_v2_columns_and_tables_to_legacy_schema():
             "assisted BOOLEAN NOT NULL DEFAULT FALSE, "
             "misconception_id VARCHAR(128), content_versions JSON NOT NULL)"
         )
+        connection.exec_driver_sql(
+            "CREATE TABLE schema_migrations ("
+            "migration_id VARCHAR(128) PRIMARY KEY, applied_at TIMESTAMP NOT NULL)"
+        )
+        for migration_id in LEGACY_CUSTOM_MIGRATIONS:
+            connection.exec_driver_sql(
+                "INSERT INTO schema_migrations VALUES (:migration_id, CURRENT_TIMESTAMP)",
+                {"migration_id": migration_id},
+            )
         connection.exec_driver_sql(
             "INSERT INTO learners VALUES "
             "('learner-1', '{}', CURRENT_TIMESTAMP)"
@@ -90,5 +154,16 @@ def test_migration_adds_v2_columns_and_tables_to_legacy_schema():
             "pedagogy_catalog_version "
             "FROM evidence_events WHERE id = 1"
         ).one()
+        historical_migrations = {
+            row[0]
+            for row in connection.exec_driver_sql(
+                "SELECT migration_id FROM schema_migrations"
+            )
+        }
+        alembic_revision = connection.exec_driver_sql(
+            "SELECT version_num FROM alembic_version"
+        ).scalar_one()
     assert tuple(legacy) == ("legacy", 1, "legacy", "legacy")
+    assert historical_migrations == set(LEGACY_CUSTOM_MIGRATIONS)
+    assert alembic_revision == REQUIRED_SCHEMA_HEAD
     assert migrate(engine) is False

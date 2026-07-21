@@ -47,7 +47,8 @@ not silently fall back to canonical examples or model-authored scored items.
   distinct-family confirmation policy
 - `backend/src/tutor/api/` — FastAPI v1 compatibility routes, authoritative v2
   snapshots, idempotency, resume, persistence, and release registry
-- `backend/src/tutor/db/` — SQLAlchemy models and the additive v2 migration
+- `backend/src/tutor/db/` — SQLAlchemy models and the additive Alembic
+  migration chain
 - `backend/src/tutor/seed/` — Calc-1 graph, coverage matrix, packaged draft item
   bank, and exact reviewed pedagogy-catalog release
 - `backend/src/tutor/sim/` — v1 and v2 synthetic diagnosis harnesses
@@ -269,11 +270,12 @@ PostgreSQL and a stable resume-token secret:
 docker compose up -d db
 export DATABASE_URL='postgresql+psycopg://tutor:tutor@localhost/tutor'
 
-# Initialize/publish the base schema and graph for a fresh database.
-python -m tutor.seed.load_seed --validate --db "$DATABASE_URL"
+# Required for fresh and existing databases; safe to rerun. This upgrades to
+# the explicit production head recorded in alembic_version.
+alembic -c backend/alembic.ini upgrade head
 
-# Required before enabling v2 against an existing database; safe to rerun.
-python -m tutor.db.migrate_session_v2
+# Validate the data assets and publish the graph only after schema migration.
+python -m tutor.seed.load_seed --validate --db "$DATABASE_URL"
 
 # Generate once, store in a secret manager, and reuse across restarts.
 export TUTOR_RESUME_TOKEN_SECRET='replace-with-at-least-32-random-bytes'
@@ -291,6 +293,11 @@ export TUTOR_PAUSE_V2_MUTATIONS=0
 export TUTOR_V2_STUDENT_ROLLOUT_PERCENT=0
 uvicorn tutor.api.app:app
 ```
+
+`python -m tutor.db.migrate_session_v2` remains an equivalent compatibility
+entry point for existing deployment automation. Both commands require an
+explicit `DATABASE_URL`; neither application startup nor the migration command
+silently targets an in-memory database.
 
 Pilot mode fails startup if `DATABASE_URL` is not PostgreSQL, persistence
 cannot initialize, the v2 schema has not been migrated, the resume secret is
@@ -341,8 +348,8 @@ Resume reconciles the checkpoint against the ordered durable transcript,
 evidence, exposure-transition, widget-attempt, and mutation-receipt ledgers.
 Missing or divergent rows fail closed with `503` and an integrity metric; the
 checkpoint copy cannot silently mask missing append-only evidence. The
-additive migration labels pre-catalog evidence and checkpoints `legacy` rather
-than fabricating trust: legacy evidence may weakly seed belief, but cannot
+additive Alembic revisions label pre-catalog evidence and checkpoints `legacy`
+rather than fabricating trust: legacy evidence may weakly seed belief, but cannot
 confirm mastery, carry misconception flags, propagate mastery, or receive a
 practice-learning transition. A pre-catalog v2 checkpoint is not silently
 rebound to the deployment's current catalog and therefore fails closed.

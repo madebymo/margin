@@ -18,6 +18,7 @@ RUN addgroup --system tutor && adduser --system --ingroup tutor tutor
 WORKDIR /app
 
 COPY backend/pyproject.toml backend/pyproject.toml
+COPY backend/alembic.ini backend/alembic.ini
 COPY backend/src backend/src
 COPY --from=frontend-build \
     /workspace/backend/src/tutor/api/static/dist \
@@ -27,4 +28,3 @@ RUN python -m pip install --no-cache-dir "./backend[api,pilot]"
 USER tutor
 EXPOSE 8000
 CMD ["sh", "-c", "exec uvicorn tutor.api.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${TUTOR_TRUSTED_PROXY_CIDRS:-127.0.0.1}"]
-
