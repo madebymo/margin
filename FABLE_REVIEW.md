@@ -1,5 +1,8 @@
 # Phase 1 Implementation Handoff
 
+> Historical handoff: this document records the Phase 1 review boundary. See
+> [README.md](README.md) for the current implementation and submission status.
+
 Date: 2026-07-20
 
 Status: Phase 1 is implemented, hardened, and ready for Fable's implementation

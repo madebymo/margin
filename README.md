@@ -39,6 +39,26 @@ includes the on-screen evidence and disclosure beats for this workflow.
 
 **Submission URL:** [github.com/madebymo/margin](https://github.com/madebymo/margin)
 
+## Judge demo
+
+**Live demo:** [retro-ebony-extended-wear.trycloudflare.com](https://retro-ebony-extended-wear.trycloudflare.com)
+
+The judge build is an explicitly labeled, single-goal engineering demonstration
+of the complete no-refresh v2 flow. It uses synthetic Power Rule content so the
+interaction, diagnosis, hint, independent-check, capstone, and resume behavior
+can be assessed without presenting the pending pilot curriculum as reviewed or
+released. Its state is process-local: reload works, but a host restart begins a
+new demo session. The normal production entry point remains fail-closed.
+
+Run the same guarded build locally with a fresh secret:
+
+```bash
+cd backend
+TUTOR_SUBMISSION_DEMO=1 \
+TUTOR_RESUME_TOKEN_SECRET="$(openssl rand -hex 32)" \
+uvicorn tests.browser_v2_app:app --host 127.0.0.1 --port 8000
+```
+
 ## Release posture: fail closed
 
 The v2 control plane, API, persistence model, diagnosis policy, allocator,
