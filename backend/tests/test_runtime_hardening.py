@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+import json
+from collections.abc import Mapping
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
+from sqlalchemy.orm import Session
 
 from tutor.api.app import create_app
+from tutor.api.v2_admission import AdmissionDecision
+from tutor.api.v2_controls import StaticMutationGate
 from tutor.api.http_safety import (
     CONTENT_SECURITY_POLICY,
     HttpSecurityHeadersMiddleware,
@@ -23,15 +28,18 @@ from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_persistence import V2PersistenceService
 from tutor.api.v2_quarantine import (
     ReleaseQuarantineSnapshot,
+    StaticReleaseQuarantineProvider,
     release_runtime_digest,
 )
 from tutor.api.v2_versions import V2VersionRegistry
 from tutor.db.migrate_session_v2 import migrate, schema_migration_status
+from tutor.db.models import ResumeTokenRow, SessionCheckpointRow
 from tutor.db.persistence import PersistenceService
 from tutor.db.session import PostgresEngineSettings, get_engine
 from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
+from tutor.schemas.pedagogy import PedagogyPackCatalog
 
 from tests.v2_helpers import (
     approved_power_rule_episode_bank,
@@ -51,6 +59,72 @@ class MutableQuarantine:
             source="test_control_plane",
             observed_at=datetime.now(timezone.utc),
         )
+
+
+class HealthyMetricsSink:
+    def increment(
+        self,
+        name: str,
+        amount: int = 1,
+        *,
+        dimensions: Mapping[str, str],
+    ) -> None:
+        del name, amount, dimensions
+
+    def healthy(self) -> bool:
+        return True
+
+
+class AllowAllAdmissionGate:
+    def admit(self, operation, *, peer_host, forwarded_for=()):
+        del operation, peer_host, forwarded_for
+        return AdmissionDecision(allowed=True)
+
+
+def _versioned_pilot_release(version: int):
+    """Build a one-node pilot-goal fixture with distinct immutable coordinates."""
+
+    target_kc = "kc.der.product_quotient"
+    graph_payload = power_rule_only_graph().model_dump(mode="json")
+    graph_payload["graph_version"] = version
+    graph_payload["nodes"][0]["id"] = target_kc
+    graph_payload["nodes"][0]["name"] = "Product and quotient rule"
+    graph_payload["nodes"][0]["description"] = (
+        "Differentiate products and quotients of functions."
+    )
+    graph = GraphDocument.model_validate(graph_payload)
+
+    bank_payload = approved_power_rule_episode_bank().model_dump(mode="json")
+    bank_payload["graph_version"] = version
+    bank_payload["bank_version"] = f"readiness-bank-v{version}"
+    bank_payload["released_kcs"] = [target_kc]
+    for item in bank_payload["items"]:
+        item["kc_id"] = target_kc
+        item["item_id"] += f".readiness{version}"
+        item["family_id"] += f".readiness{version}"
+    bank = ItemBankDocument.model_validate(bank_payload)
+
+    catalog_payload = approved_power_rule_catalog().model_dump(mode="json")
+    catalog_payload["graph_version"] = version
+    catalog_payload["catalog_version"] = f"readiness-pedagogy-v{version}"
+    catalog_payload["packs"][0]["kc_id"] = target_kc
+    catalog = PedagogyPackCatalog.model_validate(catalog_payload)
+    return graph, bank, catalog
+
+
+def _write_fixture_bundle(path, release) -> None:
+    graph, bank, catalog = release
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "graph": graph.model_dump(mode="json"),
+                "item_bank": bank.model_dump(mode="json"),
+                "pedagogy_catalog": catalog.model_dump(mode="json"),
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_postgres_engine_uses_bounded_pool_and_server_timeouts(monkeypatch):
@@ -145,6 +219,145 @@ def test_liveness_is_cheap_and_default_readiness_fails_closed():
     assert readiness.json()["status"] == "not_ready"
     assert readiness.json()["checks"]["durable_persistence"] is False
     assert set(readiness.json()) == {"status", "checks", "migration_head"}
+
+
+def test_readiness_requires_every_active_resume_pin_to_be_restorable(
+    tmp_path,
+    monkeypatch,
+):
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'readiness.sqlite3'}"
+    migration_engine = get_engine(database_url)
+    migrate(migration_engine)
+    migration_engine.dispose()
+
+    old_release = _versioned_pilot_release(301)
+    active_release = _versioned_pilot_release(302)
+    old_bundle = tmp_path / "old-release.json"
+    active_bundle = tmp_path / "active-release.json"
+    _write_fixture_bundle(old_bundle, old_release)
+    _write_fixture_bundle(active_bundle, active_release)
+    runtime_options = {
+        "database_url": database_url,
+        "v2_metrics_sink": HealthyMetricsSink(),
+        "v2_mutation_gate": StaticMutationGate(
+            False,
+            revision="readiness-test-open",
+            source="test_control_plane",
+        ),
+        "v2_release_quarantine": StaticReleaseQuarantineProvider(
+            revision="readiness-test-safe",
+            source="test_control_plane",
+        ),
+        "v2_request_admission_gate": AllowAllAdmissionGate(),
+        "trusted_hosts": ("testserver",),
+    }
+
+    old_app = create_app(
+        old_release[0],
+        v2_active_release_bundle=old_bundle,
+        **runtime_options,
+    )
+    with TestClient(old_app) as old_client:
+        created = old_client.post(
+            "/api/v2/sessions",
+            json={
+                "request_id": str(uuid4()),
+                "goal_id": "goal.der.product_quotient",
+            },
+        )
+        assert created.status_code == 200, created.text
+
+    duplicate_engine = get_engine(database_url)
+    with Session(duplicate_engine) as session:
+        original_token = session.scalar(select(ResumeTokenRow))
+        assert original_token is not None
+        session.add(
+            ResumeTokenRow(
+                learner_id=original_token.learner_id,
+                session_id=original_token.session_id,
+                token_hash="duplicate-active-token-hash-for-readiness-test",
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            )
+        )
+        session.commit()
+    duplicate_engine.dispose()
+
+    new_app = create_app(
+        active_release[0],
+        v2_active_release_bundle=active_bundle,
+        **runtime_options,
+    )
+    with TestClient(new_app) as new_client:
+        missing = new_client.get("/readyz")
+        assert missing.status_code == 503
+        assert missing.json()["checks"]["resume_restoration_state_available"] is True
+        assert missing.json()["checks"]["retained_resumes_restorable"] is False
+        private_readiness = new_app.state.v2_readiness_provider()
+        assert private_readiness["active_resume_pin_count"] == 1
+        assert private_readiness["unrestorable_resume_pin_count"] == 1
+        assert "session_id" not in private_readiness
+        assert "token" not in repr(private_readiness).lower()
+
+        new_app.state.v2_version_registry.register(*old_release)
+
+        ready = new_client.get("/readyz")
+        assert ready.status_code == 200, ready.text
+        assert ready.json()["status"] == "ready"
+        assert ready.json()["checks"]["retained_resumes_restorable"] is True
+        restored_readiness = new_app.state.v2_readiness_provider()
+        assert restored_readiness["active_resume_pin_count"] == 1
+        assert restored_readiness["unrestorable_resume_pin_count"] == 0
+
+        with Session(new_app.state.v2_persistence.engine) as session:
+            row = session.scalar(select(SessionCheckpointRow))
+            assert row is not None
+            original_checkpoint = json.loads(json.dumps(row.checkpoint))
+            corrupted = json.loads(json.dumps(row.checkpoint))
+            corrupted["content_release"]["item_bank_version"] = "mismatched-bank"
+            row.checkpoint = corrupted
+            session.commit()
+        corrupted_readiness = new_app.state.v2_readiness_provider()
+        assert corrupted_readiness["active_resume_pin_count"] == 1
+        assert corrupted_readiness["unrestorable_resume_pin_count"] == 1
+        with Session(new_app.state.v2_persistence.engine) as session:
+            row = session.scalar(select(SessionCheckpointRow))
+            assert row is not None
+            row.checkpoint = original_checkpoint
+            session.commit()
+        assert new_client.get("/readyz").status_code == 200
+
+        with Session(new_app.state.v2_persistence.engine) as session:
+            tokens = session.scalars(select(ResumeTokenRow)).all()
+            assert len(tokens) == 2
+            for token in tokens:
+                token.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+            session.commit()
+        assert new_app.state.v2_readiness_provider()["active_resume_pin_count"] == 0
+
+        with Session(new_app.state.v2_persistence.engine) as session:
+            tokens = session.scalars(select(ResumeTokenRow)).all()
+            assert len(tokens) == 2
+            for token in tokens:
+                token.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+                token.revoked = True
+            session.commit()
+        assert new_app.state.v2_readiness_provider()["active_resume_pin_count"] == 0
+
+        def unavailable_pins():
+            raise RuntimeError("private-database-detail")
+
+        monkeypatch.setattr(
+            new_app.state.v2_persistence,
+            "active_resume_checkpoint_pins",
+            unavailable_pins,
+        )
+        unavailable = new_app.state.v2_readiness_provider()
+        assert unavailable["resume_restoration_state_available"] is False
+        assert unavailable["retained_resumes_restorable"] is False
+        assert unavailable["active_resume_pin_count"] == 0
+        assert unavailable["unrestorable_resume_pin_count"] == 0
+        assert "private-database-detail" not in repr(unavailable)
+        assert new_client.get("/readyz").status_code == 503
 
 
 def test_content_length_body_limit_returns_typed_v2_error_before_validation():

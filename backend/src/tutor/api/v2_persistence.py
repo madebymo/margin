@@ -59,6 +59,7 @@ _REQUIRED_EVIDENCE_COLUMNS = {
 _REQUIRED_CHECKPOINT_COLUMNS = {"pedagogy_catalog_version"}
 _REQUIRED_RESUME_COLUMNS = {"session_id"}
 _REQUIRED_WIDGET_ATTEMPT_COLUMNS = {"verification_status", "counted"}
+_SUPPORTED_CHECKPOINT_ENVELOPE_SCHEMAS = frozenset({3, 4})
 
 
 def _utcnow() -> datetime:
@@ -100,6 +101,74 @@ class RetentionBatch:
             raise TypeError("complete must be a boolean")
         if self.complete and self.next_cursor is not None:
             raise ValueError("a complete retention page cannot carry a cursor")
+
+
+@dataclass(frozen=True)
+class ActiveResumeCheckpointPins:
+    """Privacy-minimal version pins referenced by one or more live tokens.
+
+    Every field is excluded from ``repr`` so an operational exception cannot
+    accidentally print release coordinates or policy configuration. Readiness
+    exposes only aggregate counts and booleans derived from these values.
+    """
+
+    envelope_schema_version: Any = field(repr=False)
+    content_release: Any = field(repr=False)
+    orchestrator_schema_version: Any = field(repr=False)
+    graph_version: Any = field(repr=False)
+    item_bank_version: Any = field(repr=False)
+    pedagogy_catalog_version: Any = field(repr=False)
+    release_id: Any = field(repr=False)
+    release_digest: Any = field(repr=False)
+    policy_versions: Any = field(repr=False)
+
+    def restoration_checkpoint(self) -> dict[str, Any]:
+        """Return registry input only when the checkpoint layers agree."""
+
+        envelope_schema = self.envelope_schema_version
+        if (
+            type(envelope_schema) is not int
+            or envelope_schema not in _SUPPORTED_CHECKPOINT_ENVELOPE_SCHEMAS
+        ):
+            raise ValueError("active resume checkpoint envelope is unsupported")
+        expected_coordinate_keys = {
+            "graph_version",
+            "item_bank_version",
+            "pedagogy_catalog_version",
+        }
+        expected_keys = (
+            expected_coordinate_keys | {"release_id", "release_digest"}
+            if envelope_schema == 4
+            else expected_coordinate_keys
+        )
+        if not isinstance(self.content_release, dict) or set(
+            self.content_release
+        ) != expected_keys:
+            raise ValueError("active resume checkpoint has invalid release pins")
+        state = {
+            "schema_version": self.orchestrator_schema_version,
+            "graph_version": self.graph_version,
+            "item_bank_version": self.item_bank_version,
+            "pedagogy_catalog_version": self.pedagogy_catalog_version,
+            "policy_versions": (
+                dict(self.policy_versions)
+                if isinstance(self.policy_versions, dict)
+                else self.policy_versions
+            ),
+        }
+        state_release = {
+            key: state.get(key) for key in expected_coordinate_keys
+        }
+        if envelope_schema == 4:
+            state["release_id"] = self.release_id
+            state["release_digest"] = self.release_digest
+            state_release.update(
+                release_id=self.release_id,
+                release_digest=self.release_digest,
+            )
+        if self.content_release != state_release:
+            raise ValueError("active resume checkpoint release pins disagree")
+        return state
 
 
 class V2PersistenceService:
@@ -896,6 +965,62 @@ class V2PersistenceService:
             if _aware(token.expires_at) <= _utcnow():
                 return "expired"
             return "active"
+
+    def active_resume_checkpoint_pins(
+        self,
+        *,
+        as_of: datetime | None = None,
+    ) -> tuple[ActiveResumeCheckpointPins, ...]:
+        """Load only distinct restoration pins referenced by active tokens.
+
+        The projection deliberately excludes token hashes, learner/session
+        identifiers, transcript data, context, responses, and the remainder of
+        each checkpoint. A legacy token without an exact v2 session binding is
+        not resumable and therefore does not contribute a pin set.
+        """
+
+        now = as_of or _utcnow()
+        checkpoint = SessionCheckpointRow.checkpoint
+        orchestrator = checkpoint["orchestrator"]
+        statement = (
+            select(
+                checkpoint["schema_version"].as_integer(),
+                checkpoint["content_release"],
+                orchestrator["schema_version"].as_integer(),
+                orchestrator["graph_version"].as_integer(),
+                orchestrator["item_bank_version"].as_string(),
+                orchestrator["pedagogy_catalog_version"].as_string(),
+                orchestrator["release_id"].as_string(),
+                orchestrator["release_digest"].as_string(),
+                orchestrator["policy_versions"],
+            )
+            .join(
+                ResumeTokenRow,
+                ResumeTokenRow.session_id == SessionCheckpointRow.session_id,
+            )
+            .where(
+                ResumeTokenRow.session_id.is_not(None),
+                ResumeTokenRow.revoked.is_(False),
+                ResumeTokenRow.expires_at > now,
+            )
+            .distinct()
+        )
+        with Session(self._engine) as session:
+            rows = session.execute(statement).all()
+        return tuple(
+            ActiveResumeCheckpointPins(
+                envelope_schema_version=row[0],
+                content_release=row[1],
+                orchestrator_schema_version=row[2],
+                graph_version=row[3],
+                item_bank_version=row[4],
+                pedagogy_catalog_version=row[5],
+                release_id=row[6],
+                release_digest=row[7],
+                policy_versions=row[8],
+            )
+            for row in rows
+        )
 
     def _enforce_episode_quota(
         self,

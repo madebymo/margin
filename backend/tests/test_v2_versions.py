@@ -200,10 +200,32 @@ def test_policy_registry_dispatches_exact_pins_and_rejects_aliasing():
             evidence_trust_policy,
         )
 
-    runtime = registry.register(versions, restore_old)
+    runtime = registry.register(
+        versions,
+        restore_old,
+        checkpoint_schema_versions=(3,),
+    )
     assert registry.resolve_checkpoint({"policy_versions": versions}) == runtime
-    assert registry.register(versions, restore_old) == runtime
+    assert (
+        registry.register(
+            versions,
+            restore_old,
+            checkpoint_schema_versions=(3,),
+        )
+        == runtime
+    )
+    assert (
+        registry.resolve_restoration_checkpoint(
+            {"schema_version": 3, "policy_versions": versions}
+        )
+        == runtime
+    )
     assert runtime.restore(None, {}, None, None, trust)[-1] is trust
+
+    with pytest.raises(V2VersionUnavailable, match="schema"):
+        registry.resolve_restoration_checkpoint(
+            {"schema_version": 4, "policy_versions": versions}
+        )
 
     with pytest.raises(V2VersionConflict):
         registry.register(
@@ -237,7 +259,11 @@ def test_policy_registry_loads_retained_runtime_modules_from_environment(monkeyp
         )
 
     def register_v2_policy_runtimes(registry):
-        registry.register(versions, restore_old)
+        registry.register(
+            versions,
+            restore_old,
+            checkpoint_schema_versions=(3,),
+        )
 
     module.register_v2_policy_runtimes = register_v2_policy_runtimes
     monkeypatch.setitem(sys.modules, module_name, module)

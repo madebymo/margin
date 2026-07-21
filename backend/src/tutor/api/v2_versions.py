@@ -75,6 +75,7 @@ class V2PolicyRuntime:
 
     versions: tuple[tuple[str, str], ...]
     restore: PolicyRestore
+    checkpoint_schema_versions: tuple[int, ...]
 
 
 class V2PolicyRegistry:
@@ -92,6 +93,9 @@ class V2PolicyRegistry:
         ``register_v2_policy_runtimes(registry)``. This is deliberately a code
         registry, rather than data deserialization: old checkpoints require the
         actual reviewed implementation that authored their pinned policy set.
+        Retained registrations must also declare ``checkpoint_schema_versions``
+        so deployment readiness can prove the adapter accepts every live token's
+        serialized state before traffic is admitted.
         """
         registry = cls()
         configured = os.environ.get("TUTOR_V2_POLICY_RUNTIME_MODULES", "")
@@ -124,12 +128,36 @@ class V2PolicyRegistry:
         self,
         versions: dict[str, str],
         restore: PolicyRestore,
+        *,
+        checkpoint_schema_versions: Iterable[int] | None = None,
     ) -> V2PolicyRuntime:
         key = self._key(versions)
-        runtime = V2PolicyRuntime(versions=key, restore=restore)
+        declared_schemas = (
+            checkpoint_schema_versions
+            if checkpoint_schema_versions is not None
+            else getattr(restore, "supported_checkpoint_schema_versions", ())
+        )
+        try:
+            schemas = tuple(sorted(set(declared_schemas)))
+        except TypeError as exc:
+            raise ValueError(
+                "checkpoint schema versions must be an iterable of integers"
+            ) from exc
+        if any(
+            type(schema_version) is not int or schema_version < 1
+            for schema_version in schemas
+        ):
+            raise ValueError(
+                "checkpoint schema versions must be positive integers"
+            )
+        runtime = V2PolicyRuntime(
+            versions=key,
+            restore=restore,
+            checkpoint_schema_versions=schemas,
+        )
         with self._lock:
             existing = self._runtimes.get(key)
-            if existing is not None and existing.restore != restore:
+            if existing is not None and existing != runtime:
                 raise V2VersionConflict(
                     "policy-version set already identifies a different runtime"
                 )
@@ -148,6 +176,23 @@ class V2PolicyRegistry:
         if runtime is None:
             raise V2VersionUnavailable(
                 f"checkpoint policy runtime unavailable: {dict(key)}"
+            )
+        return runtime
+
+    def resolve_restoration_checkpoint(
+        self,
+        checkpoint: dict[str, Any],
+    ) -> V2PolicyRuntime:
+        """Resolve an executable adapter that declares this checkpoint schema."""
+
+        runtime = self.resolve_checkpoint(checkpoint)
+        schema_version = checkpoint.get("schema_version")
+        if (
+            type(schema_version) is not int
+            or schema_version not in runtime.checkpoint_schema_versions
+        ):
+            raise V2VersionUnavailable(
+                "checkpoint schema has no retained policy restoration adapter"
             )
         return runtime
 

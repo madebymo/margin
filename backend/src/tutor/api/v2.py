@@ -567,6 +567,7 @@ def install_v2_routes(
     policies.register(
         active_policy_versions,
         SessionOrchestratorV2.restore,
+        checkpoint_schema_versions=(3, 4),
     )
     active_release_digest = (
         active_release.release_digest
@@ -1033,7 +1034,7 @@ def install_v2_routes(
             raise SessionUnavailable("durable checkpoint cannot be restored")
         try:
             release = registry.resolve_checkpoint(state)
-            policy_runtime = policies.resolve_checkpoint(state)
+            policy_runtime = policies.resolve_restoration_checkpoint(state)
             orchestrator = policy_runtime.restore(
                 release.graph,
                 state,
@@ -2176,11 +2177,46 @@ def install_v2_routes(
     )
     app.state.v2_request_admission = active_request_admission
 
+    def retained_resume_readiness() -> dict[str, int | bool]:
+        """Check every distinct live-token pin without exposing coordinates."""
+
+        if persistence is None:
+            return {
+                "resume_restoration_state_available": False,
+                "retained_resumes_restorable": False,
+                "active_resume_pin_count": 0,
+                "unrestorable_resume_pin_count": 0,
+            }
+        try:
+            pins = persistence.active_resume_checkpoint_pins()
+            unrestorable = 0
+            for pin_set in pins:
+                try:
+                    checkpoint = pin_set.restoration_checkpoint()
+                    registry.resolve_checkpoint(checkpoint)
+                    policies.resolve_restoration_checkpoint(checkpoint)
+                except Exception:  # noqa: BLE001 - readiness is sanitized/fail-closed
+                    unrestorable += 1
+        except Exception:  # noqa: BLE001 - never expose DB/provider details
+            return {
+                "resume_restoration_state_available": False,
+                "retained_resumes_restorable": False,
+                "active_resume_pin_count": 0,
+                "unrestorable_resume_pin_count": 0,
+            }
+        return {
+            "resume_restoration_state_available": True,
+            "retained_resumes_restorable": unrestorable == 0,
+            "active_resume_pin_count": len(pins),
+            "unrestorable_resume_pin_count": unrestorable,
+        }
+
     def readiness_view() -> dict[str, Any]:
         """Observe the live gate without exposing provider failures or config."""
 
         gate_snapshot = observe_mutation_gate()
         quarantine_snapshot = observe_release_quarantine()
+        resume_readiness = retained_resume_readiness()
         effective_pause = mutations_paused(gate_snapshot)
         content_ready = bool(eligible_goals)
         active_release_quarantined = bool(
@@ -2229,6 +2265,7 @@ def install_v2_routes(
                 "available": quarantine_snapshot.available,
             },
             "durable_persistence": persistence is not None,
+            **resume_readiness,
             "reviewed_goal_count": len(eligible_goals),
             "active_versions": {
                 "graph": active_graph.graph_version,

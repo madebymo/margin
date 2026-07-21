@@ -586,6 +586,12 @@ def create_app(
             "request_admission_configured": bool(
                 v2_readiness.get("request_admission_configured")
             ),
+            "resume_restoration_state_available": bool(
+                v2_readiness.get("resume_restoration_state_available")
+            ),
+            "retained_resumes_restorable": bool(
+                v2_readiness.get("retained_resumes_restorable")
+            ),
             "active_release_safe": not bool(
                 v2_readiness.get("active_release_quarantined", True)
             ),
