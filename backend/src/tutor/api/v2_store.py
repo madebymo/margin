@@ -41,6 +41,10 @@ from tutor.api.v2_schemas import (
     TranscriptEntry,
     WidgetAttemptAction,
 )
+from tutor.content.release_identity import (
+    LEGACY_RELEASE_DIGEST,
+    LEGACY_RELEASE_ID,
+)
 from tutor.schemas.assessment import PlotPromptSegment
 from tutor.orchestrator.machine import Interaction
 
@@ -568,6 +572,24 @@ class V2SessionStore:
     ) -> V2SessionHandle:
         """Reinstall a durably checkpointed session after a process restart."""
         view = SessionView.model_validate(checkpoint["session_view"])
+        release_id = getattr(orchestrator, "release_id", LEGACY_RELEASE_ID)
+        release_digest = getattr(
+            orchestrator,
+            "release_digest",
+            LEGACY_RELEASE_DIGEST,
+        )
+        if view.release_id not in {LEGACY_RELEASE_ID, release_id}:
+            raise ValueError("checkpoint view release_id disagrees with its runtime")
+        if view.release_digest not in {LEGACY_RELEASE_DIGEST, release_digest}:
+            raise ValueError(
+                "checkpoint view release_digest disagrees with its runtime"
+            )
+        view = view.model_copy(
+            update={
+                "release_id": release_id,
+                "release_digest": release_digest,
+            }
+        )
         bind_episode = getattr(orchestrator, "bind_episode_id", None)
         if callable(bind_episode):
             bind_episode(view.session_id)
@@ -593,6 +615,19 @@ class V2SessionStore:
         )
         for receipt_data in receipts:
             response = SessionView.model_validate(receipt_data["response_payload"])
+            if response.release_id not in {LEGACY_RELEASE_ID, release_id}:
+                raise ValueError("receipt release_id disagrees with its runtime")
+            if response.release_digest not in {
+                LEGACY_RELEASE_DIGEST,
+                release_digest,
+            }:
+                raise ValueError("receipt release_digest disagrees with its runtime")
+            response = response.model_copy(
+                update={
+                    "release_id": release_id,
+                    "release_digest": release_digest,
+                }
+            )
             handle.receipts[str(receipt_data["request_id"])] = MutationReceipt(
                 payload_hash=str(receipt_data["payload_hash"]),
                 response=response,
@@ -1351,6 +1386,16 @@ class V2SessionStore:
                     getattr(orchestrator, "phase", "unknown"))
         return SessionView(
             session_id=handle.session_id,
+            release_id=str(
+                getattr(orchestrator, "release_id", None)
+                or summary.get("release_id")
+                or LEGACY_RELEASE_ID
+            ),
+            release_digest=str(
+                getattr(orchestrator, "release_digest", None)
+                or summary.get("release_digest")
+                or LEGACY_RELEASE_DIGEST
+            ),
             revision=handle.revision,
             phase=phase,
             durability=handle.durability,
@@ -1409,11 +1454,6 @@ class V2SessionStore:
             return None
         input_mode = getattr(pending, "input_mode", "math")
         answer_spec = getattr(pending, "answer_spec", None)
-        choice_options = (
-            list(getattr(answer_spec, "option_ids", ()))
-            if str(getattr(answer_spec, "kind", "")) == "choice"
-            else []
-        )
         prompt_segments = [
             (
                 segment.model_dump(mode="json")
@@ -1440,17 +1480,21 @@ class V2SessionStore:
         raw_widget_state = getattr(pending, "widget_state", None)
         if hasattr(raw_widget_state, "model_dump"):
             raw_widget_state = raw_widget_state.model_dump(mode="json")
+        widget_state = self._safe_widget_state(raw_widget_state)
+        public_input = self._pending_input(
+            input_mode=input_mode,
+            answer_spec=answer_spec,
+            widget=widget,
+            widget_state=widget_state,
+        )
         return PendingView(
             key=key,
             kind=str(getattr(kind, "value", kind)),
             kc_id=kc_id,
             skill_name=self._skill_name(kc_id, graph_nodes),
-            input_mode=input_mode,
             prompt=str(getattr(pending, "prompt", "")),
             prompt_segments=prompt_segments,
-            choice_options=choice_options,
-            widget=widget,
-            widget_state=self._safe_widget_state(raw_widget_state),
+            input=public_input,
             hint=PendingHintView(
                 available=hint_available,
                 next_index=min(hints_given, len(hints)),
@@ -1459,6 +1503,118 @@ class V2SessionStore:
             ),
             can_hint=hint_available,
         )
+
+    @staticmethod
+    def _pending_input(
+        *,
+        input_mode: object,
+        answer_spec: Any,
+        widget: dict[str, Any] | None,
+        widget_state: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Project only public controls; scoring truth is not representable."""
+
+        if input_mode == "widget":
+            if widget is None:
+                raise ValueError("enabled guided input has no safe presentation")
+            widget_type = widget.get("interaction_version") or widget.get(
+                "widget_type"
+            )
+            presentation = widget.get("presentation")
+            if widget_type == "mapping_v1" and isinstance(presentation, dict):
+                selections = {
+                    row["id"]: row["value"] or None
+                    for row in (widget_state or {}).get("rows", [])
+                    if isinstance(row, dict)
+                    and isinstance(row.get("id"), str)
+                    and isinstance(row.get("value", ""), str)
+                }
+                return {
+                    "type": "mapping_v1",
+                    "prompt": presentation["prompt"],
+                    "rows": [
+                        {
+                            **row,
+                            "selected_option_id": selections.get(row["entry_id"]),
+                        }
+                        for row in presentation["rows"]
+                    ],
+                    "options": presentation["options"],
+                }
+            if widget_type == "slider_v1" and isinstance(presentation, dict):
+                current = (widget_state or {}).get(
+                    "value",
+                    presentation["initial_value"],
+                )
+                return {
+                    "type": "slider_v1",
+                    **{
+                        key: presentation.get(key)
+                        for key in (
+                            "prompt",
+                            "label",
+                            "help_text",
+                            "minimum",
+                            "maximum",
+                            "step",
+                            "initial_value",
+                            "value_label",
+                            "result_template",
+                        )
+                    },
+                    "current_value": current,
+                }
+            raise ValueError("enabled guided input has unsupported semantics")
+
+        answer_kind = str(getattr(answer_spec, "kind", ""))
+        if answer_kind == "choice":
+            return {
+                "type": "legacy_choice",
+                "options": list(getattr(answer_spec, "option_ids", ())),
+            }
+        text_copy = {
+            "symbolic": (
+                "Your expression",
+                "Enter an expression",
+                "Use * for multiplication and ^ for exponents.",
+            ),
+            "numeric": (
+                "Your number",
+                "Enter a number",
+                "Enter a finite number; use / for an exact fraction.",
+            ),
+            "finite_set": (
+                "Your set",
+                "For example: {-2, 2}",
+                "Put distinct values inside braces, separated by commas.",
+            ),
+            "interval_set": (
+                "Your interval or union",
+                "For example: (-inf, 2] U [5, inf)",
+                "Use parentheses or brackets and U between interval pieces.",
+            ),
+            "ordered_tuple": (
+                "Your ordered tuple",
+                "For example: (2, -3)",
+                "Keep entries in order inside parentheses, separated by commas.",
+            ),
+            "antiderivative": (
+                "Your antiderivative",
+                "Enter an antiderivative + C",
+                "Include an arbitrary constant, written as + C.",
+            ),
+        }
+        if answer_kind not in text_copy:
+            return {"type": "legacy_text"}
+        label, placeholder, help_text = text_copy[answer_kind]
+        return {
+            "type": "text",
+            "answer_kind": answer_kind,
+            "label": label,
+            "placeholder": placeholder,
+            "help_text": help_text,
+            "max_length": 256,
+        }
 
     @staticmethod
     def _summary(orchestrator: Any) -> dict[str, Any]:

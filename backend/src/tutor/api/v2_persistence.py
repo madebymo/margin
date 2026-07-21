@@ -1113,11 +1113,12 @@ class V2PersistenceService:
                 (entry.text, entry.prompt_segments, entry.widget)
             )
         if view.pending is not None:
+            choice_options = getattr(view.pending.input, "options", ())
             public_visible_values.extend(
                 (
                     view.pending.prompt,
                     view.pending.prompt_segments,
-                    view.pending.choice_options,
+                    choice_options,
                 )
             )
         expected_visible_texts = canonical_visible_texts(*public_visible_values)
@@ -1296,9 +1297,11 @@ class V2PersistenceService:
             "pedagogy_catalog_version": orchestrator_state.get(
                 "pedagogy_catalog_version"
             ),
+            "release_id": orchestrator_state.get("release_id"),
+            "release_digest": orchestrator_state.get("release_digest"),
         }
         payload = {
-            "schema_version": 3,
+            "schema_version": 4,
             "content_release": content_release,
             "session_view": view.model_dump(mode="json"),
             "orchestrator": orchestrator_state,
@@ -1336,18 +1339,27 @@ class V2PersistenceService:
         expected_catalog_version: str | None = None,
     ) -> None:
         """Validate a checkpoint before insert as well as after durable read."""
-        if not isinstance(payload, dict) or payload.get("schema_version") != 3:
+        if not isinstance(payload, dict) or payload.get("schema_version") not in {
+            3,
+            4,
+        }:
             raise DurableLedgerMismatch(
                 "checkpoint_integrity_failures",
                 "durable checkpoint has no supported content-release pin",
             )
         content_release = payload.get("content_release")
         state = payload.get("orchestrator")
-        expected_keys = {
+        coordinate_keys = {
             "graph_version",
             "item_bank_version",
             "pedagogy_catalog_version",
         }
+        identity_keys = {"release_id", "release_digest"}
+        expected_keys = (
+            coordinate_keys | identity_keys
+            if payload["schema_version"] == 4
+            else coordinate_keys
+        )
         if (
             not isinstance(content_release, dict)
             or set(content_release) != expected_keys
@@ -1359,8 +1371,28 @@ class V2PersistenceService:
             )
         state_release = {key: state.get(key) for key in expected_keys}
         catalog_version = content_release["pedagogy_catalog_version"]
+        view = payload.get("session_view")
+        identity_invalid = False
+        if payload["schema_version"] == 4:
+            release_id = content_release["release_id"]
+            release_digest = content_release["release_digest"]
+            identity_invalid = (
+                not isinstance(release_id, str)
+                or not release_id
+                or len(release_id) > 128
+                or not isinstance(release_digest, str)
+                or len(release_digest) != 64
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in release_digest
+                )
+                or not isinstance(view, dict)
+                or view.get("release_id") != release_id
+                or view.get("release_digest") != release_digest
+            )
         if (
             content_release != state_release
+            or identity_invalid
             or not isinstance(content_release["graph_version"], int)
             or isinstance(content_release["graph_version"], bool)
             or not isinstance(content_release["item_bank_version"], str)

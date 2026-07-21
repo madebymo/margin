@@ -7,7 +7,6 @@ the request path; provider/network I/O must never happen in ``snapshot()``.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import threading
@@ -50,7 +49,13 @@ def release_runtime_digest(
     release: V2ContentRelease,
     policy_versions: dict[str, str],
 ) -> str:
-    """Return a canonical digest for content plus executable policy pins."""
+    """Return the exact bundle digest pinned by publication.
+
+    ``policy_versions`` remains accepted for compatibility with callers from
+    the earlier policy-inclusive digest contract. Policies are independently
+    pinned in checkpoints and metric labels; they must not change the content
+    key used for quarantine and release retention.
+    """
 
     if not policy_versions or any(
         not isinstance(name, str)
@@ -60,20 +65,7 @@ def release_runtime_digest(
         for name, version in policy_versions.items()
     ):
         raise ValueError("policy versions must be a non-empty string mapping")
-    payload = {
-        "schema_version": 1,
-        "graph": release.graph.model_dump(mode="json"),
-        "item_bank": release.item_bank.model_dump(mode="json"),
-        "pedagogy_catalog": release.pedagogy_catalog.model_dump(mode="json"),
-        "policy_versions": dict(sorted(policy_versions.items())),
-    }
-    canonical = json.dumps(
-        payload,
-        ensure_ascii=True,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return release.release_digest
 
 
 @dataclass(frozen=True)

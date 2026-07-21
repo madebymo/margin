@@ -65,12 +65,12 @@ from tutor.api.v2_quarantine import (
     ReleaseQuarantineProvider,
     ReleaseQuarantineSnapshot,
     StaticReleaseQuarantineProvider,
-    release_runtime_digest,
     safe_release_quarantine_snapshot,
 )
 from tutor.api.v2_versions import (
     V2_ACTIVE_RELEASE_BUNDLE_ENV,
     V2_ACTIVE_RELEASE_SHA256_ENV,
+    V2ContentRelease,
     V2PolicyRegistry,
     V2VersionRegistry,
 )
@@ -374,6 +374,8 @@ def _default_factory(
     pedagogy_catalog: PedagogyPackCatalog,
     evidence_trust_policy: EvidenceTrustPolicy,
     widget_capabilities: dict[str, Any] | None = None,
+    release_id: str | None = None,
+    release_digest: str | None = None,
 ) -> tuple[Any, ContentModeView]:
     """Build the best available deterministic v2 machine.
 
@@ -395,6 +397,8 @@ def _default_factory(
         pedagogy_catalog=pedagogy_catalog,
         evidence_trust_policy=evidence_trust_policy,
         widget_capabilities=widget_capabilities,
+        release_id=release_id,
+        release_digest=release_digest,
     )
     return orchestrator, ContentModeView(
         requested=request.content_mode,
@@ -548,6 +552,13 @@ def install_v2_routes(
                 active_item_bank,
                 active_pedagogy_catalog,
             )
+    if pilot_production and (
+        active_release is None or not active_release.published
+    ):
+        raise RuntimeError(
+            "TUTOR_PILOT_PRODUCTION requires an adjacent reviewed "
+            "release-manifest.json"
+        )
     evidence_trust_policy = registry.evidence_trust_registry
     from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 
@@ -558,7 +569,7 @@ def install_v2_routes(
         SessionOrchestratorV2.restore,
     )
     active_release_digest = (
-        release_runtime_digest(active_release, active_policy_versions)
+        active_release.release_digest
         if active_release is not None
         else None
     )
@@ -603,11 +614,11 @@ def install_v2_routes(
             pedagogy_catalog_version,
             tuple(sorted(policy_versions.items())),
         )
-        cached = release_digest_cache.get(key)
-        if cached is not None:
-            return cached
         release = registry.resolve_checkpoint(state)
-        digest = release_runtime_digest(release, policy_versions)
+        digest = release.release_digest
+        pinned_digest = state.get("release_digest")
+        if pinned_digest is not None and pinned_digest != digest:
+            raise ValueError("session release digest does not match retained content")
         release_digest_cache[key] = digest
         return digest
 
@@ -649,6 +660,8 @@ def install_v2_routes(
                 pedagogy_catalog=active_pedagogy_catalog,
                 evidence_trust_policy=evidence_trust_policy,
                 widget_capabilities=active_widget_manifest,
+                release_id=(active_release.release_id if active_release else None),
+                release_digest=active_release_digest,
             )
     else:
         factory = orchestrator_factory
@@ -657,6 +670,12 @@ def install_v2_routes(
         setter = getattr(orchestrator, "set_runtime_widget_capabilities", None)
         if callable(setter):
             setter(active_widget_manifest)
+
+    def bind_release_identity(orchestrator: Any, release: V2ContentRelease) -> None:
+        binder = getattr(orchestrator, "bind_release_identity", None)
+        if not callable(binder):
+            raise ValueError("session runtime cannot bind an exact release identity")
+        binder(release.release_id, release.release_digest)
 
     def qualify_episode(orchestrator: Any) -> None:
         """Run a non-mutating inventory proof when the runtime provides one."""
@@ -1022,6 +1041,7 @@ def install_v2_routes(
                 release.pedagogy_catalog,
                 evidence_trust_policy,
             )
+            bind_release_identity(orchestrator, release)
             apply_runtime_widget_capabilities(orchestrator)
             return store.restore(
                 orchestrator=orchestrator,
@@ -1582,6 +1602,9 @@ def install_v2_routes(
             orchestrator, content_mode = factory(
                 active_graph, goal.target_kc, profile, request_body
             )
+            if active_release is None:
+                raise ValueError("active release identity is unavailable")
+            bind_release_identity(orchestrator, active_release)
             apply_runtime_widget_capabilities(orchestrator)
             remember_visible = getattr(
                 orchestrator, "remember_visible_content", None
@@ -1884,6 +1907,9 @@ def install_v2_routes(
                     ),
                     replacement_request,
                 )
+                if active_release is None:
+                    raise ValueError("active release identity is unavailable")
+                bind_release_identity(replacement_orchestrator, active_release)
                 seed_longitudinal = getattr(
                     replacement_orchestrator,
                     "seed_longitudinal",
@@ -2145,6 +2171,9 @@ def install_v2_routes(
     app.state.v2_feature_flags = flags
     app.state.v2_release_quarantine = active_release_quarantine
     app.state.v2_active_release_digest = active_release_digest
+    app.state.v2_active_release_id = (
+        active_release.release_id if active_release is not None else None
+    )
     app.state.v2_request_admission = active_request_admission
 
     def readiness_view() -> dict[str, Any]:
@@ -2216,6 +2245,11 @@ def install_v2_routes(
                 "policies": dict(sorted(active_policy_versions.items())),
                 "learner_parameters": f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
                 "capability_manifest": active_widget_manifest["version"],
+                "release_id": (
+                    active_release.release_id
+                    if active_release is not None
+                    else None
+                ),
                 "release_digest": active_release_digest,
             },
         }

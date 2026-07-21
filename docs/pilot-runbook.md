@@ -21,11 +21,17 @@ SHA-256 digest; retain every pinned release and policy implementation until no
 unexpired resume token refers to it.
 
 ```bash
-sha256sum /srv/tutor/releases/release.json
-export TUTOR_V2_ACTIVE_RELEASE_BUNDLE=/srv/tutor/releases/release.json
-export TUTOR_V2_ACTIVE_RELEASE_SHA256='<sha256>'
+sha256sum /srv/tutor/releases/product-quotient-v1/bundle.json
+export TUTOR_V2_ACTIVE_RELEASE_BUNDLE=/srv/tutor/releases/product-quotient-v1
+export TUTOR_V2_ACTIVE_RELEASE_SHA256='<bundle.json sha256>'
 export TUTOR_V2_RELEASE_REGISTRY_DIR=/srv/tutor/releases
 ```
+
+The active directory is valid only as the complete, atomic publication output:
+`bundle.json`, `release-reviews.json`, `release-manifest.json`, and
+`bundle.sha256`. Startup revalidates every exact family, KC, and release
+attestation against the bundle; a manifest containing only review IDs is not a
+reviewed release. Missing or changed publication files fail startup.
 
 ## Required configuration
 

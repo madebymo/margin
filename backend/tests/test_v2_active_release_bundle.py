@@ -20,6 +20,7 @@ from tutor.api.v2_versions import (
     V2_ACTIVE_RELEASE_BUNDLE_ENV,
     V2_ACTIVE_RELEASE_SHA256_ENV,
     V2VersionConflict,
+    V2VersionRegistry,
 )
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
@@ -87,6 +88,27 @@ def _write_bundle(
         encoding="utf-8",
     )
     return path
+
+
+def test_pilot_production_rejects_sha_pinned_bundle_without_manifest(
+    tmp_path,
+    monkeypatch,
+):
+    bundle = _write_bundle(
+        tmp_path / "unreviewed.json",
+        _release(42, "unreviewed-bank-v42", "unreviewed-pedagogy-v42"),
+    )
+    monkeypatch.setenv("TUTOR_PILOT_PRODUCTION", "1")
+
+    with pytest.raises(RuntimeError, match="release-manifest"):
+        install_v2_routes(
+            FastAPI(),
+            power_rule_only_graph(),
+            active_release_bundle=bundle,
+            active_release_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest(),
+            resume_token_secret=b"test-resume-token-secret-32-bytes",
+            feature_flags=V2FeatureFlags(),
+        )
 
 
 def test_environment_bundle_is_active_exposes_only_valid_goal_and_pins_versions(
@@ -239,6 +261,56 @@ def test_active_bundle_merges_with_retained_history_and_evidence_trust(
     )
     assert registry.release_versions == expected_releases
     assert app.state.v2_evidence_trust_registry.release_versions == expected_releases
+
+
+def test_retained_registry_recursively_loads_standalone_legacy_bundles(tmp_path):
+    retained = tmp_path / "retained"
+    retained.mkdir()
+    child = retained / "older"
+    child.mkdir()
+    _write_bundle(
+        retained / "current.json",
+        _release(73, "root-bank-v73", "root-pedagogy-v73"),
+    )
+    _write_bundle(
+        child / "older.json",
+        _release(72, "child-bank-v72", "child-pedagogy-v72"),
+    )
+
+    registry = V2VersionRegistry.from_release_directory(retained)
+
+    assert registry.release_versions == (
+        (72, "child-bank-v72", "child-pedagogy-v72"),
+        (73, "root-bank-v73", "root-pedagogy-v73"),
+    )
+
+
+def test_retained_registry_rejects_empty_and_partial_directories(tmp_path):
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(ValueError, match="no release bundles"):
+        V2VersionRegistry.from_release_directory(empty)
+
+    partial = tmp_path / "partial" / "nested-release"
+    partial.mkdir(parents=True)
+    (partial / "release-manifest.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(ValueError, match="incomplete publication"):
+        V2VersionRegistry.from_release_directory(tmp_path / "partial")
+
+
+def test_directory_bundle_cannot_silently_downgrade_to_a_fixture(tmp_path):
+    directory = tmp_path / "release-directory"
+    directory.mkdir()
+    bundle = _write_bundle(
+        directory / "bundle.json",
+        _release(74, "directory-bank-v74", "directory-pedagogy-v74"),
+    )
+
+    with pytest.raises(ValueError, match="incomplete published"):
+        create_app(
+            v2_active_release_bundle=directory,
+            v2_active_release_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest(),
+        )
 
 
 def test_active_bundle_cannot_cross_product_retained_components(

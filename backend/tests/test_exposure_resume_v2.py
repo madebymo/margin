@@ -38,7 +38,7 @@ def test_restart_after_capstone_remediation_reconciles_exposure_ledger():
     while view["phase"] == "teach":
         handle = first.app.state.v2_store.get(session_id)
         action = _answer(view, handle.orchestrator.pending_expected)
-        if view["pending"]["input_mode"] == "widget":
+        if view["pending"]["input"]["type"] in {"mapping_v1", "slider_v1"}:
             item = handle.orchestrator._item_for(
                 handle.orchestrator.pending.reservation
             )

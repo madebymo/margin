@@ -5,9 +5,18 @@ from __future__ import annotations
 import hashlib
 import json
 from copy import deepcopy
+from uuid import uuid4
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from tutor.api.app import create_app
+from tutor.api.v2 import _token_hash, install_v2_routes
+from tutor.api.v2_persistence import V2PersistenceService
+from tutor.api.v2_versions import V2VersionConflict
 from tutor.content.item_bank import load_item_bank
 from tutor.content.publication import (
     ReleasePublicationError,
@@ -15,6 +24,8 @@ from tutor.content.publication import (
     publish_release,
 )
 from tutor.content.review_artifacts import (
+    canonical_digest,
+    canonical_json_bytes,
     compiled_family_digest,
     family_attestation_set_digest,
     kc_attestation_set_digest,
@@ -24,6 +35,9 @@ from tutor.content.reviewer_packet import (
     render_reviewer_html,
     write_reviewer_packet,
 )
+from tutor.db import models as m
+from tutor.db.persistence import PersistenceService
+from tutor.db.session import get_engine
 from tutor.schemas.assessment import (
     ItemBankDocument,
     PlotPromptSegment,
@@ -38,6 +52,7 @@ from tutor.schemas.release_authoring import (
     ReleaseApprovalAttestation,
     ReleasePublicationMetadata,
     ReleaseReviewManifest,
+    PublishedReleaseManifest,
 )
 
 from tests.v2_helpers import (
@@ -317,14 +332,231 @@ def test_atomic_publication_emits_exact_bundle_manifest_and_sha(
     assert (output / "bundle.sha256").read_text() == (
         f"{manifest.bundle_sha256}  bundle.json\n"
     )
+    reviews_bytes = (output / "release-reviews.json").read_bytes()
+    assert reviews_bytes == canonical_json_bytes(reviews, trailing_newline=True)
+    assert hashlib.sha256(reviews_bytes).hexdigest() == manifest.reviews_sha256
     assert set(json.loads(bundle)) == {
         "schema_version",
         "graph",
         "item_bank",
         "pedagogy_catalog",
     }
+    app = FastAPI()
+    install_v2_routes(
+        app,
+        graph,
+        available_targets=("kc.der.power_rule",),
+        active_release_bundle=output,
+        active_release_sha256=manifest.bundle_sha256,
+        resume_token_secret=b"published-release-test-secret-32-bytes",
+    )
+    client = TestClient(app)
+    created = client.post(
+        "/api/v2/sessions",
+        json={
+            "request_id": str(uuid4()),
+            "goal_id": "goal.der.power_rule",
+        },
+    )
+    assert created.status_code == 200
+    view = created.json()
+    assert view["release_id"] == manifest.release_id
+    assert view["release_digest"] == manifest.bundle_sha256
+    checkpoint = app.state.v2_store.get(
+        view["session_id"]
+    ).orchestrator.export_checkpoint()
+    assert checkpoint["schema_version"] == 4
+    assert checkpoint["release_id"] == manifest.release_id
+    assert checkpoint["release_digest"] == manifest.bundle_sha256
+    assert app.state.v2_active_release.published is True
     with pytest.raises(ReleasePublicationError, match="already exists"):
         publish_release(output, graph, bank, catalog, reviews, publication)
+
+
+@pytest.mark.parametrize(
+    ("artifact", "replacement", "match"),
+    [
+        ("bundle.sha256", b"0" * 64 + b"  bundle.json\n", "exact bundle"),
+        ("release-reviews.json", b"{}\n", "invalid published"),
+    ],
+)
+def test_runtime_rejects_changed_publication_artifacts(
+    tmp_path,
+    modern_release,
+    artifact,
+    replacement,
+    match,
+):
+    graph, bank, catalog, reviews, publication = modern_release
+    output = tmp_path / "release"
+    manifest = publish_release(output, graph, bank, catalog, reviews, publication)
+    (output / artifact).write_bytes(replacement)
+
+    with pytest.raises((ValueError, V2VersionConflict), match=match):
+        create_app(
+            v2_active_release_bundle=output,
+            v2_active_release_sha256=manifest.bundle_sha256,
+        )
+
+
+def test_runtime_rejects_partial_publication_directory(
+    tmp_path,
+    modern_release,
+):
+    graph, bank, catalog, reviews, publication = modern_release
+    output = tmp_path / "release"
+    manifest = publish_release(output, graph, bank, catalog, reviews, publication)
+    (output / "release-manifest.json").unlink()
+
+    with pytest.raises(ValueError, match="incomplete published"):
+        create_app(
+            v2_active_release_bundle=output,
+            v2_active_release_sha256=manifest.bundle_sha256,
+        )
+
+
+def test_runtime_revalidates_attestations_instead_of_trusting_manifest_ids(
+    tmp_path,
+    modern_release,
+):
+    graph, bank, catalog, reviews, publication = modern_release
+    output = tmp_path / "release"
+    manifest = publish_release(output, graph, bank, catalog, reviews, publication)
+    review_payload = reviews.model_dump(mode="json")
+    review_payload["release_attestation"]["kc_attestation_digest"] = "0" * 64
+    forged_reviews = ReleaseReviewManifest.model_validate(review_payload)
+    forged_review_bytes = canonical_json_bytes(
+        forged_reviews,
+        trailing_newline=True,
+    )
+    manifest_payload = manifest.model_dump(mode="json")
+    manifest_payload["reviews_sha256"] = hashlib.sha256(
+        forged_review_bytes
+    ).hexdigest()
+    manifest_payload["release_attestation_digest"] = canonical_digest(
+        forged_reviews.release_attestation
+    )
+    forged_manifest = PublishedReleaseManifest.model_validate(manifest_payload)
+    (output / "release-reviews.json").write_bytes(forged_review_bytes)
+    (output / "release-manifest.json").write_bytes(
+        canonical_json_bytes(forged_manifest, trailing_newline=True)
+    )
+
+    with pytest.raises(V2VersionConflict, match="valid exact attestations"):
+        create_app(
+            v2_active_release_bundle=output,
+            v2_active_release_sha256=manifest.bundle_sha256,
+        )
+
+
+def test_durable_schema_three_session_upgrades_on_published_release(
+    tmp_path,
+    modern_release,
+):
+    graph, bank, catalog, reviews, publication = modern_release
+    output = tmp_path / "release"
+    manifest = publish_release(output, graph, bank, catalog, reviews, publication)
+    legacy = PersistenceService(
+        engine=get_engine("sqlite+pysqlite:///:memory:")
+    )
+    persistence = V2PersistenceService(legacy.engine)
+    secret = b"published-schema-three-resume-secret"
+
+    def app_for_release() -> FastAPI:
+        app = FastAPI()
+        install_v2_routes(
+            app,
+            graph,
+            persistence=persistence,
+            available_targets=("kc.der.power_rule",),
+            active_release_bundle=output,
+            active_release_sha256=manifest.bundle_sha256,
+            resume_token_secret=secret,
+        )
+        return app
+
+    first = TestClient(app_for_release())
+    created = first.post(
+        "/api/v2/sessions",
+        json={
+            "request_id": str(uuid4()),
+            "goal_id": "goal.der.power_rule",
+        },
+    )
+    assert created.status_code == 200
+    session_id = created.json()["session_id"]
+    token = first.cookies.get("tutor_resume_v2")
+    assert token
+
+    with Session(legacy.engine) as database:
+        checkpoint_row = database.get(m.SessionCheckpointRow, session_id)
+        assert checkpoint_row is not None
+        checkpoint = deepcopy(checkpoint_row.checkpoint)
+        checkpoint["schema_version"] = 3
+        checkpoint["orchestrator"]["schema_version"] = 3
+        for key in ("release_id", "release_digest"):
+            checkpoint["content_release"].pop(key)
+            checkpoint["orchestrator"].pop(key)
+            checkpoint["session_view"].pop(key)
+        checkpoint["session_view"]["schema_version"] = 2
+        checkpoint_row.checkpoint = checkpoint
+        receipts = database.scalars(
+            select(m.SessionMutationReceiptRow).where(
+                m.SessionMutationReceiptRow.session_id == session_id
+            )
+        ).all()
+        for receipt in receipts:
+            response = deepcopy(receipt.response_payload)
+            response["schema_version"] = 2
+            response.pop("release_id")
+            response.pop("release_digest")
+            receipt.response_payload = response
+        database.commit()
+
+    resumed = TestClient(app_for_release())
+    resumed.cookies.set("tutor_resume_v2", token, path="/api/v2")
+    durable_bundle = persistence.resolve_resume(_token_hash(token))
+    assert durable_bundle is not None
+    state = durable_bundle["checkpoint"]["orchestrator"]
+    release = resumed.app.state.v2_version_registry.resolve_checkpoint(state)
+    policy = resumed.app.state.v2_policy_registry.resolve_checkpoint(state)
+    restored_runtime = policy.restore(
+        release.graph,
+        state,
+        release.item_bank,
+        release.pedagogy_catalog,
+        resumed.app.state.v2_evidence_trust_registry,
+    )
+    restored_runtime.bind_release_identity(
+        release.release_id,
+        release.release_digest,
+    )
+    restored = resumed.get("/api/v2/sessions/current")
+
+    assert restored.status_code == 200, restored.text
+    view = restored.json()
+    assert view["schema_version"] == 3
+    assert view["release_id"] == manifest.release_id
+    assert view["release_digest"] == manifest.bundle_sha256
+
+
+@pytest.mark.parametrize(
+    "release_id",
+    [
+        "nonproduction.legacy-unpinned",
+        "nonproduction.fixture.0123456789abcdef",
+    ],
+)
+def test_release_attestations_reject_reserved_runtime_identities(
+    modern_release,
+    release_id,
+):
+    reviews = modern_release[3]
+    payload = reviews.release_attestation.model_dump(mode="json")
+    payload["release_id"] = release_id
+
+    with pytest.raises(ValueError, match="reserved non-production"):
+        ReleaseApprovalAttestation.model_validate(payload)
 
 
 def test_publication_rejects_tampered_family_and_legacy_contracts(

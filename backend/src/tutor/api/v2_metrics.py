@@ -143,6 +143,7 @@ class V2MetricDimensions:
                 "learner_params": {
                     "params_version": getattr(params, "params_version", None)
                 },
+                "release_digest": getattr(orchestrator, "release_digest", None),
             },
             fallback=fallback,
         )

@@ -258,7 +258,7 @@ def test_goal_catalog_and_safe_authoritative_create(client):
     response, _ = _create(client, context="Reviewing before a quiz.")
     assert response.status_code == 200
     view = response.json()
-    assert view["schema_version"] == 2
+    assert view["schema_version"] == 3
     assert view["revision"] == 0
     assert view["phase"] == "diagnose"
     assert view["pending"]["key"]
@@ -365,7 +365,8 @@ def test_rich_widget_flag_keeps_core_flow_and_uses_text_guided_practice():
 
     assert view["phase"] == "teach"
     assert view["pending"]["kind"] == "guided_widget"
-    assert view["pending"]["input_mode"] == "math"
+    assert view["pending"]["input"]["type"] == "text"
+    assert view["pending"]["input"]["answer_kind"] == "symbolic"
     assert not any(entry["widget"] for entry in view["transcript"])
     guided_key = view["pending"]["key"]
     guided_answer = guarded.app.state.v2_store.get(
@@ -410,17 +411,16 @@ def test_reviewed_slider_restores_then_falls_back_when_runtime_disables_it():
         )
         assert response.status_code == 200
         view = response.json()
-    assert view["pending"]["input_mode"] == "widget"
-    assert view["pending"]["widget"]["widget_type"] == "slider_v1"
-    assert view["pending"]["widget_state"] == {"value": 0.0}
-    assert "scoring" not in str(view["pending"]["widget"])
+    assert view["pending"]["input"]["type"] == "slider_v1"
+    assert view["pending"]["input"]["current_value"] == 0.0
+    assert "scoring" not in str(view["pending"]["input"])
     attempted = first.post(
         f"/api/v2/sessions/{view['session_id']}/actions",
         json=_widget_response(view, {"value": 2}),
     )
     assert attempted.status_code == 200
     view = attempted.json()
-    assert view["pending"]["widget_state"] == {"value": 2.0}
+    assert view["pending"]["input"]["current_value"] == 2.0
     raw_token = first.cookies.get("tutor_resume_v2")
 
     restarted = TestClient(
@@ -436,9 +436,8 @@ def test_reviewed_slider_restores_then_falls_back_when_runtime_disables_it():
     assert restored.status_code == 200
     restored_view = restored.json()
     assert restored_view["pending"]["key"] == view["pending"]["key"]
-    assert restored_view["pending"]["input_mode"] == "math"
-    assert restored_view["pending"]["widget"] is None
-    assert restored_view["pending"]["widget_state"] == {"value": 2.0}
+    assert restored_view["pending"]["input"]["type"] == "text"
+    assert restored_view["pending"]["input"]["answer_kind"] == "symbolic"
     manifest = restarted.get("/api/v2/capabilities").json()
     assert "live_input" not in manifest["supported"]
     restored_handle = restarted.app.state.v2_store.get(view["session_id"])
@@ -1090,11 +1089,10 @@ def test_post_diagnosis_uses_reviewed_slider_without_exposing_scoring_state(clie
 
     assert view["phase"] == "teach"
     assert view["pending"]["kind"] == "guided_widget"
-    assert view["pending"]["input_mode"] == "widget"
-    assert view["pending"]["widget"]["widget_type"] == "slider_v1"
-    assert view["pending"]["widget_state"] == {"value": 0.0}
-    assert "scoring" not in str(view["pending"]["widget"])
-    assert "target" not in str(view["pending"]["widget"])
+    assert view["pending"]["input"]["type"] == "slider_v1"
+    assert view["pending"]["input"]["current_value"] == 0.0
+    assert "scoring" not in str(view["pending"]["input"])
+    assert "target" not in str(view["pending"]["input"])
 
     rejected_widget = client.post(
         f"/api/v2/sessions/{view['session_id']}/actions",
@@ -1792,6 +1790,8 @@ def test_persistence_is_atomic_and_tokens_are_hashed(monkeypatch):
             "graph_version": power_rule_only_graph().graph_version,
             "item_bank_version": "test-approved-power-stress-v2",
             "pedagogy_catalog_version": "test-approved-pedagogy-v1",
+            "release_id": view["release_id"],
+            "release_digest": view["release_digest"],
         }
         assert len(receipts) == 2  # create plus hint
         assert len(transcript) == len(advanced.json()["transcript"])

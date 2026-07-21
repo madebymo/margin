@@ -21,6 +21,11 @@ from tutor.content.item_bank import (
     render_prompt_segments,
     validate_item_bank,
 )
+from tutor.content.release_identity import (
+    NONPRODUCTION_RELEASE_PREFIX,
+    canonical_bundle_sha256,
+    fixture_release_id,
+)
 from tutor.content.visible import extend_visible_texts, visible_fragments
 from tutor.graph import service as graph_service
 from tutor.learner.evidence_trust import (
@@ -252,6 +257,8 @@ class SessionOrchestratorV2:
         impact_decay: float = PINNED_IMPACT_DECAY,
         episode_id: str | None = None,
         widget_capabilities: dict[str, Any] | None = None,
+        release_id: str | None = None,
+        release_digest: str | None = None,
     ) -> None:
         self._graph = graph
         self._nodes = {node.id: node for node in graph.nodes}
@@ -268,6 +275,24 @@ class SessionOrchestratorV2:
         )
         self._bank = item_bank or load_item_bank()
         self._pedagogy_catalog = pedagogy_catalog
+        fixture_digest = canonical_bundle_sha256(
+            graph,
+            self._bank,
+            pedagogy_catalog,
+        )
+        self._release_id = release_id or fixture_release_id(fixture_digest)
+        self._release_digest = release_digest or fixture_digest
+        self._validate_release_identity(
+            self._release_id,
+            self._release_digest,
+        )
+        if self._release_id.startswith(NONPRODUCTION_RELEASE_PREFIX) and (
+            self._release_digest != fixture_digest
+            or self._release_id != fixture_release_id(fixture_digest)
+        ):
+            raise ValueError(
+                "non-production release identity does not match fixture content"
+            )
         self._reviewed_misconceptions = reviewed_misconception_ids(
             pedagogy_catalog
         )
@@ -362,6 +387,53 @@ class SessionOrchestratorV2:
         # transcript deliberately uses a generic student bubble. Keep those
         # values separately so durable widget-attempt rows can reconcile them.
         self._private_visible_inputs: list[str] = []
+
+    @staticmethod
+    def _validate_release_identity(release_id: object, release_digest: object) -> None:
+        if (
+            not isinstance(release_id, str)
+            or not release_id
+            or release_id != release_id.strip()
+            or len(release_id) > 128
+        ):
+            raise ValueError("release_id must be a non-empty unpadded string")
+        if (
+            not isinstance(release_digest, str)
+            or len(release_digest) != 64
+            or any(
+                character not in "0123456789abcdef"
+                for character in release_digest
+            )
+        ):
+            raise ValueError("release_digest must be a lowercase SHA-256")
+
+    @property
+    def release_id(self) -> str:
+        return self._release_id
+
+    @property
+    def release_digest(self) -> str:
+        return self._release_digest
+
+    def bind_release_identity(self, release_id: str, release_digest: str) -> None:
+        """Bind registry-validated publication identity, idempotently.
+
+        The API calls this before a new episode begins and after a retained
+        checkpoint has been resolved. A schema-v4 checkpoint already carries
+        the same identity; a schema-v3 checkpoint is upgraded from its
+        deterministic non-production fallback here.
+        """
+
+        self._validate_release_identity(release_id, release_digest)
+        if (
+            self._release_id == release_id
+            and self._release_digest == release_digest
+        ):
+            return
+        if not self._release_id.startswith(NONPRODUCTION_RELEASE_PREFIX):
+            raise ValueError("session release identity cannot be rebound")
+        self._release_id = release_id
+        self._release_digest = release_digest
 
     def remember_visible_content(self, *values: Any) -> None:
         """Idempotently add content that this learner can already see."""
@@ -500,6 +572,8 @@ class SessionOrchestratorV2:
             impact_lambda=self._diag.state.impact_lambda,
             impact_decay=self._diag.state.impact_decay,
             widget_capabilities=self._effective_widget_capabilities(),
+            release_id=self._release_id,
+            release_digest=self._release_digest,
         )
         fresh.seed_longitudinal(
             self.learner.learner_id,
@@ -2101,6 +2175,8 @@ class SessionOrchestratorV2:
             "events_recorded": len(self.learner.events),
             "item_bank_version": self._bank.bank_version,
             "pedagogy_catalog_version": self.pedagogy_catalog_version,
+            "release_id": self._release_id,
+            "release_digest": self._release_digest,
             "policy_versions": self._policy_versions(),
             "stop_reason": self._stop_reason,
         }
@@ -2480,10 +2556,12 @@ class SessionOrchestratorV2:
     def export_checkpoint(self) -> dict[str, Any]:
         """Serialize every control-plane field needed for exact process recovery."""
         return {
-            "schema_version": 3,
+            "schema_version": 4,
             "graph_version": self._graph.graph_version,
             "item_bank_version": self._bank.bank_version,
             "pedagogy_catalog_version": self.pedagogy_catalog_version,
+            "release_id": self._release_id,
+            "release_digest": self._release_digest,
             "policy_versions": self._policy_versions(),
             "widget_capability_manifest": self._pinned_widget_capabilities,
             "episode_id": self._episode_id,
@@ -2550,7 +2628,8 @@ class SessionOrchestratorV2:
         bank = item_bank or load_item_bank()
         if pedagogy_catalog is None:
             raise ValueError("checkpoint pedagogy catalog is unavailable")
-        if checkpoint.get("schema_version") != 3:
+        checkpoint_schema = checkpoint.get("schema_version")
+        if checkpoint_schema not in {3, 4}:
             raise ValueError("unsupported session checkpoint version")
         if checkpoint.get("graph_version") != graph.graph_version:
             raise ValueError("checkpoint graph version is unavailable")
@@ -2564,6 +2643,13 @@ class SessionOrchestratorV2:
         expected_policies = cls._policy_versions()
         if checkpoint.get("policy_versions") != expected_policies:
             raise ValueError("checkpoint policy implementation is unavailable")
+        release_id = checkpoint.get("release_id")
+        release_digest = checkpoint.get("release_digest")
+        if checkpoint_schema == 4:
+            cls._validate_release_identity(release_id, release_digest)
+        else:
+            release_id = None
+            release_digest = None
         pinned_widget_capabilities = normalize_widget_capability_manifest(
             checkpoint.get("widget_capability_manifest", {})
         )
@@ -2588,6 +2674,8 @@ class SessionOrchestratorV2:
             impact_decay=float(checkpoint["diagnosis"]["impact_decay"]),
             episode_id=str(checkpoint["episode_id"]),
             widget_capabilities=pinned_widget_capabilities,
+            release_id=release_id,
+            release_digest=release_digest,
         )
         events = [
             EvidenceEvent.model_validate(payload)

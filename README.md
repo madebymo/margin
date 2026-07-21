@@ -328,9 +328,9 @@ when no database is configured.
 
 Durable sessions restore only the exact registered graph, item-bank, and
 pedagogy-catalog triple pinned in their checkpoint and checkpoint row. Keep
-prior immutable release bundles available as schema-v2 JSON files with exactly
-the top-level keys `schema_version`, `graph`, `item_bank`, and
-`pedagogy_catalog`, and configure:
+each published release directory, including `bundle.json`,
+`release-reviews.json`, `release-manifest.json`, and `bundle.sha256`, for the
+full resume window, and configure:
 
 ```bash
 export TUTOR_V2_RELEASE_REGISTRY_DIR=/srv/tutor/releases
@@ -341,17 +341,18 @@ than relying on packaged draft content. Pilot deployments must pin the bytes by
 SHA-256 so a path replacement cannot silently change the active release:
 
 ```bash
-export TUTOR_V2_ACTIVE_RELEASE_BUNDLE=/srv/tutor/releases/product-quotient-v1.json
-export TUTOR_V2_ACTIVE_RELEASE_SHA256='<64-character SHA-256 digest>'
+export TUTOR_V2_ACTIVE_RELEASE_BUNDLE=/srv/tutor/releases/product-quotient-v1
+export TUTOR_V2_ACTIVE_RELEASE_SHA256='<bundle.json 64-character SHA-256 digest>'
 ```
 
 Do not set these variables for the pending Product/Quotient draft: it contains
 no released KCs and is intentionally ineligible for active-session admission.
 
-Startup rejects malformed bundles, incompatible graph/bank/catalog triples,
-unregistered component cross-products, and reuse of any version identifier for
-different content. A policy-version bump must retain the executable restore
-implementation too. Each configured Python module must expose
+Startup rejects malformed or partial publication directories, invalid exact
+attestations, incompatible graph/bank/catalog triples, unregistered component
+cross-products, and reuse of any version identifier for different content. A
+policy-version bump must retain the executable restore implementation too. Each
+configured Python module must expose
 `register_v2_policy_runtimes(registry)` and register the exact version set it
 can restore:
 

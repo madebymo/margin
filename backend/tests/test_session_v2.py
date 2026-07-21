@@ -108,6 +108,27 @@ def test_visible_text_ledger_round_trips_exactly_with_pending_skip():
     assert restored.pending.item_id == "item.power.diagnostic.sixth"
 
 
+def test_schema_three_checkpoint_restores_and_upgrades_release_identity():
+    session = _session()
+    session.begin()
+    checkpoint = session.export_checkpoint()
+    expected_identity = (checkpoint["release_id"], checkpoint["release_digest"])
+    checkpoint["schema_version"] = 3
+    checkpoint.pop("release_id")
+    checkpoint.pop("release_digest")
+
+    restored = SessionOrchestratorV2.restore(
+        power_rule_only_graph(),
+        checkpoint,
+        item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
+    )
+
+    upgraded = restored.export_checkpoint()
+    assert upgraded["schema_version"] == 4
+    assert (upgraded["release_id"], upgraded["release_digest"]) == expected_identity
+
+
 def test_guided_practice_is_followed_by_two_independent_unseen_checks():
     session = _session(budget=2)
     session.begin()

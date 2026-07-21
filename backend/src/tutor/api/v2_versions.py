@@ -22,6 +22,15 @@ from typing import Any
 from pydantic import BaseModel
 
 from tutor.content.item_bank import validate_item_bank
+from tutor.content.publication import (
+    ReleasePublicationError,
+    validate_release_reviews,
+)
+from tutor.content.release_identity import (
+    canonical_bundle_sha256,
+    fixture_release_id,
+)
+from tutor.content.review_artifacts import canonical_digest, canonical_json_bytes
 from tutor.learner.evidence_trust import (
     EvidenceTrustPolicy,
     ReviewedEvidenceTrustRegistry,
@@ -29,6 +38,11 @@ from tutor.learner.evidence_trust import (
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.pedagogy import PedagogyPackCatalog
+from tutor.schemas.release_authoring import (
+    PublishedReleaseManifest,
+    ReleasePublicationMetadata,
+    ReleaseReviewManifest,
+)
 
 
 V2_ACTIVE_RELEASE_BUNDLE_ENV = "TUTOR_V2_ACTIVE_RELEASE_BUNDLE"
@@ -150,6 +164,24 @@ class V2ContentRelease:
     graph: GraphDocument
     item_bank: ItemBankDocument
     pedagogy_catalog: PedagogyPackCatalog
+    release_id: str
+    release_digest: str
+    published: bool
+
+
+@dataclass(frozen=True)
+class _ReleaseIdentity:
+    release_id: str
+    release_digest: str
+    published: bool
+
+
+@dataclass(frozen=True)
+class _LoadedBundle:
+    graph: GraphDocument
+    item_bank: ItemBankDocument
+    pedagogy_catalog: PedagogyPackCatalog
+    identity: _ReleaseIdentity
 
 
 @dataclass(frozen=True)
@@ -195,6 +227,10 @@ class V2VersionRegistry:
         self._item_banks: dict[str, _SerializedDocument] = {}
         self._pedagogy_catalogs: dict[str, _SerializedDocument] = {}
         self._releases: set[tuple[int, str, str]] = set()
+        self._release_identities: dict[
+            tuple[int, str, str], _ReleaseIdentity
+        ] = {}
+        self._release_ids: dict[str, tuple[int, str, str]] = {}
         self._lock = threading.RLock()
         for graph, item_bank, pedagogy_catalog in releases:
             self.register(graph, item_bank, pedagogy_catalog)
@@ -217,8 +253,39 @@ class V2VersionRegistry:
             raise FileNotFoundError(
                 f"v2 release registry directory does not exist: {root}"
             )
+        bundle_paths = tuple(sorted(root.rglob("bundle.json")))
+        release_directories = {path.parent for path in bundle_paths}
+        marker_names = {
+            "release-manifest.json",
+            "release-reviews.json",
+            "bundle.sha256",
+        }
+        partial_directories = {
+            path.parent
+            for path in root.rglob("*")
+            if path.is_file() and path.name in marker_names
+        } - release_directories
+        if partial_directories:
+            raise ValueError(
+                "v2 release registry contains an incomplete publication directory"
+            )
+        standalone_bundles = tuple(
+            path
+            for path in sorted(root.rglob("*.json"))
+            if path.name not in marker_names
+            and path.name != "bundle.json"
+            and not any(
+                directory in path.parents
+                for directory in release_directories
+            )
+        )
+        if not bundle_paths and not standalone_bundles:
+            raise ValueError("v2 release registry contains no release bundles")
+
         registry = cls()
-        for path in sorted(root.glob("*.json")):
+        for path in bundle_paths:
+            registry.register_bundle(path.parent)
+        for path in standalone_bundles:
             registry.register_bundle(path)
         return registry
 
@@ -233,10 +300,14 @@ class V2VersionRegistry:
         source: str | Path,
         *,
         expected_sha256: str | None = None,
-    ) -> tuple[GraphDocument, ItemBankDocument, PedagogyPackCatalog]:
+    ) -> _LoadedBundle:
         """Parse one exact schema-v2 release file without logging its payload."""
 
-        path = Path(source).expanduser()
+        source_path = Path(source).expanduser()
+        path = source_path / "bundle.json" if source_path.is_dir() else source_path
+        manifest_path = path.parent / "release-manifest.json"
+        sidecar_path = path.parent / "bundle.sha256"
+        reviews_path = path.parent / "release-reviews.json"
         try:
             raw_bundle = path.read_bytes()
         except OSError as exc:
@@ -275,16 +346,115 @@ class V2VersionRegistry:
                 "pedagogy_catalog"
             )
         try:
-            return (
-                GraphDocument.model_validate(payload["graph"]),
-                ItemBankDocument.model_validate(payload["item_bank"]),
-                PedagogyPackCatalog.model_validate(payload["pedagogy_catalog"]),
+            graph = GraphDocument.model_validate(payload["graph"])
+            item_bank = ItemBankDocument.model_validate(payload["item_bank"])
+            pedagogy_catalog = PedagogyPackCatalog.model_validate(
+                payload["pedagogy_catalog"]
             )
         except (ValueError, TypeError):
             # Pydantic's rich ValidationError includes rejected input values.
             # Suppress the nested exception so startup traceback capture cannot
             # disclose prompts, answers, or other bundle content.
             raise ValueError(f"invalid v2 release bundle {path}") from None
+
+        publication_files = (
+            manifest_path.is_file(),
+            sidecar_path.is_file(),
+            reviews_path.is_file(),
+        )
+        if source_path.is_dir() or any(publication_files):
+            if not all(publication_files):
+                raise ValueError(
+                    f"incomplete published v2 release beside {path}"
+                )
+            try:
+                raw_manifest = manifest_path.read_bytes()
+                manifest = PublishedReleaseManifest.model_validate_json(
+                    raw_manifest
+                )
+                sidecar = sidecar_path.read_bytes()
+                raw_reviews = reviews_path.read_bytes()
+                reviews = ReleaseReviewManifest.model_validate_json(raw_reviews)
+            except (OSError, ValueError, TypeError):
+                raise ValueError(
+                    f"incomplete or invalid published v2 release beside {path}"
+                ) from None
+            actual_sha256 = hashlib.sha256(raw_bundle).hexdigest()
+            expected_sidecar = f"{actual_sha256}  bundle.json\n".encode("ascii")
+            reviews_sha256 = hashlib.sha256(raw_reviews).hexdigest()
+            coordinates_match = (
+                manifest.graph_version == graph.graph_version
+                and manifest.bank_version == item_bank.bank_version
+                and manifest.catalog_version == pedagogy_catalog.catalog_version
+            )
+            component_digests_match = (
+                manifest.graph_digest == canonical_digest(graph)
+                and manifest.bank_digest == canonical_digest(item_bank)
+                and manifest.catalog_digest == canonical_digest(pedagogy_catalog)
+            )
+            if (
+                path.name != manifest.bundle_file
+                or not hmac.compare_digest(
+                    raw_manifest,
+                    canonical_json_bytes(manifest, trailing_newline=True),
+                )
+                or not hmac.compare_digest(sidecar, expected_sidecar)
+                or not hmac.compare_digest(manifest.bundle_sha256, actual_sha256)
+                or not hmac.compare_digest(
+                    manifest.reviews_sha256,
+                    reviews_sha256,
+                )
+                or not coordinates_match
+                or not component_digests_match
+                or manifest.released_kcs != tuple(sorted(item_bank.released_kcs))
+            ):
+                raise V2VersionConflict(
+                    "published v2 release manifest does not bind the exact bundle"
+                )
+            try:
+                candidate, expected_manifest = validate_release_reviews(
+                    graph,
+                    item_bank,
+                    pedagogy_catalog,
+                    reviews,
+                    ReleasePublicationMetadata(
+                        published_by=manifest.published_by,
+                        published_at=manifest.published_at,
+                    ),
+                )
+            except (ReleasePublicationError, ValueError, TypeError):
+                raise V2VersionConflict(
+                    "published v2 release lacks valid exact attestations"
+                ) from None
+            if (
+                not hmac.compare_digest(candidate.bundle_bytes, raw_bundle)
+                or expected_manifest != manifest
+            ):
+                raise V2VersionConflict(
+                    "published v2 release receipt does not match exact artifacts"
+                )
+            identity = _ReleaseIdentity(
+                release_id=manifest.release_id,
+                release_digest=manifest.bundle_sha256,
+                published=True,
+            )
+        else:
+            fixture_sha256 = canonical_bundle_sha256(
+                graph,
+                item_bank,
+                pedagogy_catalog,
+            )
+            identity = _ReleaseIdentity(
+                release_id=fixture_release_id(fixture_sha256),
+                release_digest=fixture_sha256,
+                published=False,
+            )
+        return _LoadedBundle(
+            graph=graph,
+            item_bank=item_bank,
+            pedagogy_catalog=pedagogy_catalog,
+            identity=identity,
+        )
 
     def register_bundle(
         self,
@@ -302,10 +472,13 @@ class V2VersionRegistry:
         parse.
         """
 
-        graph, item_bank, pedagogy_catalog = self._load_bundle(
+        loaded = self._load_bundle(
             source,
             expected_sha256=expected_sha256,
         )
+        graph = loaded.graph
+        item_bank = loaded.item_bank
+        pedagogy_catalog = loaded.pedagogy_catalog
         if require_released_content and not item_bank.released_kcs:
             raise V2VersionConflict(
                 "active v2 release bundle contains no released knowledge components"
@@ -327,13 +500,20 @@ class V2VersionRegistry:
                 raise V2VersionConflict(
                     "active v2 release bundle is an unregistered component cross-product"
                 )
-        return self.register(graph, item_bank, pedagogy_catalog)
+        return self.register(
+            graph,
+            item_bank,
+            pedagogy_catalog,
+            _identity=loaded.identity,
+        )
 
     def register(
         self,
         graph: GraphDocument,
         item_bank: ItemBankDocument,
         pedagogy_catalog: PedagogyPackCatalog,
+        *,
+        _identity: _ReleaseIdentity | None = None,
     ) -> V2ContentRelease:
         """Validate and retain one exact triple without version aliasing."""
         graph_snapshot = _SerializedDocument.capture(graph)
@@ -373,6 +553,19 @@ class V2VersionRegistry:
             registered_bank.bank_version,
             registered_catalog.catalog_version,
         )
+        if _identity is None:
+            bundle_sha256 = canonical_bundle_sha256(
+                registered_graph,
+                registered_bank,
+                registered_catalog,
+            )
+            identity = _ReleaseIdentity(
+                release_id=fixture_release_id(bundle_sha256),
+                release_digest=bundle_sha256,
+                published=False,
+            )
+        else:
+            identity = _identity
         with self._lock:
             existing_graph = self._graphs.get(registered_graph.graph_version)
             if existing_graph is not None and existing_graph != graph_snapshot:
@@ -398,12 +591,24 @@ class V2VersionRegistry:
                     f"{registered_catalog.catalog_version!r} already identifies "
                     "different content"
                 )
+            existing_identity = self._release_identities.get(key)
+            if existing_identity is not None and existing_identity != identity:
+                raise V2VersionConflict(
+                    "content release coordinates already identify another release"
+                )
+            existing_release_key = self._release_ids.get(identity.release_id)
+            if existing_release_key is not None and existing_release_key != key:
+                raise V2VersionConflict(
+                    "release_id already identifies different content coordinates"
+                )
             self._graphs[registered_graph.graph_version] = graph_snapshot
             self._item_banks[registered_bank.bank_version] = bank_snapshot
             self._pedagogy_catalogs[
                 registered_catalog.catalog_version
             ] = catalog_snapshot
             self._releases.add(key)
+            self._release_identities[key] = identity
+            self._release_ids[identity.release_id] = key
             return self._materialize(key)
 
     def _materialize(
@@ -412,6 +617,7 @@ class V2VersionRegistry:
     ) -> V2ContentRelease:
         """Return a detached model snapshot for one lock-protected key."""
         graph_version, bank_version, catalog_version = key
+        identity = self._release_identities[key]
         return V2ContentRelease(
             graph=GraphDocument.model_validate_json(
                 self._graphs[graph_version].payload
@@ -422,6 +628,9 @@ class V2VersionRegistry:
             pedagogy_catalog=PedagogyPackCatalog.model_validate_json(
                 self._pedagogy_catalogs[catalog_version].payload
             ),
+            release_id=identity.release_id,
+            release_digest=identity.release_digest,
+            published=identity.published,
         )
 
     def resolve(
@@ -480,11 +689,25 @@ class V2VersionRegistry:
                 "checkpoint is missing valid graph, item-bank, and "
                 "pedagogy-catalog version pins"
             )
-        return self.resolve(
+        release = self.resolve(
             graph_version,
             item_bank_version,
             pedagogy_catalog_version,
         )
+        release_id = checkpoint.get("release_id")
+        if release_id is not None and release_id != release.release_id:
+            raise V2VersionUnavailable(
+                "checkpoint release_id does not match retained release coordinates"
+            )
+        release_digest = checkpoint.get("release_digest")
+        if (
+            release_digest is not None
+            and release_digest != release.release_digest
+        ):
+            raise V2VersionUnavailable(
+                "checkpoint release_digest does not match retained release coordinates"
+            )
+        return release
 
     @property
     def graph_versions(self) -> tuple[int, ...]:
