@@ -79,6 +79,35 @@ jobs:
       - name: Run PostgreSQL concurrency and recovery gates
         run: pytest backend/tests/test_api_v2_postgres.py -v
 
+  redis:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TUTOR_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend with pilot dependencies
+        run: python -m pip install -e "backend[dev,api,pilot]"
+
+      - name: Run Redis fleet-control integration gates
+        run: pytest backend/tests/test_v2_redis.py -v
+
   frontend:
     runs-on: ubuntu-latest
     steps:
