@@ -241,12 +241,31 @@ review its complete family set and the complete hard-ancestor closure first.
 The pending Product/Quotient Rules pilot inventory has its own construct-aware,
 typed compiler and review manifest. It derives mathematical truth from bounded
 blueprints, compares all 1,326 family-answer pairs in a supervised worker,
-checks 5,541 answer-shaped visible candidates, and performs 2,652 deterministic
+checks 5,601 answer-shaped visible candidates, and performs 2,652 deterministic
 literal cross-family scans:
 
 ```bash
 python -m tutor.content.product_quotient_release --check
 ```
+
+Generate the deterministic private packet used for independent review directly
+from the pending assessment and pedagogy source/review manifests:
+
+```bash
+python -m tutor.content.product_quotient_reviewer_packet \
+  --check \
+  --out-dir /tmp/product-quotient-review
+```
+
+The output contains exact learner-visible and spoken rendering, expected-answer
+contracts, private widget scoring data, ordered hints and revealing-hint effects,
+allocation paths, provenance and citations, and structured similarity warnings.
+It is an offline truth-bearing artifact: never place it under an application
+static directory or release mount. The command requires all decisions to remain
+pending and `released_kcs` to remain empty; it creates no approval records,
+changes no review manifest, and publishes no release. Independent reviewers
+record their own decisions through the separate review workflow after inspecting
+the packet's exact digests.
 
 The packaged inventory is deliberately marked AI-assisted and unreviewed. It
 contains 52 independently reviewable candidate families across the exact

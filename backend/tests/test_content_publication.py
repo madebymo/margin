@@ -288,9 +288,11 @@ def test_reviewer_packet_is_deterministic_complete_and_offline(
     second = build_reviewer_packet(graph, bank, catalog)
 
     assert first == second
+    assert first["schema_version"] == 2
     assert first["warnings"] == ["construct ids were not supplied for 13 families"]
     assert len(first["families"]) == 13
     assert first["families"][0]["items"][0]["answer_spec"]["expected"]
+    assert first["families"][0]["items"][0]["rendering"]["production_text_fallback"]
     html_output = render_reviewer_html(first)
     assert "OFFLINE REVIEW ARTIFACT" in html_output
     assert "Expected answer contract" in html_output
