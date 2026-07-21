@@ -26,11 +26,14 @@ from tutor.db import models as m
 from tutor.db.persistence import PersistenceService
 from tutor.db.session import get_engine
 from tutor.orchestrator.machine import SessionPhase
+import tutor.orchestrator.session_v2 as session_v2_module
 from tutor.seed.load_seed import load_graph
+from tutor.verify.checker import VerificationResult, VerificationStatus
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
+    approved_power_rule_episode_bank,
     approved_power_rule_catalog,
+    approved_power_rule_stress_bank,
     power_rule_only_graph,
 )
 
@@ -46,10 +49,11 @@ def _v2_app(
     persistence: V2PersistenceService | None = None,
     resume_token_secret: bytes | str | None = None,
     feature_flags: V2FeatureFlags | None = None,
+    item_bank_override=None,
 ) -> FastAPI:
     app = FastAPI()
     graph = power_rule_only_graph()
-    item_bank = approved_power_rule_bank()
+    item_bank = item_bank_override or approved_power_rule_stress_bank()
     if durable and persistence is None:
         legacy = PersistenceService(
             engine=get_engine("sqlite+pysqlite:///:memory:")
@@ -130,6 +134,12 @@ def _complete_perfect_session(client: TestClient, view: dict) -> dict:
         assert response.status_code == 200
         view = response.json()
     raise AssertionError("perfect v2 session did not reach done")
+
+
+def _single_episode_inventory():
+    """Keep exactly the bounded inventory needed before the first item is shown."""
+
+    return approved_power_rule_episode_bank()
 
 
 def _set_resume_cookie(client: TestClient, raw_token: str) -> None:
@@ -281,6 +291,46 @@ def test_goal_catalog_and_safe_authoritative_create(client):
     )
     assert external_response.status_code == 200
     assert "secure" in external_response.headers["set-cookie"].lower()
+
+
+def test_verifier_saturation_returns_retryable_snapshot_without_committing(
+    client,
+    monkeypatch,
+):
+    created, _ = _create(client)
+    assert created.status_code == 200
+    before = created.json()
+    handle = client.app.state.v2_store.get(before["session_id"])
+    answer = handle.orchestrator.pending_expected
+    request_id = uuid4()
+    action = _answer(before, answer, request_id=request_id)
+
+    real_verify = session_v2_module.verify_answer
+
+    def saturated(_answer, _given, **_kwargs):
+        return VerificationResult(
+            status=VerificationStatus.TIMEOUT,
+            code="verifier_saturated",
+        )
+
+    monkeypatch.setattr(session_v2_module, "verify_answer", saturated)
+    failed = client.post(
+        f"/api/v2/sessions/{before['session_id']}/actions",
+        json=action,
+    )
+
+    assert failed.status_code == 503
+    assert failed.json()["code"] == "verification_capacity_unavailable"
+    assert failed.json()["session"] == before
+    assert client.app.state.v2_store.view(handle).model_dump(mode="json") == before
+
+    monkeypatch.setattr(session_v2_module, "verify_answer", real_verify)
+    retried = client.post(
+        f"/api/v2/sessions/{before['session_id']}/actions",
+        json=action,
+    )
+    assert retried.status_code == 200
+    assert retried.json()["revision"] == before["revision"] + 1
 
 
 def test_rich_widget_flag_keeps_core_flow_and_uses_text_guided_practice():
@@ -877,8 +927,80 @@ def test_terminal_rollover_carries_revealed_family_retirement():
     assert rollover.status_code == 200
     replacement = app.state.v2_store.get(rollover.json()["session_id"])
     assert revealed_family in replacement.orchestrator.exposure_state.retired_family_ids
-    assert replacement.orchestrator.pending is None
-    assert rollover.json()["phase"] == "stopped"
+    assert replacement.orchestrator.pending is not None
+    assert replacement.orchestrator.pending.family_id != revealed_family
+    assert rollover.json()["phase"] == "diagnose"
+
+
+def test_create_preflight_rejects_incomplete_inventory_without_a_session():
+    bank = _single_episode_inventory()
+    bank = bank.model_copy(
+        update={
+            "items": [
+                item
+                for item in bank.items
+                if item.item_id != "item.power.checkin.scaled-sixth"
+            ]
+        }
+    )
+    app = _v2_app(item_bank_override=bank)
+    client = TestClient(app)
+
+    response, _ = _create(client)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "content_exhausted"
+    assert response.json().get("session") is None
+    assert client.cookies.get("tutor_resume_v2") is None
+    assert not app.state.v2_store._sessions
+
+
+def test_reset_preflight_is_non_mutating_when_prior_exposure_exhausts_content():
+    app = _v2_app(item_bank_override=_single_episode_inventory())
+    client = TestClient(app)
+    created, _ = _create(client)
+    before = created.json()
+    raw_token = client.cookies.get("tutor_resume_v2")
+    handle = app.state.v2_store.get(before["session_id"])
+    checkpoint = handle.orchestrator.export_checkpoint()
+
+    stale = client.post(
+        "/api/v2/sessions/current/reset",
+        json=_reset(before, expected_revision=before["revision"] + 1),
+    )
+    assert stale.status_code == 409
+    assert stale.json()["code"] == "stale_interaction"
+
+    response = client.post(
+        "/api/v2/sessions/current/reset",
+        json=_reset(before),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "content_exhausted"
+    assert response.json()["session"] == before
+    assert client.cookies.get("tutor_resume_v2") == raw_token
+    assert (
+        app.state.v2_store.get(before["session_id"]).orchestrator.export_checkpoint()
+        == checkpoint
+    )
+    assert len(app.state.v2_store._sessions) == 1
+
+
+def test_terminal_rollover_preflight_keeps_completed_episode_authoritative():
+    app = _v2_app(item_bank_override=_single_episode_inventory())
+    client = TestClient(app)
+    created, _ = _create(client)
+    completed = _complete_perfect_session(client, created.json())
+    raw_token = client.cookies.get("tutor_resume_v2")
+
+    response, _ = _create(client)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "content_exhausted"
+    assert response.json()["session"] == completed
+    assert client.cookies.get("tutor_resume_v2") == raw_token
+    assert client.get("/api/v2/sessions/current").json() == completed
 
 
 def test_hint_action_advances_revision_but_not_pending_answer(client):
@@ -1647,8 +1769,8 @@ def test_persistence_is_atomic_and_tokens_are_hashed(monkeypatch):
         assert checkpoint.checkpoint["session_view"]["revision"] == 1
         assert checkpoint.pedagogy_catalog_version == "test-approved-pedagogy-v1"
         assert checkpoint.checkpoint["content_release"] == {
-            "graph_version": 1,
-            "item_bank_version": "test-approved-power-v2",
+            "graph_version": power_rule_only_graph().graph_version,
+            "item_bank_version": "test-approved-power-stress-v2",
             "pedagogy_catalog_version": "test-approved-pedagogy-v1",
         }
         assert len(receipts) == 2  # create plus hint

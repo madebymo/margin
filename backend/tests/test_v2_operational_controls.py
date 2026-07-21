@@ -25,8 +25,8 @@ from tutor.db.session import get_engine
 from tutor.seed.load_seed import load_graph
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
     approved_power_rule_catalog,
+    approved_power_rule_stress_bank,
     power_rule_only_graph,
 )
 
@@ -92,7 +92,7 @@ def _app(
         power_rule_only_graph(),
         persistence=persistence,
         available_targets=("kc.der.power_rule",),
-        item_bank=approved_power_rule_bank(),
+        item_bank=approved_power_rule_stress_bank(),
         pedagogy_catalog=approved_power_rule_catalog(),
         resume_token_secret=_SECRET,
         feature_flags=V2FeatureFlags(pause_v2_mutations=paused),
@@ -608,7 +608,10 @@ def test_metrics_sink_receives_only_stable_release_and_item_dimensions():
     assert len(action_events) == 1
     dimensions = action_events[0][2]
     assert dimensions["graph_version"] == str(power_rule_only_graph().graph_version)
-    assert dimensions["item_bank_version"] == approved_power_rule_bank().bank_version
+    assert (
+        dimensions["item_bank_version"]
+        == approved_power_rule_stress_bank().bank_version
+    )
     assert (
         dimensions["pedagogy_catalog_version"]
         == approved_power_rule_catalog().catalog_version
@@ -617,6 +620,7 @@ def test_metrics_sink_receives_only_stable_release_and_item_dimensions():
     assert dimensions["capability_manifest_version"].startswith(
         "web-widget-capabilities-v2"
     )
+    assert len(dimensions["release_digest"]) == 64
     assert dimensions["item_id"].startswith("item.power")
     assert "policy_diagnosis_version" in dimensions
     exported = repr(sink.events)

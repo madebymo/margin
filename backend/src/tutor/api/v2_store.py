@@ -16,7 +16,7 @@ from collections import Counter, OrderedDict
 from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
@@ -207,6 +207,7 @@ class V2SessionHandle:
     transcript: list[TranscriptEntry] = field(default_factory=list)
     receipts: OrderedDict[str, MutationReceipt] = field(default_factory=OrderedDict)
     token_hashes: set[str] = field(default_factory=set)
+    metric_dimensions: V2MetricDimensions | None = None
     lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
 
@@ -220,6 +221,7 @@ class V2SessionStore:
         persistence: V2PersistencePort | None = None,
         metrics_sink: MetricsSink | None = None,
         metric_dimensions: V2MetricDimensions | None = None,
+        metric_dimensions_resolver: Callable[[Any], V2MetricDimensions] | None = None,
         max_sessions: int = 500,
         max_receipts_per_session: int = 256,
         max_episodes_per_learner: int = 32,
@@ -241,6 +243,7 @@ class V2SessionStore:
             learner_parameter_version="unknown",
             capability_manifest_version="unknown",
         )
+        self._metric_dimensions_resolver = metric_dimensions_resolver
         self._max_sessions = max_sessions
         self._max_receipts = max_receipts_per_session
         self._max_episodes_per_learner = max_episodes_per_learner
@@ -303,6 +306,7 @@ class V2SessionStore:
                 revision=0,
                 transcript=self._interaction_entries([], interactions),
                 token_hashes={token_hash},
+                metric_dimensions=self._resolve_metric_dimensions(orchestrator),
             )
             self._replace_visible_snapshot(
                 handle.orchestrator,
@@ -355,9 +359,15 @@ class V2SessionStore:
                     handle.session_id,
                     utcnow() + _RESUME_WINDOW,
                 )
-            self.record_metric("sessions_created")
+            self.record_metric(
+                "sessions_created",
+                metric_dimensions=handle.metric_dimensions,
+            )
             if terminal_rollover:
-                self.record_metric("terminal_rollovers_committed")
+                self.record_metric(
+                    "terminal_rollovers_committed",
+                    metric_dimensions=handle.metric_dimensions,
+                )
             return handle
 
     def get(self, session_id: str) -> V2SessionHandle:
@@ -395,7 +405,10 @@ class V2SessionStore:
                     "request_id was already used with a different payload",
                     self.view(handle),
                 )
-            self.record_metric("create_replays")
+            self.record_metric(
+                "create_replays",
+                metric_dimensions=handle.metric_dimensions,
+            )
             return receipt.response.model_copy(deep=True)
 
     def repeat_create_without_token(
@@ -423,7 +436,10 @@ class V2SessionStore:
                         "request_id was already used for another mutation",
                         self.view(handle),
                     )
-                self.record_metric("create_replays")
+                self.record_metric(
+                    "create_replays",
+                    metric_dimensions=handle.metric_dimensions,
+                )
                 return handle, receipt.response.model_copy(deep=True)
         return None
 
@@ -481,6 +497,8 @@ class V2SessionStore:
         amount: int = 1,
         *,
         item_id: str | None = None,
+        orchestrator: Any | None = None,
+        metric_dimensions: V2MetricDimensions | None = None,
     ) -> None:
         """Record locally and best-effort export one privacy-safe counter."""
         if amount < 1:
@@ -491,7 +509,16 @@ class V2SessionStore:
                 self._item_metrics[item_id] += amount
         if self._metrics_sink is None:
             return
-        dimensions = self._metric_dimensions.as_labels()
+        resolved_dimensions = metric_dimensions or self._metric_dimensions
+        if metric_dimensions is None and orchestrator is not None:
+            try:
+                resolved_dimensions = V2MetricDimensions.from_orchestrator(
+                    orchestrator,
+                    fallback=self._metric_dimensions,
+                )
+            except Exception:  # noqa: BLE001 - retain safe active-release fallback
+                resolved_dimensions = self._metric_dimensions
+        dimensions = resolved_dimensions.as_labels()
         if item_id is not None:
             dimensions["item_id"] = item_id
         try:
@@ -508,6 +535,26 @@ class V2SessionStore:
                 name,
                 type(exc).__name__,
             )
+
+    def _resolve_metric_dimensions(self, orchestrator: Any) -> V2MetricDimensions:
+        if self._metric_dimensions_resolver is not None:
+            try:
+                resolved = self._metric_dimensions_resolver(orchestrator)
+                if not isinstance(resolved, V2MetricDimensions):
+                    raise TypeError("metric dimension resolver returned an invalid value")
+                return resolved
+            except Exception as exc:  # noqa: BLE001 - telemetry cannot block sessions
+                logger.warning(
+                    "v2 metric pin resolution failed error_type=%s",
+                    type(exc).__name__,
+                )
+        try:
+            return V2MetricDimensions.from_orchestrator(
+                orchestrator,
+                fallback=self._metric_dimensions,
+            )
+        except Exception:  # noqa: BLE001 - retain safe active-release fallback
+            return self._metric_dimensions
 
     def restore(
         self,
@@ -540,6 +587,7 @@ class V2SessionStore:
             revision=view.revision,
             transcript=list(view.transcript),
             token_hashes={token_hash},
+            metric_dimensions=self._resolve_metric_dimensions(orchestrator),
         )
         for receipt_data in receipts:
             response = SessionView.model_validate(receipt_data["response_payload"])
@@ -599,7 +647,11 @@ class V2SessionStore:
                 token[0],
                 utcnow() + _RESUME_WINDOW,
             )
-        self.record_metric("resume_refreshes")
+            handle = self._sessions.get(token[0])
+        self.record_metric(
+            "resume_refreshes",
+            metric_dimensions=(handle.metric_dimensions if handle is not None else None),
+        )
         return True
 
     def revoke(self, token_hash: str) -> bool:
@@ -720,30 +772,13 @@ class V2SessionStore:
             if replayed is not None:
                 self.forget_token(token_hash)
                 return replayed
-
-            current = self.view(handle)
-            if request.expected_revision != handle.revision:
-                raise SessionConflict(
-                    "stale_interaction",
-                    "session revision changed; use the authoritative snapshot",
-                    current,
-                )
+            self.validate_reset_preconditions(
+                handle,
+                token_hash,
+                request,
+                accept_quarantine_recovery_key=accept_quarantine_recovery_key,
+            )
             pending_key = self._pending_key(handle.orchestrator)
-            if (
-                not accept_quarantine_recovery_key
-                and pending_key != request.pending_key
-            ):
-                raise SessionConflict(
-                    "stale_interaction",
-                    "the pending interaction changed; use the authoritative snapshot",
-                    current,
-                )
-            if not self.owns(handle.session_id, token_hash):
-                raise SessionConflict(
-                    "session_revoked",
-                    "the anonymous session token is no longer active",
-                    current,
-                )
 
             now = utcnow()
             self._enforce_episode_quota(handle, now=now)
@@ -766,6 +801,9 @@ class V2SessionStore:
                 revision=0,
                 transcript=self._interaction_entries([], replacement_interactions),
                 token_hashes={replacement_token_hash},
+                metric_dimensions=self._resolve_metric_dimensions(
+                    replacement_orchestrator
+                ),
             )
             self._replace_visible_snapshot(
                 replacement.orchestrator,
@@ -820,9 +858,57 @@ class V2SessionStore:
                     replacement.session_id,
                     utcnow() + _RESUME_WINDOW,
                 )
-            self.record_metric("resets_committed")
-            self.record_metric("sessions_created_by_reset")
+            self.record_metric(
+                "resets_committed",
+                metric_dimensions=replacement.metric_dimensions,
+            )
+            self.record_metric(
+                "sessions_created_by_reset",
+                metric_dimensions=replacement.metric_dimensions,
+            )
             return response.model_copy(deep=True)
+
+    def validate_reset_preconditions(
+        self,
+        handle: V2SessionHandle,
+        token_hash: str,
+        request: ResetSessionV2Request,
+        *,
+        accept_quarantine_recovery_key: bool = False,
+    ) -> SessionView:
+        """Check reset concurrency/auth facts without changing session state.
+
+        The API uses this before constructing and qualifying a replacement so
+        a stale request cannot be misreported as content exhaustion. ``reset``
+        repeats the same checks under its commit lock to close the race between
+        preflight and the authoritative transaction.
+        """
+
+        with handle.lock:
+            current = self.view(handle)
+            if request.expected_revision != handle.revision:
+                raise SessionConflict(
+                    "stale_interaction",
+                    "session revision changed; use the authoritative snapshot",
+                    current,
+                )
+            pending_key = self._pending_key(handle.orchestrator)
+            if (
+                not accept_quarantine_recovery_key
+                and pending_key != request.pending_key
+            ):
+                raise SessionConflict(
+                    "stale_interaction",
+                    "the pending interaction changed; use the authoritative snapshot",
+                    current,
+                )
+            if not self.owns(handle.session_id, token_hash):
+                raise SessionConflict(
+                    "session_revoked",
+                    "the anonymous session token is no longer active",
+                    current,
+                )
+            return current.model_copy(deep=True)
 
     def _enforce_episode_quota(
         self,
@@ -915,7 +1001,10 @@ class V2SessionStore:
                     "idempotent replay changed the authoritative revision"
                 )
             response = receipt.response.model_copy(deep=True)
-        self.record_metric("action_replays")
+        self.record_metric(
+            "action_replays",
+            metric_dimensions=handle.metric_dimensions,
+        )
         return response
 
     def apply(
@@ -957,7 +1046,10 @@ class V2SessionStore:
                     raise SessionIntegrityError(
                         "idempotent replay changed the authoritative revision"
                     )
-                self.record_metric("action_replays")
+                self.record_metric(
+                    "action_replays",
+                    metric_dimensions=handle.metric_dimensions,
+                )
                 return previous_receipt.response.model_copy(deep=True)
 
             committed_actions = sum(
@@ -1033,6 +1125,7 @@ class V2SessionStore:
                 transcript=next_transcript,
                 receipts=handle.receipts.copy(),
                 token_hashes=set(handle.token_hashes),
+                metric_dimensions=handle.metric_dimensions,
                 lock=handle.lock,
             )
             next_view = self.view(next_handle)
@@ -1075,7 +1168,10 @@ class V2SessionStore:
                 except Exception as exc:
                     raise SessionUnavailable("could not durably commit action") from exc
                 if persisted is not None:
-                    self.record_metric("action_replays")
+                    self.record_metric(
+                        "action_replays",
+                        metric_dimensions=next_handle.metric_dimensions,
+                    )
                     raise DurableReceiptReplay(SessionView.model_validate(persisted))
 
             handle.orchestrator = next_handle.orchestrator
@@ -1091,7 +1187,11 @@ class V2SessionStore:
                             handle.session_id,
                             utcnow() + _RESUME_WINDOW,
                         )
-            self.record_metric("actions_committed", item_id=item_id)
+            self.record_metric(
+                "actions_committed",
+                item_id=item_id,
+                metric_dimensions=handle.metric_dimensions,
+            )
             logger.info(
                 json.dumps(
                     {

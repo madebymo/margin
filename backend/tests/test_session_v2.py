@@ -6,7 +6,11 @@ from datetime import timedelta
 import pytest
 
 import tutor.content.item_bank as item_bank_module
-from tutor.orchestrator.session_v2 import SessionOrchestratorV2
+import tutor.orchestrator.session_v2 as session_v2_module
+from tutor.orchestrator.session_v2 import (
+    SessionOrchestratorV2,
+    VerificationCapacityUnavailable,
+)
 from tutor.runtime_capabilities import widget_capability_manifest
 from tutor.schemas.assessment import AssessmentSurface, ItemBankDocument
 from tutor.schemas.learner import LearnerProfile
@@ -581,6 +585,27 @@ def test_runtime_bundle_gate_stops_on_indeterminate_worker_result(
         "No unused reviewed practice" in interaction.text
         for interaction in interactions
     )
+
+
+def test_verifier_saturation_is_a_retryable_non_mutating_turn(monkeypatch):
+    session = _session()
+    session.begin()
+    pending_key = session.pending.key
+    revision_state = session.export_checkpoint()
+
+    def saturated(_answer, _given, **_kwargs):
+        return VerificationResult(
+            status=VerificationStatus.TIMEOUT,
+            code="verifier_saturated",
+        )
+
+    monkeypatch.setattr(session_v2_module, "verify_answer", saturated)
+
+    with pytest.raises(VerificationCapacityUnavailable):
+        session.submit("3*x^2")
+
+    assert session.pending.key == pending_key
+    assert session.export_checkpoint() == revision_state
 
 
 def test_revealing_hint_retires_family_and_forces_fresh_check():

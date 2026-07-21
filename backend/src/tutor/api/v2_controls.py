@@ -9,10 +9,15 @@ environment behaviour for local development and simple deployments.
 from __future__ import annotations
 
 import os
+import json
+import logging
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Protocol, runtime_checkable
+from typing import Any, Callable, Protocol, runtime_checkable
+
+from tutor.api.background_refresh import BackgroundRefresher
 
 DEFAULT_MUTATION_PAUSE_ENV = "TUTOR_PAUSE_V2_MUTATIONS"
 MAX_MUTATION_GATE_REVISION_LENGTH = 128
@@ -24,6 +29,9 @@ _FALSE_VALUES = frozenset({"0", "false", "no", "off"})
 _FAIL_CLOSED_REVISION = "fail-closed-v1"
 _FAIL_CLOSED_SOURCE = "fail_closed"
 _MAX_FUTURE_SKEW = timedelta(seconds=5)
+_MAX_REDIS_CONTROL_BYTES = 16 * 1024
+
+logger = logging.getLogger("tutor.api.v2.controls")
 
 
 def _bounded_label(name: str, value: object, *, maximum: int) -> str:
@@ -172,6 +180,110 @@ class StaticMutationGate:
         return self._snapshot
 
 
+class RedisMutationGate:
+    """Redis-backed mutation control with an O(1), nonblocking request path.
+
+    Redis stores a strict JSON document at ``key``::
+
+        {"schema_version": 1, "paused": true, "revision": "incident-42"}
+
+    The background refresher is the only code that performs network I/O.
+    Missing, malformed, or unavailable state immediately replaces the cache
+    with a paused fail-closed observation.
+    """
+
+    def __init__(
+        self,
+        redis_client: Any,
+        *,
+        key: str = "tutor:v2:controls:mutations",
+        refresh_interval_seconds: float = 5.0,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
+        if redis_client is None or not callable(getattr(redis_client, "get", None)):
+            raise TypeError("redis_client must provide get")
+        if not isinstance(key, str) or not key or len(key) > 256 or not key.isprintable():
+            raise ValueError("key must be a non-empty printable string of at most 256 characters")
+        self._redis = redis_client
+        self._key = key
+        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._lock = threading.Lock()
+        self._snapshot = MutationGateSnapshot(
+            paused=True,
+            revision="redis-uninitialized-v1",
+            source="fail_closed",
+            observed_at=self._now(),
+        )
+        self._refresher = BackgroundRefresher(
+            self.refresh_once,
+            interval_seconds=refresh_interval_seconds,
+            name="tutor-redis-mutation-gate",
+            logger=logger,
+        )
+
+    def _now(self) -> datetime:
+        return _as_utc("clock result", self._clock())
+
+    def start(self) -> None:
+        self._refresher.start()
+
+    def close(self) -> None:
+        self._refresher.close()
+
+    def refresh_once(self) -> None:
+        """Fetch and validate one control value outside the request path."""
+
+        observed_at = self._now()
+        try:
+            raw = self._redis.get(self._key)
+            if raw is None:
+                raise ValueError("mutation control is missing")
+            if isinstance(raw, bytes):
+                if len(raw) > _MAX_REDIS_CONTROL_BYTES:
+                    raise ValueError("mutation control is oversized")
+                text = raw.decode("utf-8", errors="strict")
+            elif isinstance(raw, str):
+                if len(raw.encode("utf-8")) > _MAX_REDIS_CONTROL_BYTES:
+                    raise ValueError("mutation control is oversized")
+                text = raw
+            else:
+                raise TypeError("mutation control must be text")
+            payload = json.loads(text)
+            if not isinstance(payload, dict) or set(payload) != {
+                "schema_version",
+                "paused",
+                "revision",
+            }:
+                raise ValueError("mutation control has an invalid schema")
+            if payload["schema_version"] != 1:
+                raise ValueError("mutation control schema version is unsupported")
+            candidate = MutationGateSnapshot(
+                paused=payload["paused"],
+                revision=payload["revision"],
+                source="redis_control_plane",
+                observed_at=observed_at,
+            )
+        except Exception as exc:  # noqa: BLE001 - payload/config stay private
+            candidate = MutationGateSnapshot(
+                paused=True,
+                revision="redis-refresh-failed-v1",
+                source="fail_closed",
+                observed_at=observed_at,
+            )
+            logger.warning(
+                "mutation control refresh failed error_type=%s",
+                type(exc).__name__,
+            )
+        with self._lock:
+            self._snapshot = candidate
+
+    def snapshot(self) -> MutationGateSnapshot:
+        """Return the already-refreshed immutable value without Redis I/O."""
+
+        with self._lock:
+            return self._snapshot
+
+
 def safe_mutation_gate_snapshot(
     gate: MutationGate,
     *,
@@ -216,6 +328,7 @@ __all__ = [
     "MAX_MUTATION_GATE_SOURCE_LENGTH",
     "MutationGate",
     "MutationGateSnapshot",
+    "RedisMutationGate",
     "StaticMutationGate",
     "safe_mutation_gate_snapshot",
 ]

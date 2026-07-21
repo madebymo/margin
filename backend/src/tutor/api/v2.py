@@ -18,6 +18,12 @@ from urllib.parse import urlsplit
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
+from tutor.api.v2_admission import (
+    AdmissionDecision,
+    AdmissionOperation,
+    NoopRequestAdmissionGate,
+    RequestAdmissionGate,
+)
 from tutor.api.v2_persistence import DurableLedgerMismatch, V2PersistenceService
 from tutor.api.v2_features import V2FeatureFlags
 from tutor.api.v2_metrics import MetricsSink, V2MetricDimensions
@@ -71,6 +77,7 @@ from tutor.api.v2_versions import (
 from tutor.content.exposure import AllocationError
 from tutor.learner.evidence_trust import EvidenceTrustPolicy
 from tutor.learner.params import DEFAULT_PARAMS_V2
+from tutor.orchestrator.session_v2 import VerificationCapacityUnavailable
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import LearnerProfile
@@ -416,6 +423,7 @@ def install_v2_routes(
     mutation_gate_max_age: timedelta | None = None,
     release_quarantine: ReleaseQuarantineProvider | None = None,
     release_quarantine_max_age: timedelta | None = None,
+    request_admission_gate: RequestAdmissionGate | None = None,
 ) -> V2SessionStore:
     """Install API v2 without changing any v1 route or response model."""
     token_secret = _resume_secret(resume_token_secret)
@@ -443,6 +451,11 @@ def install_v2_routes(
         release_quarantine
         if release_quarantine is not None
         else StaticReleaseQuarantineProvider()
+    )
+    active_request_admission = (
+        request_admission_gate
+        if request_admission_gate is not None
+        else NoopRequestAdmissionGate()
     )
 
     def observe_release_quarantine() -> ReleaseQuarantineSnapshot:
@@ -651,28 +664,46 @@ def install_v2_routes(
         qualify = getattr(orchestrator, "qualify_episode", None)
         if callable(qualify):
             qualify()
+    active_metric_dimensions = V2MetricDimensions(
+        graph_version=str(active_graph.graph_version),
+        item_bank_version=(
+            active_item_bank.bank_version
+            if active_item_bank is not None
+            else "unavailable"
+        ),
+        pedagogy_catalog_version=(
+            active_pedagogy_catalog.catalog_version
+            if active_pedagogy_catalog is not None
+            else "unavailable"
+        ),
+        policy_versions=tuple(sorted(active_policy_versions.items())),
+        learner_parameter_version=f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
+        capability_manifest_version=str(active_widget_manifest["version"]),
+        release_digest=active_release_digest,
+    )
+
+    def session_metric_dimensions(orchestrator: Any) -> V2MetricDimensions:
+        pinned = V2MetricDimensions.from_orchestrator(
+            orchestrator,
+            fallback=active_metric_dimensions,
+        )
+        digest = release_digest_for_orchestrator(orchestrator)
+        return V2MetricDimensions(
+            graph_version=pinned.graph_version,
+            item_bank_version=pinned.item_bank_version,
+            pedagogy_catalog_version=pinned.pedagogy_catalog_version,
+            policy_versions=pinned.policy_versions,
+            learner_parameter_version=pinned.learner_parameter_version,
+            capability_manifest_version=pinned.capability_manifest_version,
+            release_digest=digest,
+        )
+
     store = V2SessionStore(
         graph_nodes={node.id: node for node in active_graph.nodes},
         persistence=persistence,
         metrics_sink=metrics_sink,
-        metric_dimensions=V2MetricDimensions(
-            graph_version=str(active_graph.graph_version),
-            item_bank_version=(
-                active_item_bank.bank_version
-                if active_item_bank is not None
-                else "unavailable"
-            ),
-            pedagogy_catalog_version=(
-                active_pedagogy_catalog.catalog_version
-                if active_pedagogy_catalog is not None
-                else "unavailable"
-            ),
-            policy_versions=tuple(sorted(active_policy_versions.items())),
-            learner_parameter_version=(
-                f"bkt-v{DEFAULT_PARAMS_V2.params_version}"
-            ),
-            capability_manifest_version=str(active_widget_manifest["version"]),
-        ),
+        metric_dimensions=active_metric_dimensions,
+        metric_dimensions_resolver=session_metric_dimensions,
     )
 
     @app.middleware("http")
@@ -685,16 +716,48 @@ def install_v2_routes(
             and parts[:3] == ["api", "v2", "sessions"]
             and parts[4] == "actions"
         )
-        if is_action:
-            store.record_metric("action_requests")
+
+        def pinned_handle() -> V2SessionHandle | None:
+            if not is_action:
+                return None
+            try:
+                return store.get(parts[3])
+            except KeyError:
+                return None
+
         try:
             result = await call_next(request)
         except Exception:
             if is_action:
-                store.record_metric("action_5xx")
+                handle = pinned_handle()
+                store.record_metric(
+                    "action_requests",
+                    metric_dimensions=(
+                        handle.metric_dimensions if handle is not None else None
+                    ),
+                )
+                store.record_metric(
+                    "action_5xx",
+                    metric_dimensions=(
+                        handle.metric_dimensions if handle is not None else None
+                    ),
+                )
             raise
-        if is_action and result.status_code >= 500:
-            store.record_metric("action_5xx")
+        if is_action:
+            handle = pinned_handle()
+            store.record_metric(
+                "action_requests",
+                metric_dimensions=(
+                    handle.metric_dimensions if handle is not None else None
+                ),
+            )
+            if result.status_code >= 500:
+                store.record_metric(
+                    "action_5xx",
+                    metric_dimensions=(
+                        handle.metric_dimensions if handle is not None else None
+                    ),
+                )
         return result
 
     router = APIRouter(prefix="/api/v2")
@@ -707,7 +770,12 @@ def install_v2_routes(
     ) -> JSONResponse | None:
         observed = snapshot or observe_release_quarantine()
         if not observed.available:
-            store.record_metric("release_safety_state_unavailable")
+            store.record_metric(
+                "release_safety_state_unavailable",
+                metric_dimensions=(
+                    handle.metric_dimensions if handle is not None else None
+                ),
+            )
             return _error(
                 503,
                 "safety_state_unavailable",
@@ -716,7 +784,10 @@ def install_v2_routes(
             )
         if release_digest is None or not observed.is_quarantined(release_digest):
             return None
-        store.record_metric("release_quarantined")
+        store.record_metric(
+            "release_quarantined",
+            metric_dimensions=(handle.metric_dimensions if handle is not None else None),
+        )
         recovery = None
         if (
             handle is not None
@@ -747,7 +818,10 @@ def install_v2_routes(
         try:
             digest = release_digest_for_orchestrator(handle.orchestrator)
         except Exception:
-            store.record_metric("release_identity_unavailable")
+            store.record_metric(
+                "release_identity_unavailable",
+                metric_dimensions=handle.metric_dimensions,
+            )
             return _error(
                 503,
                 "safety_state_unavailable",
@@ -872,6 +946,52 @@ def install_v2_routes(
             session,
             retryable=True,
         )
+
+    def request_admission_error(
+        operation: AdmissionOperation,
+        request: Request,
+        handle: V2SessionHandle | None = None,
+    ) -> JSONResponse | None:
+        """Apply the fleet bucket without exposing or retaining network data."""
+
+        peer_host = request.client.host if request.client is not None else None
+        forwarded_for = tuple(request.headers.getlist("x-forwarded-for"))
+        try:
+            decision = active_request_admission.admit(
+                operation,
+                peer_host=peer_host,
+                forwarded_for=forwarded_for,
+            )
+        except Exception:  # noqa: BLE001 - custom adapters also fail safely
+            decision = None
+        if not isinstance(decision, AdmissionDecision) or not decision.available:
+            store.record_metric(
+                f"request_admission_unavailable_{operation}",
+                metric_dimensions=(
+                    handle.metric_dimensions if handle is not None else None
+                ),
+            )
+            return _error(
+                503,
+                "safety_state_unavailable",
+                "Request safety controls are temporarily unavailable; retry shortly.",
+                retryable=True,
+            )
+        if decision.allowed:
+            return None
+        store.record_metric(
+            f"requests_rate_limited_{operation}",
+            metric_dimensions=(handle.metric_dimensions if handle is not None else None),
+        )
+        retry_after = decision.retry_after_seconds or 1
+        response = _error(
+            429,
+            "rate_limited",
+            "Too many requests; retry after the indicated delay.",
+            retryable=True,
+        )
+        response.headers["Retry-After"] = str(retry_after)
+        return response
 
     def restore_durable(
         token_hash: str, bundle: dict[str, Any] | None = None
@@ -1130,8 +1250,17 @@ def install_v2_routes(
             store.record_metric("resume_successes")
         return None
 
-    @router.get("/goals", response_model=GoalCatalog)
-    def list_goals(request: Request, response: Response) -> GoalCatalog:
+    @router.get(
+        "/goals",
+        response_model=GoalCatalog,
+        responses={429: {"model": APIError}},
+    )
+    def list_goals(
+        request: Request, response: Response
+    ) -> GoalCatalog | JSONResponse:
+        limited = request_admission_error("read", request)
+        if limited is not None:
+            return limited
         assignment = assignment_for(request)
         _set_rollout_cookie(response, assignment.cookie_value, request)
         catalog = rollout_catalog(assignment)
@@ -1139,8 +1268,15 @@ def install_v2_routes(
         store.record_metric(f"catalog_{catalog.rollout.status}")
         return catalog
 
-    @router.get("/capabilities", response_model=WidgetCapabilityManifestView)
-    def capabilities() -> WidgetCapabilityManifestView:
+    @router.get(
+        "/capabilities",
+        response_model=WidgetCapabilityManifestView,
+        responses={429: {"model": APIError}},
+    )
+    def capabilities(request: Request) -> WidgetCapabilityManifestView | JSONResponse:
+        limited = request_admission_error("read", request)
+        if limited is not None:
+            return limited
         return WidgetCapabilityManifestView.model_validate(
             active_widget_manifest
         )
@@ -1152,6 +1288,7 @@ def install_v2_routes(
             401: {"model": APIError},
             403: {"model": APIError},
             409: {"model": APIError},
+            429: {"model": APIError},
             503: {"model": APIError},
         },
     )
@@ -1169,6 +1306,9 @@ def install_v2_routes(
 
         if not _origin_allowed(request):
             return _error(403, "origin_not_allowed", "cross-origin mutation rejected")
+        limited = request_admission_error("recover", request)
+        if limited is not None:
+            return limited
         quarantine_snapshot = observe_release_quarantine()
         if not quarantine_snapshot.available:
             return release_safety_error(
@@ -1252,13 +1392,20 @@ def install_v2_routes(
                 "the committed replacement session is no longer active",
             )
         _set_resume_cookie(response, replacement_raw_token, request)
-        store.record_metric(f"{request_body.operation}_responses_recovered")
+        store.record_metric(
+            f"{request_body.operation}_responses_recovered",
+            metric_dimensions=handle.metric_dimensions,
+        )
         return RecoverSessionV2Response(session_id=handle.session_id)
 
     @router.post(
         "/sessions",
         response_model=SessionView,
-        responses={409: {"model": APIError}, 503: {"model": APIError}},
+        responses={
+            409: {"model": APIError},
+            429: {"model": APIError},
+            503: {"model": APIError},
+        },
     )
     def create_session(
         request_body: CreateSessionV2Request, request: Request, response: Response
@@ -1360,6 +1507,11 @@ def install_v2_routes(
                 "persistence_unavailable",
                 "the creation receipt could not be checked; retry with the same request_id",
             )
+
+        limited = request_admission_error("create", request)
+        if limited is not None:
+            _set_rollout_cookie(limited, assignment.cookie_value, request)
+            return limited
 
         release_error = release_safety_error(
             active_release_digest,
@@ -1522,10 +1674,17 @@ def install_v2_routes(
         _set_resume_cookie(response, raw_token, request)
         return store.view(handle)
 
-    @router.get("/sessions/current", response_model=SessionView)
+    @router.get(
+        "/sessions/current",
+        response_model=SessionView,
+        responses={429: {"model": APIError}},
+    )
     def get_current(
         request: Request, response: Response
     ) -> SessionView | JSONResponse:
+        limited = request_admission_error("read", request)
+        if limited is not None:
+            return limited
         handle, token_hash, error = authorized_handle(
             request,
             measure_resume=True,
@@ -1544,7 +1703,11 @@ def install_v2_routes(
             return refresh_error
         return store.view(handle)
 
-    @router.post("/sessions/current/reset", response_model=ResetResponse)
+    @router.post(
+        "/sessions/current/reset",
+        response_model=ResetResponse,
+        responses={429: {"model": APIError}, 503: {"model": APIError}},
+    )
     def reset_current(
         request_body: ResetSessionV2Request,
         request: Request,
@@ -1674,6 +1837,23 @@ def install_v2_routes(
                 "reset",
                 None if quarantined_reset else store.view(handle),
             )
+        try:
+            store.validate_reset_preconditions(
+                handle,
+                token_hash,
+                request_body,
+                accept_quarantine_recovery_key=quarantined_reset,
+            )
+        except SessionConflict as exc:
+            return _error(
+                409,
+                exc.code,
+                str(exc),
+                None if quarantined_reset else (exc.view or store.view(handle)),
+            )
+        limited = request_admission_error("reset", request, handle)
+        if limited is not None:
+            return limited
         try:
             from datetime import datetime, timezone
 
@@ -1807,10 +1987,17 @@ def install_v2_routes(
         _set_resume_cookie(response, replacement_raw_token, request)
         return reset
 
-    @router.get("/sessions/{session_id}", response_model=SessionView)
+    @router.get(
+        "/sessions/{session_id}",
+        response_model=SessionView,
+        responses={429: {"model": APIError}},
+    )
     def get_session(
         session_id: str, request: Request, response: Response
     ) -> SessionView | JSONResponse:
+        limited = request_admission_error("read", request)
+        if limited is not None:
+            return limited
         handle, token_hash, error = authorized_handle(
             request,
             session_id,
@@ -1868,6 +2055,9 @@ def install_v2_routes(
             gate_snapshot = observe_mutation_gate()
             if mutations_paused(gate_snapshot):
                 return mutation_paused_error("action", store.view(handle))
+            limited = request_admission_error("action", request, handle)
+            if limited is not None:
+                return limited
             view = store.apply(session_id, action, token_hash=token_hash)
             raw_token = request.cookies[_COOKIE_NAME]
             _set_resume_cookie(response, raw_token, request)
@@ -1912,6 +2102,13 @@ def install_v2_routes(
                 "the action was not committed; retry with the same request_id",
                 store.view(handle),
             )
+        except VerificationCapacityUnavailable:
+            return _error(
+                503,
+                "verification_capacity_unavailable",
+                "answer checking is temporarily busy; retry with the same request_id",
+                store.view(handle),
+            )
         except SessionIntegrityError:
             return _error(
                 500,
@@ -1947,6 +2144,7 @@ def install_v2_routes(
     app.state.v2_feature_flags = flags
     app.state.v2_release_quarantine = active_release_quarantine
     app.state.v2_active_release_digest = active_release_digest
+    app.state.v2_request_admission = active_request_admission
 
     def readiness_view() -> dict[str, Any]:
         """Observe the live gate without exposing provider failures or config."""
@@ -1964,10 +2162,24 @@ def install_v2_routes(
             gate_snapshot.source != "fail_closed"
             and quarantine_snapshot.available
         )
+        metrics_health = getattr(metrics_sink, "healthy", None)
+        telemetry_healthy = bool(metrics_sink is not None) and (
+            bool(metrics_health()) if callable(metrics_health) else True
+        )
+        telemetry_dropped_count = getattr(metrics_sink, "dropped_count", 0)
+        if not isinstance(telemetry_dropped_count, int) or telemetry_dropped_count < 0:
+            telemetry_dropped_count = 0
+        request_admission_configured = not isinstance(
+            active_request_admission,
+            NoopRequestAdmissionGate,
+        )
         return {
             "student_stack_enabled": flags.student_stack_enabled,
             "content_ready": content_ready,
             "fleet_metrics_configured": metrics_sink is not None,
+            "telemetry_healthy": telemetry_healthy,
+            "telemetry_dropped_count": telemetry_dropped_count,
+            "request_admission_configured": request_admission_configured,
             "mutations_paused": effective_pause,
             "safety_state_available": safety_state_available,
             "active_release_quarantined": active_release_quarantined,
@@ -1977,6 +2189,7 @@ def install_v2_routes(
                 and not effective_pause
                 and safety_state_available
                 and not active_release_quarantined
+                and telemetry_healthy
             ),
             "mutation_gate": mutation_gate_view(gate_snapshot),
             "release_quarantine": {

@@ -17,8 +17,8 @@ from tutor.db.persistence import PersistenceService
 from tutor.db.session import get_engine
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
     approved_power_rule_catalog,
+    approved_power_rule_stress_bank,
     power_rule_only_graph,
 )
 
@@ -34,7 +34,7 @@ def _app(persistence: V2PersistenceService | None = None) -> FastAPI:
         power_rule_only_graph(),
         persistence=persistence,
         available_targets=("kc.der.power_rule",),
-        item_bank=approved_power_rule_bank(),
+        item_bank=approved_power_rule_stress_bank(),
         pedagogy_catalog=approved_power_rule_catalog(),
         resume_token_secret=_RESUME_SECRET,
     )

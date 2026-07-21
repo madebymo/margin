@@ -28,7 +28,7 @@ from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
+    approved_power_rule_episode_bank,
     approved_power_rule_catalog,
     power_rule_only_graph,
 )
@@ -197,7 +197,7 @@ def test_chunked_body_limit_never_calls_downstream_application():
 
 def test_quarantine_blocks_reads_and_committed_action_replays_without_content():
     graph = power_rule_only_graph()
-    bank = approved_power_rule_bank()
+    bank = approved_power_rule_episode_bank()
     catalog = approved_power_rule_catalog()
     registry = V2VersionRegistry()
     release = registry.register(graph, bank, catalog)
@@ -260,7 +260,7 @@ def test_quarantine_blocks_reads_and_committed_action_replays_without_content():
 
 def test_quarantine_reset_moves_an_old_episode_to_a_distinct_safe_release():
     graph_v1 = power_rule_only_graph()
-    bank_v1 = approved_power_rule_bank()
+    bank_v1 = approved_power_rule_episode_bank()
     catalog_v1 = approved_power_rule_catalog()
     graph_payload = graph_v1.model_dump(mode="json")
     graph_payload["graph_version"] = 2

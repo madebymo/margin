@@ -16,8 +16,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
     approved_power_rule_catalog,
+    approved_power_rule_stress_bank,
     power_rule_only_graph,
 )
 from tutor.api.v2 import install_v2_routes
@@ -39,7 +39,7 @@ _DIST_DIR = (
     / "dist"
 )
 _GRAPH = power_rule_only_graph()
-_BANK = approved_power_rule_bank()
+_BANK = approved_power_rule_stress_bank()
 _PEDAGOGY_CATALOG = approved_power_rule_catalog()
 
 

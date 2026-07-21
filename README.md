@@ -277,8 +277,10 @@ python -m tutor.db.migrate_session_v2
 
 # Generate once, store in a secret manager, and reuse across restarts.
 export TUTOR_RESUME_TOKEN_SECRET='replace-with-at-least-32-random-bytes'
-# Deployment-owned zero-argument factory returning the MetricsSink contract.
-export TUTOR_V2_METRICS_SINK_FACTORY='deployment.metrics:create_sink'
+export TUTOR_REDIS_URL='rediss://redis.example.invalid/0'
+export TUTOR_NETWORK_HMAC_SECRET='replace-with-an-independent-32-byte-secret'
+export TUTOR_TRUSTED_PROXY_CIDRS='10.0.0.0/8'
+export OTEL_EXPORTER_OTLP_ENDPOINT='https://otel.example.invalid'
 export TUTOR_PILOT_PRODUCTION=1
 export TUTOR_ENABLE_API_SESSION_V2=1
 export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
@@ -292,10 +294,11 @@ uvicorn tutor.api.app:app
 
 Pilot mode fails startup if `DATABASE_URL` is not PostgreSQL, persistence
 cannot initialize, the v2 schema has not been migrated, the resume secret is
-missing/too short, or a fleet metrics sink cannot be loaded. It also requires
-all six feature flags and the rollout percentage explicitly; the example starts
-closed before the reviewed 5/25/100 canary progression. Non-pilot development
-reports `memory_only` durability when no database is configured.
+missing/too short, or the Redis safety/admission and OpenTelemetry adapters
+cannot be constructed. It also requires all six feature flags and the rollout
+percentage explicitly; the example starts closed before the reviewed 5/25/100
+canary progression. Non-pilot development reports `memory_only` durability
+when no database is configured.
 
 Durable sessions restore only the exact registered graph, item-bank, and
 pedagogy-catalog triple pinned in their checkpoint and checkpoint row. Keep
@@ -402,17 +405,24 @@ before invoking the orchestrator or writing revision, transcript, evidence,
 exposure, widget-attempt, or receipt state. Clients must retry the identical
 payload and request ID after the operator clears the pause.
 
-Deployments that need a live control-plane switch may additionally configure
-`TUTOR_V2_MUTATION_GATE_FACTORY=package.module:factory`. The zero-argument
-factory must return the runtime-checkable `MutationGate` contract. Its bounded
-snapshot is read for each catalog view and new mutation; provider exceptions,
-invalid values, observations more than 60 seconds old, and materially
-future-dated observations fail closed. The static pause flag remains a
-one-way ceiling, so a dynamic provider can never reopen a statically paused
-deployment. Receipt lookup still precedes the live gate, preserving exact
-create/action/reset transport retries during an incident. Health readiness
-reports only the effective pause, content readiness, acceptance decision, and
-the bounded gate revision/source/time—not provider errors or configuration.
+Pilot production uses a built-in Redis refresher for the mutation switch and
+release quarantine. Requests read immutable process-local snapshots; only the
+background refresher performs Redis I/O. Provider exceptions, malformed
+documents, stale observations, and materially future-dated observations fail
+closed. The static pause flag remains a one-way ceiling, and receipt lookup
+still precedes both the mutation gate and request bucket. Optional
+`TUTOR_V2_MUTATION_GATE_FACTORY` and
+`TUTOR_V2_RELEASE_QUARANTINE_FACTORY` adapters override the built-ins when a
+deployment supplies the same runtime contracts.
+
+Redis also owns fleet-shared token buckets for create, recover, reset, action,
+and read requests. Network identities are HMACs produced from the direct peer;
+`X-Forwarded-For` is considered only when that peer belongs to
+`TUTOR_TRUSTED_PROXY_CIDRS`. The defaults are 10 create/recover/reset requests
+per 10 minutes, 60 actions per minute, and 120 reads per minute. A depleted
+bucket returns typed `429 rate_limited` with `Retry-After`. Redis failure closes
+new mutations and API reads; liveness and static assets remain available. A custom gate can be supplied through
+`TUTOR_V2_REQUEST_ADMISSION_FACTORY`.
 
 New-session admission uses one explicit percentage:
 
@@ -480,15 +490,15 @@ remain separate and do not dilute the reliability rate. An expiry already
 removed by retention is classified as invalid because no durable row remains.
 
 The process-local snapshot remains useful for tests and one-worker
-development, but is not a fleet aggregator. Production loads the fleet adapter
-from `TUTOR_V2_METRICS_SINK_FACTORY=package.module:factory`; the zero-argument
-factory must return the runtime-checkable `MetricsSink` contract. Tests and
-embedded callers may instead pass `create_app(v2_metrics_sink=...)`, which
-takes precedence. A configured factory that cannot load fails startup, and
-pilot mode requires a sink. Every exported increment is tagged only with the
-active graph, item-bank, pedagogy-catalog, and policy versions and, where
-applicable, a reviewed stable item ID. Runtime sink failures increment the
-local `metrics_export_failures` counter and never fail a tutoring request. Raw
+development, but is not a fleet aggregator. Production constructs a bounded,
+nonblocking OpenTelemetry sink from the standard OTLP environment. An optional
+`TUTOR_V2_METRICS_SINK_FACTORY=package.module:factory` overrides it; embedded
+callers may instead pass `create_app(v2_metrics_sink=...)`. Every exported
+increment is tagged only with the originating session's pinned graph,
+item-bank, pedagogy-catalog, learner, capability, and policy versions and,
+where applicable, a reviewed stable item ID. A blocked exporter fills only a
+bounded queue; drops increment an independent local failure counter and never
+block a tutoring request. Raw
 answers, expected answers, session/learner IDs, prompts, and student context are
 excluded from the sink contract. Readiness reports
 `fleet_metrics_configured` without exposing provider configuration.
@@ -572,13 +582,10 @@ headed visual review in the target deployment environment.
   deployment environment in addition to the dedicated PostgreSQL CI job.
 - Run and visually review the Playwright/axe journey in the target deployment
   environment; repository CI now executes its automated Chromium checks.
-- Configure and verify a shared edge/API request-rate limiter. Application
-  action and episode quotas bound one anonymous learner, but a client that
-  deliberately discards cookies must also be bounded before worker admission.
-- Deploy a fleet-wide `MetricsSink` through the implemented runtime factory,
-  verify active-version dimensions in the target telemetry backend, and alert
-  on `metrics_export_failures`; the built-in health snapshot is intentionally
-  process-local.
+- Verify Redis admission, mutation pause, and release quarantine across two
+  target-deployment workers, including outage and trusted-proxy drills.
+- Verify pinned-version dimensions in the target telemetry backend and alert
+  on queue drops and `metrics_export_failures`.
 - Keep `click_region` disabled until geometric hit testing and equivalent
   keyboard semantics are complete.
 

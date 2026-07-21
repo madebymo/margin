@@ -128,6 +128,10 @@ class RemediationContent(BaseModel):
     segments: list[PromptSegment] = Field(default_factory=list)
 
 
+class VerificationCapacityUnavailable(RuntimeError):
+    """The answer verifier did not start because its bounded pool was full."""
+
+
 class RemediationState(BaseModel):
     """Bounded post-check remediation for the current lesson step."""
 
@@ -716,10 +720,6 @@ class SessionOrchestratorV2:
             raise RuntimeError("session is over")
         if self._pending is None:
             raise RuntimeError("no pending item to answer")
-        # Register before verification because a correct/incorrect response can
-        # allocate the next item in this same call.  A failed transaction acts
-        # on a deep copy, so uncommitted text never reaches the live ledger.
-        self.remember_visible_content(answer)
         if (
             self._pending.kind == "guided_widget"
             and self._pending.delivery_mode == "widget"
@@ -728,6 +728,14 @@ class SessionOrchestratorV2:
 
         pending = self._pending
         result = verify_answer(pending.answer_spec, answer)
+        if result.retryable_overload:
+            raise VerificationCapacityUnavailable(
+                "answer verification capacity is temporarily unavailable"
+            )
+        # Register after admission to the verifier. A capacity failure is a
+        # transport-level retry and must not mutate even a directly used
+        # orchestrator; completed invalid/time-out checks remain visible turns.
+        self.remember_visible_content(answer)
         if result.status in {"invalid", "timeout"}:
             return [
                 self._message(
@@ -1167,11 +1175,15 @@ class SessionOrchestratorV2:
         if key != self._pending.key:
             raise KeyError("unknown or stale widget")
         pending = self._pending
+        raw = response.get("text", response.get("value", ""))
+        result = verify_answer(pending.answer_spec, str(raw))
+        if result.retryable_overload:
+            raise VerificationCapacityUnavailable(
+                "answer verification capacity is temporarily unavailable"
+            )
         # The archived control can retain its populated value even though the
         # transcript uses a generic student bubble.
         self.remember_private_visible_input(response)
-        raw = response.get("text", response.get("value", ""))
-        result = verify_answer(pending.answer_spec, str(raw))
         if result.status in {"invalid", "timeout"}:
             feedback = "That input was not gradable. Nothing was counted; try again."
             self.remember_visible_content(feedback)

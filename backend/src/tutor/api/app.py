@@ -31,14 +31,18 @@ from tutor.api.runtime_plugins import (
 from tutor.api.http_safety import RequestBodyLimitMiddleware
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
-from tutor.api.v2_controls import MutationGate, StaticMutationGate
+from tutor.api.v2_admission import RequestAdmissionGate
+from tutor.api.v2_controls import MutationGate, RedisMutationGate, StaticMutationGate
 from tutor.api.v2_features import V2FeatureFlags
-from tutor.api.v2_metrics import MetricsSink
+from tutor.api.v2_fleet import RedisFleetSettings, create_redis_client
+from tutor.api.v2_metrics import MetricsSink, OpenTelemetryMetricsSink
 from tutor.api.v2_persistence import V2PersistenceService
 from tutor.api.v2_quarantine import (
+    RedisReleaseQuarantineProvider,
     ReleaseQuarantineProvider,
     StaticReleaseQuarantineProvider,
 )
+from tutor.verify import close_verifier_pool
 from tutor.db.migrate_session_v2 import schema_migration_status
 from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
@@ -56,6 +60,7 @@ _DIST_DIR = _STATIC_DIR / "dist"
 _V2_METRICS_SINK_FACTORY_ENV = "TUTOR_V2_METRICS_SINK_FACTORY"
 _V2_MUTATION_GATE_FACTORY_ENV = "TUTOR_V2_MUTATION_GATE_FACTORY"
 _V2_RELEASE_QUARANTINE_FACTORY_ENV = "TUTOR_V2_RELEASE_QUARANTINE_FACTORY"
+_V2_REQUEST_ADMISSION_FACTORY_ENV = "TUTOR_V2_REQUEST_ADMISSION_FACTORY"
 _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE = timedelta(seconds=60)
 
 
@@ -142,6 +147,7 @@ def create_app(
     v2_mutation_gate_max_age: timedelta | None = None,
     v2_release_quarantine: ReleaseQuarantineProvider | None = None,
     v2_release_quarantine_max_age: timedelta | None = None,
+    v2_request_admission_gate: RequestAdmissionGate | None = None,
     v2_active_release_bundle: str | Path | None = None,
     v2_active_release_sha256: str | None = None,
 ) -> FastAPI:
@@ -172,14 +178,41 @@ def create_app(
             "TUTOR_PILOT_PRODUCTION forbids the missing-origin escape hatch"
         )
     persistence: PersistenceService | None = None
+    runtime_resources: list[object] = []
+    redis_client: object | None = None
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         try:
+            for resource in runtime_resources:
+                start = getattr(resource, "start", None)
+                if callable(start):
+                    start()
             yield
         finally:
+            for resource in reversed(runtime_resources):
+                close = getattr(resource, "close", None)
+                if callable(close):
+                    try:
+                        close()
+                    except Exception as exc:  # noqa: BLE001 - bounded best effort
+                        logger.warning(
+                            "runtime resource shutdown failed error_type=%s",
+                            type(exc).__name__,
+                        )
+            if redis_client is not None:
+                close_redis = getattr(redis_client, "close", None)
+                if callable(close_redis):
+                    try:
+                        close_redis()
+                    except Exception as exc:  # noqa: BLE001 - bounded best effort
+                        logger.warning(
+                            "Redis shutdown failed error_type=%s",
+                            type(exc).__name__,
+                        )
             if persistence is not None:
                 persistence.engine.dispose()
+            close_verifier_pool()
 
     app = FastAPI(
         title="Adaptive Math Tutor",
@@ -210,17 +243,25 @@ def create_app(
     app.state.persistence = persistence
     v2_flags = V2FeatureFlags.from_environment()
     app.state.v2_feature_flags = v2_flags
+    redis_settings: RedisFleetSettings | None = None
+
+    def builtin_redis() -> tuple[object, RedisFleetSettings]:
+        """Lazily construct one shared bounded Redis client for all adapters."""
+
+        nonlocal redis_client, redis_settings
+        if redis_settings is None:
+            redis_settings = RedisFleetSettings.from_environment()
+        if redis_client is None:
+            redis_client = create_redis_client(redis_settings)
+        return redis_client, redis_settings
+
     resolved_v2_metrics_sink = v2_metrics_sink
     if v2_flags.api_session_v2 and resolved_v2_metrics_sink is None:
-        metrics_factory_configured = bool(
-            os.environ.get(_V2_METRICS_SINK_FACTORY_ENV, "").strip()
-        )
         try:
             resolved_v2_metrics_sink = build_runtime_plugin_from_environment(
                 _V2_METRICS_SINK_FACTORY_ENV,
                 contract=MetricsSink,
                 contract_name="MetricsSink",
-                required=pilot_production,
             )
         except RuntimePluginError as exc:
             # A configured exporter is explicit deployment intent. Refuse to
@@ -230,16 +271,30 @@ def create_app(
                 "v2 metrics sink plugin startup failed error_type=%s",
                 type(exc).__name__,
             )
-            if pilot_production and not metrics_factory_configured:
-                raise RuntimeError(
-                    "TUTOR_PILOT_PRODUCTION requires a v2 fleet metrics sink"
-                ) from None
             raise RuntimeError(
                 "configured v2 fleet metrics sink could not be initialized"
             ) from None
+        if resolved_v2_metrics_sink is None and pilot_production:
+            try:
+                resolved_v2_metrics_sink = OpenTelemetryMetricsSink.from_environment()
+            except Exception as exc:  # noqa: BLE001 - configuration remains private
+                logger.error(
+                    "built-in metrics sink startup failed error_type=%s",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "TUTOR_PILOT_PRODUCTION requires a v2 fleet metrics sink"
+                ) from None
+    if resolved_v2_metrics_sink is not None and callable(
+        getattr(resolved_v2_metrics_sink, "close", None)
+    ):
+        runtime_resources.append(resolved_v2_metrics_sink)
     resolved_v2_mutation_gate = v2_mutation_gate
     resolved_v2_mutation_gate_max_age = v2_mutation_gate_max_age
     if v2_flags.api_session_v2 and resolved_v2_mutation_gate is None:
+        mutation_factory_configured = bool(
+            os.environ.get(_V2_MUTATION_GATE_FACTORY_ENV, "").strip()
+        )
         try:
             resolved_v2_mutation_gate = build_runtime_plugin_from_environment(
                 _V2_MUTATION_GATE_FACTORY_ENV,
@@ -254,51 +309,132 @@ def create_app(
                 "v2 mutation gate plugin failed closed error_type=%s",
                 type(exc).__name__,
             )
+            if pilot_production and mutation_factory_configured:
+                raise RuntimeError(
+                    "configured v2 mutation gate could not be initialized"
+                ) from None
             resolved_v2_mutation_gate = StaticMutationGate(
                 True,
                 revision="plugin-load-failed-v1",
                 source="fail_closed",
             )
             resolved_v2_mutation_gate_max_age = None
-        else:
-            if (
-                resolved_v2_mutation_gate is not None
-                and resolved_v2_mutation_gate_max_age is None
-            ):
-                resolved_v2_mutation_gate_max_age = (
-                    _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+        if resolved_v2_mutation_gate is None and pilot_production:
+            try:
+                client, settings = builtin_redis()
+                resolved_v2_mutation_gate = RedisMutationGate(
+                    client,
+                    refresh_interval_seconds=settings.refresh_interval_seconds,
                 )
+                resolved_v2_mutation_gate_max_age = settings.safety_max_age
+            except Exception as exc:  # noqa: BLE001 - configuration remains private
+                logger.error(
+                    "built-in mutation gate startup failed error_type=%s",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "TUTOR_PILOT_PRODUCTION requires a Redis mutation gate"
+                ) from None
+        if (
+            resolved_v2_mutation_gate is not None
+            and resolved_v2_mutation_gate_max_age is None
+        ):
+            resolved_v2_mutation_gate_max_age = _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+    if resolved_v2_mutation_gate is not None and callable(
+        getattr(resolved_v2_mutation_gate, "start", None)
+    ):
+        runtime_resources.append(resolved_v2_mutation_gate)
     resolved_v2_release_quarantine = v2_release_quarantine
     resolved_v2_release_quarantine_max_age = v2_release_quarantine_max_age
     if v2_flags.api_session_v2 and resolved_v2_release_quarantine is None:
+        quarantine_factory_configured = bool(
+            os.environ.get(_V2_RELEASE_QUARANTINE_FACTORY_ENV, "").strip()
+        )
         try:
             resolved_v2_release_quarantine = build_runtime_plugin_from_environment(
                 _V2_RELEASE_QUARANTINE_FACTORY_ENV,
                 contract=ReleaseQuarantineProvider,
                 contract_name="ReleaseQuarantineProvider",
-                required=pilot_production,
             )
         except RuntimePluginError as exc:
             logger.error(
                 "v2 release quarantine plugin failed closed error_type=%s",
                 type(exc).__name__,
             )
-            if pilot_production:
+            if pilot_production and quarantine_factory_configured:
                 raise RuntimeError(
-                    "pilot production requires a release quarantine provider"
+                    "configured v2 release quarantine provider could not be initialized"
                 ) from None
             resolved_v2_release_quarantine = StaticReleaseQuarantineProvider(
                 revision="plugin-load-failed-v1",
                 source="fail_closed",
                 available=False,
             )
-        else:
-            if resolved_v2_release_quarantine is None:
-                resolved_v2_release_quarantine = StaticReleaseQuarantineProvider()
-            elif resolved_v2_release_quarantine_max_age is None:
-                resolved_v2_release_quarantine_max_age = (
-                    _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+        if resolved_v2_release_quarantine is None and pilot_production:
+            try:
+                client, settings = builtin_redis()
+                resolved_v2_release_quarantine = RedisReleaseQuarantineProvider(
+                    client,
+                    refresh_interval_seconds=settings.refresh_interval_seconds,
                 )
+                resolved_v2_release_quarantine_max_age = settings.safety_max_age
+            except Exception as exc:  # noqa: BLE001 - configuration remains private
+                logger.error(
+                    "built-in release quarantine startup failed error_type=%s",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "TUTOR_PILOT_PRODUCTION requires a Redis release quarantine provider"
+                ) from None
+        if resolved_v2_release_quarantine is None:
+            resolved_v2_release_quarantine = StaticReleaseQuarantineProvider()
+        elif resolved_v2_release_quarantine_max_age is None:
+            resolved_v2_release_quarantine_max_age = (
+                _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+            )
+    if resolved_v2_release_quarantine is not None and callable(
+        getattr(resolved_v2_release_quarantine, "start", None)
+    ):
+        runtime_resources.append(resolved_v2_release_quarantine)
+
+    resolved_v2_request_admission = v2_request_admission_gate
+    if v2_flags.api_session_v2 and resolved_v2_request_admission is None:
+        admission_factory_configured = bool(
+            os.environ.get(_V2_REQUEST_ADMISSION_FACTORY_ENV, "").strip()
+        )
+        try:
+            resolved_v2_request_admission = build_runtime_plugin_from_environment(
+                _V2_REQUEST_ADMISSION_FACTORY_ENV,
+                contract=RequestAdmissionGate,
+                contract_name="RequestAdmissionGate",
+            )
+        except RuntimePluginError as exc:
+            logger.error(
+                "v2 request admission plugin failed error_type=%s",
+                type(exc).__name__,
+            )
+            if admission_factory_configured:
+                raise RuntimeError(
+                    "configured v2 request admission gate could not be initialized"
+                ) from None
+        if resolved_v2_request_admission is None and pilot_production:
+            try:
+                from tutor.api.v2_admission import (
+                    RedisTokenBucketRequestAdmissionGate,
+                )
+
+                client, _settings = builtin_redis()
+                resolved_v2_request_admission = (
+                    RedisTokenBucketRequestAdmissionGate.from_environment(client)
+                )
+            except Exception as exc:  # noqa: BLE001 - configuration remains private
+                logger.error(
+                    "built-in request admission startup failed error_type=%s",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "TUTOR_PILOT_PRODUCTION requires Redis request admission"
+                ) from None
     persistence_engine = getattr(persistence, "engine", None)
     database_schema = (
         schema_migration_status(persistence_engine)
@@ -440,6 +576,10 @@ def create_app(
             "fleet_metrics_configured": bool(
                 v2_readiness.get("fleet_metrics_configured")
             ),
+            "telemetry_healthy": bool(v2_readiness.get("telemetry_healthy")),
+            "request_admission_configured": bool(
+                v2_readiness.get("request_admission_configured")
+            ),
             "active_release_safe": not bool(
                 v2_readiness.get("active_release_quarantined", True)
             ),
@@ -566,6 +706,7 @@ def create_app(
             mutation_gate_max_age=resolved_v2_mutation_gate_max_age,
             release_quarantine=resolved_v2_release_quarantine,
             release_quarantine_max_age=resolved_v2_release_quarantine_max_age,
+            request_admission_gate=resolved_v2_request_admission,
             active_release_bundle=v2_active_release_bundle,
             active_release_sha256=v2_active_release_sha256,
         )

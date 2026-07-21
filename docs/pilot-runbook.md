@@ -40,9 +40,6 @@ export TUTOR_REDIS_URL='rediss://...'
 export TUTOR_RESUME_TOKEN_SECRET='<at-least-32-random-bytes>'
 export TUTOR_NETWORK_HMAC_SECRET='<independent-random-secret>'
 export TUTOR_TRUSTED_PROXY_CIDRS='<explicit-proxy-cidrs>'
-export TUTOR_V2_METRICS_SINK_FACTORY='deployment.metrics:create_sink'
-export TUTOR_V2_MUTATION_GATE_FACTORY='deployment.controls:create_mutation_gate'
-export TUTOR_V2_RELEASE_QUARANTINE_FACTORY='deployment.controls:create_release_gate'
 export OTEL_EXPORTER_OTLP_ENDPOINT='https://...'
 
 export TUTOR_ENABLE_API_SESSION_V2=1
@@ -50,9 +47,33 @@ export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
 export TUTOR_ENABLE_DIAGNOSIS_V2=1
 export TUTOR_ENABLE_LESSON_FLOW_V2=1
 export TUTOR_ENABLE_RICH_WIDGETS_V2=1
-export TUTOR_PAUSE_V2_MUTATIONS=1
+export TUTOR_PAUSE_V2_MUTATIONS=0
 export TUTOR_V2_STUDENT_ROLLOUT_PERCENT=0
 ```
+
+Before starting workers, initialize both strict Redis safety documents. Keep
+the mutation switch paused until the deployment checks pass:
+
+```bash
+redis-cli -u "$TUTOR_REDIS_URL" SET tutor:v2:controls:mutations \
+  '{"schema_version":1,"paused":true,"revision":"deploy-1-paused"}'
+redis-cli -u "$TUTOR_REDIS_URL" SET tutor:v2:controls:quarantine \
+  '{"schema_version":1,"revision":"deploy-1","quarantined_digests":[]}'
+```
+
+The built-in adapters refresh those documents every five seconds and reject
+state older than 20 seconds. Both values are configurable, but maximum staleness
+must stay at or below 60 seconds and exceed the refresh interval. A missing,
+malformed, or unavailable control pauses mutations and blocks content-bearing
+session access. Optional `TUTOR_V2_*_FACTORY` settings may replace metrics,
+mutation, quarantine, or request-admission adapters with deployment-owned
+implementations of the same contracts.
+
+Request admission uses Redis token buckets shared by all workers. The default
+buckets are 10 create/recover/reset requests per 10 minutes, 60 actions per
+minute, and 120 reads per minute. Redis keys contain only keyed HMAC identities,
+never network addresses. Forwarding headers are ignored unless the immediate
+peer is inside `TUTOR_TRUSTED_PROXY_CIDRS`; verify the ingress overwrites them.
 
 Terminate TLS at the trusted ingress. Forward only from the configured proxy
 CIDRs, overwrite rather than append forwarding headers, enforce the application
@@ -66,6 +87,8 @@ body limit at ingress too, and do not cache API or session-error responses.
    startup to create or alter production tables.
 4. Start the new image with rollout `0` and mutations paused.
 5. Require `/livez` to return 200 and `/readyz` to return 200 from every worker.
+   Readiness includes fresh Redis controls, shared admission configuration, and
+   a healthy local telemetry queue.
 6. Exercise create, action, reload/resume, duplicate retry, reset, and quarantine
    recovery against a test cohort.
 7. Confirm telemetry dimensions contain the exact release digest and pinned

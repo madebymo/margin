@@ -26,7 +26,7 @@ from tutor.schemas.kc import GraphDocument
 from tutor.schemas.pedagogy import PedagogyPackCatalog
 
 from tests.v2_helpers import (
-    approved_power_rule_bank,
+    approved_power_rule_episode_bank,
     approved_power_rule_catalog,
     power_rule_only_graph,
 )
@@ -44,7 +44,7 @@ def _release(
     if node_name is not None:
         graph_payload["nodes"][0]["name"] = node_name
     graph = GraphDocument.model_validate(graph_payload)
-    bank_payload = approved_power_rule_bank().model_dump(mode="json")
+    bank_payload = approved_power_rule_episode_bank().model_dump(mode="json")
     bank_payload["graph_version"] = graph_version
     bank_payload["bank_version"] = bank_version
     bank = ItemBankDocument.model_validate(bank_payload)
