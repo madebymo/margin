@@ -37,12 +37,7 @@ includes the on-screen evidence and disclosure beats for this workflow.
 
 ## Repository
 
-**Submission URL:** _Pending—this checkout has no configured Git remote._
-
-A public repository, or a private repository accessible to the judges, must be
-connected before submission. The URL is intentionally not fabricated here;
-replace the pending line with the actual repository link after the remote is
-created or supplied.
+**Submission URL:** [github.com/madebymo/margin](https://github.com/madebymo/margin)
 
 ## Release posture: fail closed
 

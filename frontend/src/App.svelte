@@ -680,8 +680,8 @@
           </label>
 
           <div class="curated-notice">
-            <strong>Reviewed lessons</strong>
-            <span>This pilot uses only authored, reviewed teaching and questions.</span>
+            <strong>Curated learning flow</strong>
+            <span>Authored teaching and server-checked questions stay separate.</span>
           </div>
 
           <button
@@ -805,14 +805,20 @@
         </section>
 
         <div class="content-mode">
-          <span>Lesson content</span>
-          <strong>
-            {view.content_mode.effective === "llm_coaching"
-              ? "Adaptive coaching"
-              : "Reviewed lessons"}
-          </strong>
-          {#if view.content_mode.fallback_reason}
-            <p>{view.content_mode.fallback_reason}</p>
+          {#if view.release_id?.startsWith("nonproduction.fixture.")}
+            <span>Release status</span>
+            <strong>Engineering demo</strong>
+            <p>Synthetic content for assessment—not a released curriculum.</p>
+          {:else}
+            <span>Lesson content</span>
+            <strong>
+              {view.content_mode.effective === "llm_coaching"
+                ? "Adaptive coaching"
+                : "Curated lessons"}
+            </strong>
+            {#if view.content_mode.fallback_reason}
+              <p>{view.content_mode.fallback_reason}</p>
+            {/if}
           {/if}
         </div>
       </aside>
@@ -830,6 +836,9 @@
             <h2>{phaseLabel(view.phase)}</h2>
           </div>
           <div class="topbar-status">
+            {#if view.release_id?.startsWith("nonproduction.fixture.")}
+              <span class="demo-badge">Demo</span>
+            {/if}
             <span class:memory-only={view.durability !== "durable"} class="durability">
               {view.durability === "durable" ? "Saved" : "Not durably saved"}
             </span>

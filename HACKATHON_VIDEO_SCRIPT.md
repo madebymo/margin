@@ -2,9 +2,9 @@
 
 Target runtime: 2:45–2:55. The 399-word spoken script is intentionally below the
 three-minute submission limit. Record the product sequence against the guarded,
-test-only fixture with PostgreSQL durability enabled. Add the persistent overlay
-**Development curriculum — independent review pending** whenever learner content
-is shown; the default application correctly exposes no goals.
+single-instance engineering demo. Keep its persistent **Engineering demo** and
+**Synthetic content—not a released curriculum** labels visible whenever learner
+content is shown; the default production application correctly exposes no goals.
 
 ## 0:00–0:15 — Inspiration
 
@@ -35,10 +35,10 @@ skills.
 
 ## 0:40–1:13 — Product demonstration
 
-**Picture:** Use the guarded test-only fixture with the review-pending overlay and
-the PostgreSQL-backed **Saved** indicator visible. Answer one probe, show an
-adaptive route decision, complete a mapping or slider, request a conceptual hint,
-and answer a fresh check-in. Reload and show the same transcript, draft, widget
+**Picture:** Use the guarded engineering demo with its synthetic-content label
+visible. Answer one probe, show an adaptive route decision, complete guided
+practice, request a conceptual hint, and answer a fresh check-in. Reload while
+the demo instance remains running and show the same transcript, draft, widget
 state, and progress restored.
 
 **Voiceover:**
@@ -46,7 +46,7 @@ state, and progress restored.
 > One response changes this route. Margin explains the current skill and offers
 > keyboard-accessible guided practice, but evidence comes from a different,
 > unseen item family. A conceptual hint preserves the learner's draft; a
-> revealing hint retires that question. Reloading this saved session restores
+> revealing hint retires that question. Reloading this demo session restores
 > its transcript, draft, widget state, and progress—without duplicate advancement
 > or missing evidence.
 
@@ -55,7 +55,7 @@ state, and progress restored.
 **Picture:** Fast cuts between the original browser audit, a simplified
 architecture diagram, Codex diffs, small green commits, and passing test output.
 Use the following architecture labels: **deterministic control plane**,
-**reviewed content**, **restricted verifier**, and **authoritative session view**.
+**versioned content**, **restricted verifier**, and **authoritative session view**.
 
 **Voiceover:**
 
@@ -121,9 +121,7 @@ release → canary pilot**. End on the Margin wordmark and repository URL.
 
 - Keep the finished video below 3:00; aim for 2:50 to leave upload headroom.
 - Upload it as a public YouTube video.
-- Make the recorded product name match **Margin**; the current development UI
-  still says **Adaptive Math Tutor**, so update or cover that label consistently
-  before filming.
+- Keep the recorded product name and wordmark consistently **Margin**.
 - Say both “Codex” and “GPT-5.6” in the recorded audio; captions alone do not
   satisfy the stated requirement.
 - Show the Codex session/model evidence supporting the GPT-5.6 claim. If the
@@ -134,6 +132,6 @@ release → canary pilot**. End on the Margin wordmark and repository URL.
   at least two seconds.
 - Do not expose expected answers, cookies, API keys, raw student data, or private
   reviewer artifacts in terminal or browser shots.
-- Do not call the development curriculum reviewed, independently attested, or
-  released. Keep the pending-review overlay visible and use the final
+- Do not call the demo curriculum reviewed, independently attested, or released.
+  Keep the engineering-demo disclosure visible and use the final
   release-count claim only after it is factually true.

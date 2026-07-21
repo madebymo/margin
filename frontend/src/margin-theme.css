@@ -568,7 +568,8 @@ textarea:focus-visible,
 
 .durability,
 .phase-pill,
-.revision {
+.revision,
+.demo-badge {
   padding: 6px 9px;
   border: 1px solid var(--grid);
   border-radius: var(--radius-s);
@@ -594,6 +595,12 @@ textarea:focus-visible,
   color: var(--accent-text);
   background: var(--accent-soft);
   border-color: var(--accent-line);
+}
+
+.demo-badge {
+  color: var(--retry-text);
+  background: var(--retry-soft);
+  border-color: var(--retry-line);
 }
 
 .revision {
