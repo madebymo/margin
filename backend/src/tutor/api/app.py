@@ -9,13 +9,14 @@ interactions, phase, pending-item metadata, and the session summary.
 
 import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -27,12 +28,18 @@ from tutor.api.runtime_plugins import (
     RuntimePluginError,
     build_runtime_plugin_from_environment,
 )
+from tutor.api.http_safety import RequestBodyLimitMiddleware
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_controls import MutationGate, StaticMutationGate
 from tutor.api.v2_features import V2FeatureFlags
 from tutor.api.v2_metrics import MetricsSink
 from tutor.api.v2_persistence import V2PersistenceService
+from tutor.api.v2_quarantine import (
+    ReleaseQuarantineProvider,
+    StaticReleaseQuarantineProvider,
+)
+from tutor.db.migrate_session_v2 import schema_migration_status
 from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator
@@ -48,6 +55,7 @@ _STATIC_DIR = Path(__file__).resolve().parent / "static"
 _DIST_DIR = _STATIC_DIR / "dist"
 _V2_METRICS_SINK_FACTORY_ENV = "TUTOR_V2_METRICS_SINK_FACTORY"
 _V2_MUTATION_GATE_FACTORY_ENV = "TUTOR_V2_MUTATION_GATE_FACTORY"
+_V2_RELEASE_QUARANTINE_FACTORY_ENV = "TUTOR_V2_RELEASE_QUARANTINE_FACTORY"
 _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE = timedelta(seconds=60)
 
 
@@ -132,6 +140,8 @@ def create_app(
     v2_metrics_sink: MetricsSink | None = None,
     v2_mutation_gate: MutationGate | None = None,
     v2_mutation_gate_max_age: timedelta | None = None,
+    v2_release_quarantine: ReleaseQuarantineProvider | None = None,
+    v2_release_quarantine_max_age: timedelta | None = None,
     v2_active_release_bundle: str | Path | None = None,
     v2_active_release_sha256: str | None = None,
 ) -> FastAPI:
@@ -161,9 +171,23 @@ def create_app(
         raise RuntimeError(
             "TUTOR_PILOT_PRODUCTION forbids the missing-origin escape hatch"
         )
-    app = FastAPI(title="Adaptive Math Tutor", version="0.1.0")
-    store = SessionStore()
     persistence: PersistenceService | None = None
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        try:
+            yield
+        finally:
+            if persistence is not None:
+                persistence.engine.dispose()
+
+    app = FastAPI(
+        title="Adaptive Math Tutor",
+        version="0.1.0",
+        lifespan=lifespan,
+    )
+    app.add_middleware(RequestBodyLimitMiddleware)
+    store = SessionStore()
     resolved_url = database_url or os.environ.get("DATABASE_URL")
     if pilot_production and (
         not resolved_url or not resolved_url.lower().startswith("postgresql")
@@ -244,6 +268,47 @@ def create_app(
                 resolved_v2_mutation_gate_max_age = (
                     _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
                 )
+    resolved_v2_release_quarantine = v2_release_quarantine
+    resolved_v2_release_quarantine_max_age = v2_release_quarantine_max_age
+    if v2_flags.api_session_v2 and resolved_v2_release_quarantine is None:
+        try:
+            resolved_v2_release_quarantine = build_runtime_plugin_from_environment(
+                _V2_RELEASE_QUARANTINE_FACTORY_ENV,
+                contract=ReleaseQuarantineProvider,
+                contract_name="ReleaseQuarantineProvider",
+                required=pilot_production,
+            )
+        except RuntimePluginError as exc:
+            logger.error(
+                "v2 release quarantine plugin failed closed error_type=%s",
+                type(exc).__name__,
+            )
+            if pilot_production:
+                raise RuntimeError(
+                    "pilot production requires a release quarantine provider"
+                ) from None
+            resolved_v2_release_quarantine = StaticReleaseQuarantineProvider(
+                revision="plugin-load-failed-v1",
+                source="fail_closed",
+                available=False,
+            )
+        else:
+            if resolved_v2_release_quarantine is None:
+                resolved_v2_release_quarantine = StaticReleaseQuarantineProvider()
+            elif resolved_v2_release_quarantine_max_age is None:
+                resolved_v2_release_quarantine_max_age = (
+                    _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+                )
+    persistence_engine = getattr(persistence, "engine", None)
+    database_schema = (
+        schema_migration_status(persistence_engine)
+        if persistence_engine is not None
+        else {"reachable": False, "current": False, "head": None}
+    )
+    if pilot_production and not database_schema["current"]:
+        raise RuntimeError(
+            "pilot production database schema is not at the required migration head"
+        )
     diagnosis_shadow = DiagnosisV2ShadowObserver(
         resolved_graph,
         enabled=(
@@ -342,6 +407,52 @@ def create_app(
                 }
             ),
         }
+
+    @app.get("/livez")
+    def livez() -> dict[str, str]:
+        """Cheap process liveness probe with no external dependency calls."""
+
+        return {"status": "ok"}
+
+    @app.get("/readyz")
+    def readyz() -> JSONResponse:
+        """Sanitized deployment readiness across content and dependencies."""
+
+        readiness_provider = getattr(app.state, "v2_readiness_provider", None)
+        v2_readiness = (
+            readiness_provider()
+            if callable(readiness_provider)
+            else {"accepting_mutations": False, "safety_state_available": False}
+        )
+        schema = (
+            schema_migration_status(persistence.engine)
+            if persistence is not None
+            else {"reachable": False, "current": False, "head": None}
+        )
+        checks = {
+            "database_reachable": bool(schema["reachable"]),
+            "migration_current": bool(schema["current"]),
+            "durable_persistence": persistence is not None,
+            "content_ready": bool(v2_readiness.get("content_ready")),
+            "safety_state_available": bool(
+                v2_readiness.get("safety_state_available")
+            ),
+            "fleet_metrics_configured": bool(
+                v2_readiness.get("fleet_metrics_configured")
+            ),
+            "active_release_safe": not bool(
+                v2_readiness.get("active_release_quarantined", True)
+            ),
+        }
+        ready = all(checks.values())
+        return JSONResponse(
+            status_code=200 if ready else 503,
+            content={
+                "status": "ready" if ready else "not_ready",
+                "checks": checks,
+                "migration_head": schema["head"],
+            },
+        )
 
     @app.get("/", response_class=FileResponse)
     def index() -> FileResponse:
@@ -453,6 +564,8 @@ def create_app(
             metrics_sink=resolved_v2_metrics_sink,
             mutation_gate=resolved_v2_mutation_gate,
             mutation_gate_max_age=resolved_v2_mutation_gate_max_age,
+            release_quarantine=resolved_v2_release_quarantine,
+            release_quarantine_max_age=resolved_v2_release_quarantine_max_age,
             active_release_bundle=v2_active_release_bundle,
             active_release_sha256=v2_active_release_sha256,
         )

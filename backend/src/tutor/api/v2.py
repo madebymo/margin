@@ -28,6 +28,7 @@ from tutor.api.v2_schemas import (
     CreateSessionV2Request,
     GoalCatalog,
     GoalView,
+    QuarantineRecoveryView,
     RecoverSessionV2Request,
     RecoverSessionV2Response,
     ResetResponse,
@@ -54,12 +55,20 @@ from tutor.api.v2_controls import (
     StaticMutationGate,
     safe_mutation_gate_snapshot,
 )
+from tutor.api.v2_quarantine import (
+    ReleaseQuarantineProvider,
+    ReleaseQuarantineSnapshot,
+    StaticReleaseQuarantineProvider,
+    release_runtime_digest,
+    safe_release_quarantine_snapshot,
+)
 from tutor.api.v2_versions import (
     V2_ACTIVE_RELEASE_BUNDLE_ENV,
     V2_ACTIVE_RELEASE_SHA256_ENV,
     V2PolicyRegistry,
     V2VersionRegistry,
 )
+from tutor.content.exposure import AllocationError
 from tutor.learner.evidence_trust import EvidenceTrustPolicy
 from tutor.learner.params import DEFAULT_PARAMS_V2
 from tutor.schemas.assessment import ItemBankDocument
@@ -218,18 +227,27 @@ def _error(
     session: SessionView | None = None,
     *,
     retryable: bool | None = None,
+    quarantine_recovery: QuarantineRecoveryView | None = None,
 ) -> JSONResponse:
     body = APIError(
         code=code,
         message=message,
         session=session,
         retryable=retryable,
+        quarantine_recovery=quarantine_recovery,
     )
+    excluded = set()
+    if session is None:
+        excluded.add("session")
+    if retryable is None:
+        excluded.add("retryable")
+    if quarantine_recovery is None:
+        excluded.add("quarantine_recovery")
     return JSONResponse(
         status_code=status,
         content=body.model_dump(
             mode="json",
-            exclude={"retryable"} if retryable is None else None,
+            exclude=excluded or None,
         ),
     )
 
@@ -396,6 +414,8 @@ def install_v2_routes(
     metrics_sink: MetricsSink | None = None,
     mutation_gate: MutationGate | None = None,
     mutation_gate_max_age: timedelta | None = None,
+    release_quarantine: ReleaseQuarantineProvider | None = None,
+    release_quarantine_max_age: timedelta | None = None,
 ) -> V2SessionStore:
     """Install API v2 without changing any v1 route or response model."""
     token_secret = _resume_secret(resume_token_secret)
@@ -405,6 +425,11 @@ def install_v2_routes(
     )
     if mutation_gate_max_age is not None and mutation_gate_max_age <= timedelta(0):
         raise ValueError("mutation_gate_max_age must be positive")
+    if (
+        release_quarantine_max_age is not None
+        and release_quarantine_max_age <= timedelta(0)
+    ):
+        raise ValueError("release_quarantine_max_age must be positive")
     active_mutation_gate = (
         mutation_gate
         if mutation_gate is not None
@@ -414,6 +439,17 @@ def install_v2_routes(
             source="builtin_static",
         )
     )
+    active_release_quarantine = (
+        release_quarantine
+        if release_quarantine is not None
+        else StaticReleaseQuarantineProvider()
+    )
+
+    def observe_release_quarantine() -> ReleaseQuarantineSnapshot:
+        return safe_release_quarantine_snapshot(
+            active_release_quarantine,
+            max_age=release_quarantine_max_age,
+        )
 
     def observe_mutation_gate() -> MutationGateSnapshot:
         return safe_mutation_gate_snapshot(
@@ -508,6 +544,75 @@ def install_v2_routes(
         active_policy_versions,
         SessionOrchestratorV2.restore,
     )
+    active_release_digest = (
+        release_runtime_digest(active_release, active_policy_versions)
+        if active_release is not None
+        else None
+    )
+    release_digest_cache: dict[
+        tuple[int, str, str, tuple[tuple[str, str], ...]],
+        str,
+    ] = {}
+    if active_release is not None and active_release_digest is not None:
+        release_digest_cache[
+            (
+                active_release.graph.graph_version,
+                active_release.item_bank.bank_version,
+                active_release.pedagogy_catalog.catalog_version,
+                tuple(sorted(active_policy_versions.items())),
+            )
+        ] = active_release_digest
+
+    def release_digest_for_orchestrator(orchestrator: Any) -> str:
+        export = getattr(orchestrator, "export_checkpoint", None)
+        if not callable(export):
+            raise ValueError("session has no release checkpoint")
+        state = export()
+        if not isinstance(state, dict):
+            raise ValueError("session has an invalid release checkpoint")
+        graph_version = state.get("graph_version")
+        item_bank_version = state.get("item_bank_version")
+        pedagogy_catalog_version = state.get("pedagogy_catalog_version")
+        policy_versions = state.get("policy_versions")
+        if (
+            not isinstance(graph_version, int)
+            or isinstance(graph_version, bool)
+            or not isinstance(item_bank_version, str)
+            or not item_bank_version
+            or not isinstance(pedagogy_catalog_version, str)
+            or not pedagogy_catalog_version
+            or not isinstance(policy_versions, dict)
+        ):
+            raise ValueError("session has incomplete release pins")
+        key = (
+            graph_version,
+            item_bank_version,
+            pedagogy_catalog_version,
+            tuple(sorted(policy_versions.items())),
+        )
+        cached = release_digest_cache.get(key)
+        if cached is not None:
+            return cached
+        release = registry.resolve_checkpoint(state)
+        digest = release_runtime_digest(release, policy_versions)
+        release_digest_cache[key] = digest
+        return digest
+
+    def quarantine_reset_key(
+        session_id: str,
+        revision: int,
+        release_digest: str,
+    ) -> str:
+        digest = hmac.new(
+            token_secret,
+            (
+                f"quarantine-reset-v1:{session_id}:{revision}:"
+                f"{release_digest}"
+            ).encode(),
+            hashlib.sha256,
+        ).digest()
+        return _urlsafe_encode(digest)
+
     eligible_goals = _goals(
         active_graph,
         available_targets,
@@ -539,6 +644,13 @@ def install_v2_routes(
         setter = getattr(orchestrator, "set_runtime_widget_capabilities", None)
         if callable(setter):
             setter(active_widget_manifest)
+
+    def qualify_episode(orchestrator: Any) -> None:
+        """Run a non-mutating inventory proof when the runtime provides one."""
+
+        qualify = getattr(orchestrator, "qualify_episode", None)
+        if callable(qualify):
+            qualify()
     store = V2SessionStore(
         graph_nodes={node.id: node for node in active_graph.nodes},
         persistence=persistence,
@@ -587,11 +699,69 @@ def install_v2_routes(
 
     router = APIRouter(prefix="/api/v2")
 
+    def release_safety_error(
+        release_digest: str | None,
+        *,
+        handle: V2SessionHandle | None = None,
+        snapshot: ReleaseQuarantineSnapshot | None = None,
+    ) -> JSONResponse | None:
+        observed = snapshot or observe_release_quarantine()
+        if not observed.available:
+            store.record_metric("release_safety_state_unavailable")
+            return _error(
+                503,
+                "safety_state_unavailable",
+                "Session safety state is temporarily unavailable; retry shortly.",
+                retryable=True,
+            )
+        if release_digest is None or not observed.is_quarantined(release_digest):
+            return None
+        store.record_metric("release_quarantined")
+        recovery = None
+        if (
+            handle is not None
+            and active_release_digest is not None
+            and active_release_digest != release_digest
+            and not observed.is_quarantined(active_release_digest)
+        ):
+            recovery = QuarantineRecoveryView(
+                revision=handle.revision,
+                reset_key=quarantine_reset_key(
+                    handle.session_id,
+                    handle.revision,
+                    release_digest,
+                ),
+            )
+        return _error(
+            410,
+            "release_quarantined",
+            "This lesson release was withdrawn for a safety review.",
+            quarantine_recovery=recovery,
+        )
+
+    def handle_release_safety_error(
+        handle: V2SessionHandle,
+        *,
+        snapshot: ReleaseQuarantineSnapshot | None = None,
+    ) -> JSONResponse | None:
+        try:
+            digest = release_digest_for_orchestrator(handle.orchestrator)
+        except Exception:
+            store.record_metric("release_identity_unavailable")
+            return _error(
+                503,
+                "safety_state_unavailable",
+                "Session safety state is temporarily unavailable; retry shortly.",
+                retryable=True,
+            )
+        return release_safety_error(digest, handle=handle, snapshot=snapshot)
+
     def rollout_catalog(
         assignment: _RolloutAssignment,
         gate_snapshot: MutationGateSnapshot | None = None,
     ) -> GoalCatalog:
         observed_gate = gate_snapshot or observe_mutation_gate()
+        release_error = release_safety_error(active_release_digest)
         percentage = flags.student_rollout_percent
         if not assignment.selected:
             reason = (
@@ -610,14 +780,18 @@ def install_v2_routes(
                     percentage=percentage,
                 ),
             )
-        if not flags.student_stack_enabled or mutations_paused(observed_gate):
+        if (
+            not flags.student_stack_enabled
+            or mutations_paused(observed_gate)
+            or release_error is not None
+        ):
             return GoalCatalog(
                 goals=[],
                 rollout=CatalogRolloutView(
                     status="paused",
                     reason=(
                         "New pilot sessions are temporarily paused by a runtime "
-                        "safety switch."
+                        "safety check."
                     ),
                     percentage=percentage,
                 ),
@@ -656,6 +830,10 @@ def install_v2_routes(
         gate_snapshot: MutationGateSnapshot | None = None,
     ) -> JSONResponse | None:
         observed_gate = gate_snapshot or observe_mutation_gate()
+        release_error = release_safety_error(active_release_digest)
+        if release_error is not None:
+            _set_rollout_cookie(release_error, assignment.cookie_value, request)
+            return release_error
         if (
             assignment.selected
             and flags.student_stack_enabled
@@ -739,6 +917,7 @@ def install_v2_routes(
         session_id: str | None = None,
         *,
         measure_resume: bool = False,
+        allow_quarantined: bool = False,
     ) -> tuple[V2SessionHandle | None, str | None, JSONResponse | None]:
         def outside_eligible_failure(outcome: str) -> None:
             if not measure_resume:
@@ -898,6 +1077,14 @@ def install_v2_routes(
         ):
             outside_eligible_failure("session_mismatch")
             return None, hashed, _error(404, "session_not_found", "unknown session")
+        safety_error = handle_release_safety_error(handle)
+        if safety_error is not None:
+            if not (
+                allow_quarantined
+                and safety_error.status_code == 410
+            ):
+                eligible_failure("resume_safety_failures")
+                return None, hashed, safety_error
         eligible_attempt()
         return handle, hashed, None
 
@@ -982,6 +1169,12 @@ def install_v2_routes(
 
         if not _origin_allowed(request):
             return _error(403, "origin_not_allowed", "cross-origin mutation rejected")
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
         try:
             if request_body.operation == "create":
                 replacement_session_id = store.recover_create(
@@ -1038,6 +1231,12 @@ def install_v2_routes(
                 "recovery_not_committed",
                 "the committed replacement session is no longer active",
             )
+        safety_error = handle_release_safety_error(
+            handle,
+            snapshot=quarantine_snapshot,
+        )
+        if safety_error is not None:
+            return safety_error
         try:
             active = store.refresh_token(replacement_token_hash)
         except SessionUnavailable:
@@ -1068,6 +1267,12 @@ def install_v2_routes(
             return _error(403, "origin_not_allowed", "cross-origin mutation rejected")
         assignment = assignment_for(request)
         _set_rollout_cookie(response, assignment.cookie_value, request)
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
         request_payload = {
             "type": "create",
             **request_body.model_dump(mode="json"),
@@ -1092,6 +1297,12 @@ def install_v2_routes(
             )
             if local_replay is not None:
                 handle, repeated = local_replay
+                safety_error = handle_release_safety_error(
+                    handle,
+                    snapshot=quarantine_snapshot,
+                )
+                if safety_error is not None:
+                    return safety_error
                 if not store.owns(handle.session_id, create_token_hash):
                     return _error(
                         409,
@@ -1119,6 +1330,12 @@ def install_v2_routes(
                             "session_revoked",
                             "the original session is no longer resumable",
                         )
+                    safety_error = handle_release_safety_error(
+                        restored,
+                        snapshot=quarantine_snapshot,
+                    )
+                    if safety_error is not None:
+                        return safety_error
                     if not store.refresh_token(create_token_hash):
                         return _error(
                             409,
@@ -1143,6 +1360,13 @@ def install_v2_routes(
                 "persistence_unavailable",
                 "the creation receipt could not be checked; retry with the same request_id",
             )
+
+        release_error = release_safety_error(
+            active_release_digest,
+            snapshot=quarantine_snapshot,
+        )
+        if release_error is not None:
+            return release_error
 
         gate_snapshot = observe_mutation_gate()
         if mutations_paused(gate_snapshot):
@@ -1231,6 +1455,7 @@ def install_v2_routes(
                     prior_events,
                     **seed_kwargs,
                 )
+            qualify_episode(orchestrator)
             interactions = orchestrator.begin()
             handle = store.create(
                 orchestrator=orchestrator,
@@ -1263,10 +1488,23 @@ def install_v2_routes(
                     "session_revoked",
                     "the committed session is no longer resumable",
                 )
+            safety_error = handle_release_safety_error(
+                restored,
+                snapshot=quarantine_snapshot,
+            )
+            if safety_error is not None:
+                return safety_error
             _set_resume_cookie(response, raw_token, request)
             return replay.view
         except SessionConflict as exc:
             return _error(409, exc.code, str(exc), exc.view)
+        except AllocationError:
+            return _error(
+                409,
+                "content_exhausted",
+                "There is not enough unused reviewed content to start this lesson safely.",
+                store.view(replace_handle) if replace_handle is not None else None,
+            )
         except SessionRateLimited:
             return _error(
                 429,
@@ -1318,6 +1556,12 @@ def install_v2_routes(
         if raw_token is None:
             return _error(401, "resume_token_required", "no current anonymous session")
         token_hash = _token_hash(raw_token)
+        quarantine_snapshot = observe_release_quarantine()
+        if not quarantine_snapshot.available:
+            return release_safety_error(
+                active_release_digest,
+                snapshot=quarantine_snapshot,
+            )
         replacement_raw_token = _replacement_resume_token(
             token_secret, token_hash, request_body.request_id
         )
@@ -1334,18 +1578,41 @@ def install_v2_routes(
             )
         if replayed is not None:
             try:
-                if persistence is not None:
-                    restore_durable(replacement_token_hash)
+                replacement_handle = store.resolve_token(replacement_token_hash)
+            except (KeyError, ResumeTokenExpired):
+                try:
+                    replacement_handle = restore_durable(replacement_token_hash)
+                except SessionUnavailable:
+                    return _error(
+                        503,
+                        "session_restore_unavailable",
+                        "the replacement episode could not be restored; retry shortly",
+                    )
             except SessionUnavailable:
                 return _error(
                     503,
                     "session_restore_unavailable",
                     "the replacement episode could not be restored; retry shortly",
                 )
+            if replacement_handle is None:
+                return _error(
+                    503,
+                    "session_restore_unavailable",
+                    "the replacement episode could not be restored; retry shortly",
+                )
+            safety_error = handle_release_safety_error(
+                replacement_handle,
+                snapshot=quarantine_snapshot,
+            )
+            if safety_error is not None:
+                return safety_error
             _set_resume_cookie(response, replacement_raw_token, request)
             return replayed
 
-        handle, token_hash, error = authorized_handle(request)
+        handle, token_hash, error = authorized_handle(
+            request,
+            allow_quarantined=True,
+        )
         if error is not None:
             if error.status_code >= 500:
                 return error
@@ -1353,29 +1620,141 @@ def install_v2_routes(
             return error
         assert handle is not None
         assert token_hash is not None
+        try:
+            current_release_digest = release_digest_for_orchestrator(
+                handle.orchestrator
+            )
+        except Exception:
+            return _error(
+                503,
+                "safety_state_unavailable",
+                "Session safety state is temporarily unavailable; retry shortly.",
+                retryable=True,
+            )
+        quarantined_reset = quarantine_snapshot.is_quarantined(
+            current_release_digest
+        )
+        if quarantined_reset:
+            safety_error = release_safety_error(
+                current_release_digest,
+                handle=handle,
+                snapshot=quarantine_snapshot,
+            )
+            expected_reset_key = quarantine_reset_key(
+                handle.session_id,
+                handle.revision,
+                current_release_digest,
+            )
+            if (
+                safety_error is None
+                or active_release_digest is None
+                or quarantine_snapshot.is_quarantined(active_release_digest)
+            ):
+                return safety_error or _error(
+                    410,
+                    "release_quarantined",
+                    "This lesson release was withdrawn for a safety review.",
+                )
+            if (
+                request_body.expected_revision != handle.revision
+                or request_body.pending_key is None
+                or not hmac.compare_digest(
+                    request_body.pending_key,
+                    expected_reset_key,
+                )
+            ):
+                return _error(
+                    409,
+                    "stale_interaction",
+                    "the quarantine recovery capability is stale or invalid",
+                )
         gate_snapshot = observe_mutation_gate()
         if mutations_paused(gate_snapshot):
-            return mutation_paused_error("reset", store.view(handle))
+            return mutation_paused_error(
+                "reset",
+                None if quarantined_reset else store.view(handle),
+            )
         try:
             from datetime import datetime, timezone
 
-            fresh_episode = getattr(handle.orchestrator, "fresh_episode", None)
-            if not callable(fresh_episode):
-                return _error(
-                    409,
-                    "reset_unavailable",
-                    "this episode cannot be restarted safely",
-                    store.view(handle),
+            replacement_goal = None
+            replacement_content_mode = None
+            if quarantined_reset:
+                replacement_goal = goals_by_id.get(handle.goal.goal_id)
+                if replacement_goal is None:
+                    return _error(
+                        410,
+                        "release_quarantined",
+                        "This lesson release was withdrawn and no safe replacement is available.",
+                    )
+                replacement_request = CreateSessionV2Request(
+                    request_id=request_body.request_id,
+                    goal_id=replacement_goal.goal_id,
+                    course=handle.profile.course,
+                    age_band=handle.profile.age_band,
+                    content_mode=handle.content_mode.requested,
+                    context=handle.context,
                 )
-            replacement_orchestrator = fresh_episode(
-                as_of=datetime.now(timezone.utc)
-            )
+                replacement_orchestrator, replacement_content_mode = factory(
+                    active_graph,
+                    replacement_goal.target_kc,
+                    LearnerProfile(
+                        course=handle.profile.course,
+                        age_band=handle.profile.age_band,
+                    ),
+                    replacement_request,
+                )
+                seed_longitudinal = getattr(
+                    replacement_orchestrator,
+                    "seed_longitudinal",
+                    None,
+                )
+                if callable(seed_longitudinal):
+                    exposure_state = getattr(
+                        handle.orchestrator,
+                        "exposure_state",
+                        None,
+                    )
+                    seed_kwargs = {
+                        "as_of": datetime.now(timezone.utc),
+                        "exposure_state": (
+                            exposure_state.model_copy(deep=True)
+                            if exposure_state is not None
+                            else None
+                        ),
+                    }
+                    if isinstance(replacement_orchestrator, SessionOrchestratorV2):
+                        seed_kwargs["evidence_trust_policy"] = evidence_trust_policy
+                    seed_longitudinal(
+                        handle.learner_id,
+                        list(
+                            getattr(
+                                getattr(handle.orchestrator, "learner", None),
+                                "events",
+                                (),
+                            )
+                        ),
+                        **seed_kwargs,
+                    )
+            else:
+                fresh_episode = getattr(handle.orchestrator, "fresh_episode", None)
+                if not callable(fresh_episode):
+                    return _error(
+                        409,
+                        "reset_unavailable",
+                        "this episode cannot be restarted safely",
+                        store.view(handle),
+                    )
+                replacement_orchestrator = fresh_episode(
+                    as_of=datetime.now(timezone.utc)
+                )
             apply_runtime_widget_capabilities(replacement_orchestrator)
             remember_visible = getattr(
                 replacement_orchestrator, "remember_visible_content", None
             )
             if callable(remember_visible):
                 remember_visible(handle.context)
+            qualify_episode(replacement_orchestrator)
             replacement_interactions = replacement_orchestrator.begin()
             reset = store.reset(
                 handle,
@@ -1384,6 +1763,9 @@ def install_v2_routes(
                 replacement_orchestrator=replacement_orchestrator,
                 replacement_interactions=replacement_interactions,
                 replacement_token_hash=replacement_token_hash,
+                accept_quarantine_recovery_key=quarantined_reset,
+                replacement_goal=replacement_goal,
+                replacement_content_mode=replacement_content_mode,
             )
         except DurableResetReplay as replay:
             try:
@@ -1396,13 +1778,25 @@ def install_v2_routes(
                 )
             reset = replay.response
         except SessionConflict as exc:
-            return _error(409, exc.code, str(exc), exc.view or store.view(handle))
+            return _error(
+                409,
+                exc.code,
+                str(exc),
+                None if quarantined_reset else (exc.view or store.view(handle)),
+            )
+        except AllocationError:
+            return _error(
+                409,
+                "content_exhausted",
+                "There is not enough unused reviewed content to restart this lesson safely.",
+                None if quarantined_reset else store.view(handle),
+            )
         except SessionRateLimited:
             return _error(
                 429,
                 "episode_limit",
                 "this anonymous learner reached the rolling episode limit",
-                store.view(handle),
+                None if quarantined_reset else store.view(handle),
             )
         except SessionUnavailable:
             return _error(
@@ -1551,24 +1945,46 @@ def install_v2_routes(
     app.state.v2_evidence_trust_registry = evidence_trust_policy
     app.state.v2_policy_registry = policies
     app.state.v2_feature_flags = flags
+    app.state.v2_release_quarantine = active_release_quarantine
+    app.state.v2_active_release_digest = active_release_digest
 
     def readiness_view() -> dict[str, Any]:
         """Observe the live gate without exposing provider failures or config."""
 
         gate_snapshot = observe_mutation_gate()
+        quarantine_snapshot = observe_release_quarantine()
         effective_pause = mutations_paused(gate_snapshot)
         content_ready = bool(eligible_goals)
+        active_release_quarantined = bool(
+            active_release_digest is not None
+            and quarantine_snapshot.available
+            and quarantine_snapshot.is_quarantined(active_release_digest)
+        )
+        safety_state_available = (
+            gate_snapshot.source != "fail_closed"
+            and quarantine_snapshot.available
+        )
         return {
             "student_stack_enabled": flags.student_stack_enabled,
             "content_ready": content_ready,
             "fleet_metrics_configured": metrics_sink is not None,
             "mutations_paused": effective_pause,
+            "safety_state_available": safety_state_available,
+            "active_release_quarantined": active_release_quarantined,
             "accepting_mutations": (
                 flags.student_stack_enabled
                 and content_ready
                 and not effective_pause
+                and safety_state_available
+                and not active_release_quarantined
             ),
             "mutation_gate": mutation_gate_view(gate_snapshot),
+            "release_quarantine": {
+                "revision": quarantine_snapshot.revision,
+                "source": quarantine_snapshot.source,
+                "observed_at": quarantine_snapshot.observed_at.isoformat(),
+                "available": quarantine_snapshot.available,
+            },
             "durable_persistence": persistence is not None,
             "reviewed_goal_count": len(eligible_goals),
             "active_versions": {
@@ -1586,6 +2002,7 @@ def install_v2_routes(
                 "policies": dict(sorted(active_policy_versions.items())),
                 "learner_parameters": f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
                 "capability_manifest": active_widget_manifest["version"],
+                "release_digest": active_release_digest,
             },
         }
 

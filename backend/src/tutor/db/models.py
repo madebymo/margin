@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -110,6 +111,10 @@ class ResumeTokenRow(Base):
     """A hashed, revocable, expiring token bound to one learner episode."""
 
     __tablename__ = "resume_tokens"
+    __table_args__ = (
+        Index("ix_resume_tokens_expiry_revoked", "expires_at", "revoked"),
+        Index("ix_resume_tokens_session", "session_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     learner_id: Mapped[str] = mapped_column(ForeignKey("learners.learner_id"), nullable=False)
@@ -131,6 +136,10 @@ class EvidenceEventRow(Base):
     """Append-only evidence log. No updated_at by design — events are immutable."""
 
     __tablename__ = "evidence_events"
+    __table_args__ = (
+        Index("ix_evidence_learner_time", "learner_id", "t", "id"),
+        Index("ix_evidence_episode", "episode_id", "id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     event_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
@@ -248,6 +257,10 @@ class SessionCheckpointRow(Base):
     """Latest authoritative v2 session checkpoint."""
 
     __tablename__ = "session_checkpoints"
+    __table_args__ = (
+        Index("ix_session_checkpoint_learner_started", "learner_id", "started_at"),
+        Index("ix_session_checkpoint_updated", "updated_at"),
+    )
 
     session_id: Mapped[str] = mapped_column(String(36), primary_key=True)
     learner_id: Mapped[str] = mapped_column(
@@ -275,7 +288,10 @@ class SessionMutationReceiptRow(Base):
     """Durable idempotency receipt for one v2 mutation."""
 
     __tablename__ = "session_mutation_receipts"
-    __table_args__ = (UniqueConstraint("session_id", "request_id"),)
+    __table_args__ = (
+        UniqueConstraint("session_id", "request_id"),
+        Index("ix_session_receipt_request", "request_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     session_id: Mapped[str] = mapped_column(

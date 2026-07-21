@@ -7,6 +7,7 @@ failures must never block a live session: callers catch, log, and continue
 in memory (the orchestrator disables persistence on first failure).
 """
 
+import os
 from datetime import timezone
 from uuid import UUID
 
@@ -27,9 +28,24 @@ from tutor.schemas.learner import DerivedLearnerState, EvidenceEvent, LearnerPro
 class PersistenceService:
     """Synchronous persistence facade used by the orchestrator, API, and CLI."""
 
-    def __init__(self, engine: Engine | None = None, url: str | None = None) -> None:
+    def __init__(
+        self,
+        engine: Engine | None = None,
+        url: str | None = None,
+        *,
+        initialize_schema: bool | None = None,
+    ) -> None:
         self._engine = engine or get_engine(url)
-        create_all(self._engine)
+        pilot_production = os.environ.get("TUTOR_PILOT_PRODUCTION", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        should_initialize = (
+            not pilot_production if initialize_schema is None else initialize_schema
+        )
+        if should_initialize:
+            create_all(self._engine)
 
     @property
     def engine(self) -> Engine:

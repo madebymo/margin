@@ -18,6 +18,13 @@ from tutor.db.session import get_engine
 
 _MIGRATION_ID = "20260720_trustworthy_session_v2_1"
 _CATALOG_MIGRATION_ID = "20260720_pedagogy_catalog_pin_v2_2"
+_OPERATIONAL_INDEX_MIGRATION_ID = "20260720_operational_indexes_v2_3"
+REQUIRED_SCHEMA_HEAD = _OPERATIONAL_INDEX_MIGRATION_ID
+REQUIRED_MIGRATIONS = (
+    _MIGRATION_ID,
+    _CATALOG_MIGRATION_ID,
+    _OPERATIONAL_INDEX_MIGRATION_ID,
+)
 _NEW_TABLES = (
     "session_checkpoints",
     "session_mutation_receipts",
@@ -206,6 +213,70 @@ def _apply_catalog_pinning(connection: Connection, engine: Engine) -> bool:
     return evidence_changed or checkpoint_changed
 
 
+def _apply_operational_indexes(connection: Connection) -> bool:
+    """Create the indexes used by replay, retention, and recovery queries."""
+
+    required_names = {
+        "ix_evidence_learner_time",
+        "ix_evidence_episode",
+        "ix_resume_tokens_expiry_revoked",
+        "ix_resume_tokens_session",
+        "ix_session_checkpoint_learner_started",
+        "ix_session_checkpoint_updated",
+        "ix_session_receipt_request",
+    }
+    inspector = inspect(connection)
+    existing = {
+        index["name"]
+        for table_name in (
+            "evidence_events",
+            "resume_tokens",
+            "session_checkpoints",
+            "session_mutation_receipts",
+        )
+        for index in inspector.get_indexes(table_name)
+        if index.get("name") is not None
+    }
+    for table_name in (
+        "evidence_events",
+        "resume_tokens",
+        "session_checkpoints",
+        "session_mutation_receipts",
+    ):
+        table = Base.metadata.tables[table_name]
+        for index in table.indexes:
+            if index.name in required_names:
+                index.create(bind=connection, checkfirst=True)
+    return not required_names <= existing
+
+
+def schema_migration_status(engine: Engine) -> dict[str, object]:
+    """Return a sanitized readiness snapshot for the explicit schema head."""
+
+    try:
+        with engine.connect() as connection:
+            if "schema_migrations" not in inspect(connection).get_table_names():
+                applied: set[str] = set()
+            else:
+                applied = {
+                    str(row[0])
+                    for row in connection.exec_driver_sql(
+                        "SELECT migration_id FROM schema_migrations"
+                    )
+                }
+    except Exception:
+        return {
+            "reachable": False,
+            "current": False,
+            "head": REQUIRED_SCHEMA_HEAD,
+        }
+    return {
+        "reachable": True,
+        "current": all(migration in applied for migration in REQUIRED_MIGRATIONS),
+        "head": REQUIRED_SCHEMA_HEAD,
+    }
+
+
 def migrate(engine: Engine) -> bool:
     """Apply every unapplied additive v2 migration in order."""
     import tutor.db.models  # noqa: F401 — register all tables on Base.metadata
@@ -222,6 +293,9 @@ def migrate(engine: Engine) -> bool:
         if not _migration_applied(connection, _CATALOG_MIGRATION_ID):
             changed = _apply_catalog_pinning(connection, engine) or changed
             _record_migration(connection, _CATALOG_MIGRATION_ID)
+        if not _migration_applied(connection, _OPERATIONAL_INDEX_MIGRATION_ID):
+            changed = _apply_operational_indexes(connection) or changed
+            _record_migration(connection, _OPERATIONAL_INDEX_MIGRATION_ID)
     return changed
 
 

@@ -88,7 +88,6 @@ class V2PersistenceService:
         self._engine = engine
         self._max_episodes_per_learner = max_episodes_per_learner
         self._validate_schema()
-        self.purge_expired_anonymous_sessions()
 
     @property
     def engine(self) -> Engine:
@@ -902,13 +901,16 @@ class V2PersistenceService:
                 "this anonymous learner reached the rolling episode limit"
             )
 
-    def purge_expired_anonymous_sessions(self) -> int:
-        """Remove resumable-session material after every bound token expires.
+    def purge_expired_anonymous_sessions(self, *, limit: int = 100) -> int:
+        """Remove one bounded batch after every bound token expires.
 
         Learner identity and append-only evidence remain intact for longitudinal
         replay; only anonymous resume/checkpoint/transcript/receipt/widget data
-        outside the promised 30-day window is removed.
+        outside the promised 30-day window is removed.  This maintenance method
+        is intentionally never called by the constructor or a request path.
         """
+        if type(limit) is not int or not 1 <= limit <= 1000:
+            raise ValueError("limit must be an integer between 1 and 1000")
         now = _utcnow()
         with Session(self._engine) as session:
             candidate_ids = list(
@@ -919,6 +921,8 @@ class V2PersistenceService:
                         ResumeTokenRow.expires_at <= now,
                     )
                     .distinct()
+                    .order_by(ResumeTokenRow.session_id)
+                    .limit(limit)
                 )
             )
             if not candidate_ids:
