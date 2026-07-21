@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import traceback
 from pathlib import Path
 from uuid import uuid4
 
@@ -272,3 +273,35 @@ def test_invalid_bundle_payload_is_not_written_to_logs(tmp_path, caplog):
         create_app(v2_active_release_bundle=bundle)
 
     assert sentinel not in caplog.text
+
+
+def test_invalid_nested_content_is_suppressed_from_startup_traceback(tmp_path):
+    sentinel = "RAW-EXPECTED-ANSWER-MUST-NOT-APPEAR"
+    graph, bank, catalog = _release(
+        91,
+        "invalid-secret-bank-v91",
+        "invalid-secret-pedagogy-v91",
+    )
+    payload = {
+        "schema_version": 2,
+        "graph": graph.model_dump(mode="json"),
+        "item_bank": bank.model_dump(mode="json"),
+        "pedagogy_catalog": catalog.model_dump(mode="json"),
+    }
+    payload["item_bank"]["items"][0]["answer"]["expected"] = {
+        "secret": sentinel,
+    }
+    bundle = tmp_path / "invalid-nested-content.json"
+    bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc_info:
+        create_app(v2_active_release_bundle=bundle)
+
+    rendered = "".join(
+        traceback.format_exception(
+            exc_info.type,
+            exc_info.value,
+            exc_info.tb,
+        )
+    )
+    assert sentinel not in rendered

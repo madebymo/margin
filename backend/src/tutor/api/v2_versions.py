@@ -255,8 +255,8 @@ class V2VersionRegistry:
                 raise V2VersionConflict("active v2 release SHA-256 mismatch")
         try:
             payload = json.loads(raw_bundle)
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ValueError(f"invalid v2 release bundle {path}") from exc
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise ValueError(f"invalid v2 release bundle {path}") from None
         expected_keys = {
             "schema_version",
             "graph",
@@ -280,8 +280,11 @@ class V2VersionRegistry:
                 ItemBankDocument.model_validate(payload["item_bank"]),
                 PedagogyPackCatalog.model_validate(payload["pedagogy_catalog"]),
             )
-        except (ValueError, TypeError) as exc:
-            raise ValueError(f"invalid v2 release bundle {path}") from exc
+        except (ValueError, TypeError):
+            # Pydantic's rich ValidationError includes rejected input values.
+            # Suppress the nested exception so startup traceback capture cannot
+            # disclose prompts, answers, or other bundle content.
+            raise ValueError(f"invalid v2 release bundle {path}") from None
 
     def register_bundle(
         self,
