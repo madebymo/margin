@@ -109,6 +109,10 @@ def _review_fields(
             author=blueprint.author,
             reviewed_by=review.reviewed_by if approved else None,
             reviewed_at=review.reviewed_at if approved else None,
+            source_id=blueprint.blueprint_id,
+            source_revision=blueprint.revision,
+            source_digest=review.source_digest,
+            compiler_version=COMPILER_VERSION,
         ),
     )
 

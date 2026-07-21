@@ -17,6 +17,7 @@ from tutor.content.item_bank import (
     validate_item_bank,
 )
 from tutor.schemas.assessment import (
+    AssessmentProvenance,
     AssessmentTaskKind,
     AssessmentSurface,
     BlankPromptSegment,
@@ -61,6 +62,42 @@ def test_explicitly_approved_power_rule_fixture_is_release_valid(
 ):
     assert len(bank.items) == 11
     assert validate_item_bank(bank, graph, catalog) == []
+
+
+def test_assessment_provenance_binds_complete_reviewed_source_identity():
+    provenance = AssessmentProvenance(
+        source="assessment-source",
+        author="Author One",
+        reviewed_by="Reviewer Two",
+        reviewed_at="2026-07-20T12:00:00Z",
+        source_id="blueprint.power-rule.diagnostic",
+        source_revision=2,
+        source_digest="a" * 64,
+        compiler_version="content-compiler-v2",
+    )
+
+    assert provenance.source_digest == "a" * 64
+
+    with pytest.raises(ValueError, match="must be supplied together"):
+        AssessmentProvenance(
+            source="assessment-source",
+            author="Author One",
+            source_id="blueprint.power-rule.diagnostic",
+        )
+    with pytest.raises(ValueError, match="someone other than the author"):
+        AssessmentProvenance(
+            source="assessment-source",
+            author=" Author One ",
+            reviewed_by="author one",
+            reviewed_at="2026-07-20T12:00:00Z",
+        )
+    with pytest.raises(ValueError, match="timezone"):
+        AssessmentProvenance(
+            source="assessment-source",
+            author="Author One",
+            reviewed_by="Reviewer Two",
+            reviewed_at="2026-07-20T12:00:00",
+        )
 
 
 def test_release_requires_reviewed_catalog_coverage(bank, graph):

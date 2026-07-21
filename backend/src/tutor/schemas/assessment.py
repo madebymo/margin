@@ -11,7 +11,14 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 
 from tutor.schemas.common import ReviewStatus
 from tutor.schemas.kc import KC_ID_PATTERN
@@ -259,6 +266,59 @@ class AssessmentProvenance(StrictFrozenModel):
     author: str = Field(min_length=1)
     reviewed_by: str | None = Field(default=None, min_length=1)
     reviewed_at: datetime | None = None
+    source_id: str | None = Field(
+        default=None,
+        max_length=128,
+        pattern=_CONTENT_ID_PATTERN,
+    )
+    source_revision: int | None = Field(default=None, ge=1)
+    source_digest: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    compiler_version: str | None = Field(
+        default=None,
+        max_length=128,
+        pattern=_CONTENT_ID_PATTERN,
+    )
+
+    @field_validator("source", "author", "reviewed_by", mode="before")
+    @classmethod
+    def _normalize_meaningful_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("reviewed_at")
+    @classmethod
+    def _review_timestamp_is_aware(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("reviewed_at must include a timezone")
+        return value
+
+    @model_validator(mode="after")
+    def _review_and_source_bindings_are_complete(self) -> "AssessmentProvenance":
+        has_reviewer = self.reviewed_by is not None
+        has_review_time = self.reviewed_at is not None
+        if has_reviewer != has_review_time:
+            raise ValueError("reviewed_by and reviewed_at must be supplied together")
+        if (
+            self.reviewed_by is not None
+            and self.author.casefold() == self.reviewed_by.casefold()
+        ):
+            raise ValueError("reviewed_by must identify someone other than the author")
+        source_binding = (
+            self.source_id,
+            self.source_revision,
+            self.source_digest,
+            self.compiler_version,
+        )
+        if any(value is not None for value in source_binding) and not all(
+            value is not None for value in source_binding
+        ):
+            raise ValueError(
+                "source_id, source_revision, source_digest, and compiler_version "
+                "must be supplied together"
+            )
+        return self
 
 
 class AssessmentItem(StrictFrozenModel):
