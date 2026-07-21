@@ -8,11 +8,17 @@ from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from sqlalchemy import inspect
 
 from tutor.api.app import create_app
-from tutor.api.http_safety import RequestBodyLimitMiddleware
+from tutor.api.http_safety import (
+    CONTENT_SECURITY_POLICY,
+    HttpSecurityHeadersMiddleware,
+    RequestBodyLimitMiddleware,
+    trusted_hosts_from_environment,
+)
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_persistence import V2PersistenceService
 from tutor.api.v2_quarantine import (
@@ -193,6 +199,79 @@ def test_chunked_body_limit_never_calls_downstream_application():
 
     assert called is False
     assert sent[0]["status"] == 413
+
+
+def test_browser_security_policy_covers_pages_api_and_rejected_hosts():
+    client = TestClient(create_app())
+
+    page = client.get("/")
+    api = client.get("/api/v2/goals")
+    rejected = client.get("/livez", headers={"host": "attacker.example"})
+
+    for response in (page, api, rejected):
+        assert response.headers["content-security-policy"] == CONTENT_SECURITY_POLICY
+        assert response.headers["cross-origin-opener-policy"] == "same-origin"
+        assert response.headers["cross-origin-resource-policy"] == "same-origin"
+        assert response.headers["permissions-policy"] == (
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        )
+        assert response.headers["referrer-policy"] == "no-referrer"
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
+        assert "strict-transport-security" not in response.headers
+    assert page.headers["cache-control"] == "no-store"
+    assert api.headers["cache-control"] == "no-store"
+    assert rejected.status_code == 400
+
+
+def test_secure_transport_policy_adds_hsts_without_overwriting_app_headers():
+    app = FastAPI()
+
+    @app.get("/api/example")
+    def example():
+        return JSONResponse(
+            {"ok": True},
+            headers={"Referrer-Policy": "same-origin"},
+        )
+
+    app.add_middleware(HttpSecurityHeadersMiddleware, secure_transport=True)
+    response = TestClient(app).get("/api/example")
+
+    assert response.headers["strict-transport-security"] == (
+        "max-age=31536000; includeSubDomains"
+    )
+    assert response.headers["referrer-policy"] == "same-origin"
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_production_trusted_hosts_are_explicit_bounded_and_never_global():
+    assert trusted_hosts_from_environment(
+        pilot_production=False,
+        environ={},
+    ) == ("testserver", "localhost", "*.localhost", "127.0.0.1")
+    assert trusted_hosts_from_environment(
+        pilot_production=True,
+        environ={"TUTOR_TRUSTED_HOSTS": "Tutor.Example.edu,api.example.edu"},
+    ) == ("tutor.example.edu", "api.example.edu")
+
+    with pytest.raises(RuntimeError, match="explicit TUTOR_TRUSTED_HOSTS"):
+        trusted_hosts_from_environment(pilot_production=True, environ={})
+    with pytest.raises(RuntimeError, match="forbids wildcard"):
+        trusted_hosts_from_environment(
+            pilot_production=True,
+            environ={"TUTOR_TRUSTED_HOSTS": "*"},
+        )
+    for value in (
+        "https://tutor.example.edu",
+        "tutor.example.edu:443",
+        "tutor.example.edu/path",
+        "tutor.example.edu,,api.example.edu",
+    ):
+        with pytest.raises(ValueError):
+            trusted_hosts_from_environment(
+                pilot_production=False,
+                environ={"TUTOR_TRUSTED_HOSTS": value},
+            )
 
 
 def test_quarantine_blocks_reads_and_committed_action_replays_without_content():

@@ -40,6 +40,7 @@ export TUTOR_REDIS_URL='rediss://...'
 export TUTOR_RESUME_TOKEN_SECRET='<at-least-32-random-bytes>'
 export TUTOR_NETWORK_HMAC_SECRET='<independent-random-secret>'
 export TUTOR_TRUSTED_PROXY_CIDRS='<explicit-proxy-cidrs>'
+export TUTOR_TRUSTED_HOSTS='tutor.example.edu'
 export OTEL_EXPORTER_OTLP_ENDPOINT='https://...'
 
 export TUTOR_ENABLE_API_SESSION_V2=1
@@ -76,8 +77,13 @@ never network addresses. Forwarding headers are ignored unless the immediate
 peer is inside `TUTOR_TRUSTED_PROXY_CIDRS`; verify the ingress overwrites them.
 
 Terminate TLS at the trusted ingress. Forward only from the configured proxy
-CIDRs, overwrite rather than append forwarding headers, enforce the application
-body limit at ingress too, and do not cache API or session-error responses.
+CIDRs, overwrite rather than append forwarding headers, and preserve a `Host`
+value present in `TUTOR_TRUSTED_HOSTS`. The production process refuses wildcard
+or missing trusted-host configuration. Enforce the application body limit at
+ingress too, and do not cache API or session-error responses. The application
+adds HSTS in pilot mode plus a fixed CSP, anti-framing, MIME-sniffing, referrer,
+cross-origin, and permissions policy; verify the ingress does not remove or
+weaken those response headers.
 
 ## Deployment sequence
 

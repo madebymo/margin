@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from tutor.api.diagnosis_shadow import (
     DiagnosisV2ShadowObserver,
@@ -28,7 +29,11 @@ from tutor.api.runtime_plugins import (
     RuntimePluginError,
     build_runtime_plugin_from_environment,
 )
-from tutor.api.http_safety import RequestBodyLimitMiddleware
+from tutor.api.http_safety import (
+    HttpSecurityHeadersMiddleware,
+    RequestBodyLimitMiddleware,
+    trusted_hosts_from_environment,
+)
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_admission import RequestAdmissionGate
@@ -150,6 +155,7 @@ def create_app(
     v2_request_admission_gate: RequestAdmissionGate | None = None,
     v2_active_release_bundle: str | Path | None = None,
     v2_active_release_sha256: str | None = None,
+    trusted_hosts: tuple[str, ...] | None = None,
 ) -> FastAPI:
     """Build the API app around one graph version and an in-memory store.
 
@@ -718,6 +724,28 @@ def create_app(
         StaticFiles(directory=_DIST_DIR, check_dir=False),
         name="static",
     )
+
+    resolved_trusted_hosts = (
+        trusted_hosts
+        if trusted_hosts is not None
+        else trusted_hosts_from_environment(
+            pilot_production=pilot_production,
+            environ=os.environ,
+        )
+    )
+    if not resolved_trusted_hosts:
+        raise ValueError("trusted_hosts cannot be empty")
+    # Add trusted-host first so the security wrapper remains outermost and
+    # secures even Starlette's own rejected-host response.
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=list(resolved_trusted_hosts),
+    )
+    app.add_middleware(
+        HttpSecurityHeadersMiddleware,
+        secure_transport=pilot_production,
+    )
+    app.state.trusted_hosts = resolved_trusted_hosts
 
     return app
 

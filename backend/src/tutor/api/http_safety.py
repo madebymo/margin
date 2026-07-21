@@ -3,10 +3,113 @@
 from __future__ import annotations
 
 import json
+import re
+from collections.abc import Mapping
 from typing import Any
 
 DEFAULT_MAX_REQUEST_BODY_BYTES = 64 * 1024
 _BODY_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_TRUSTED_HOST_PATTERN = re.compile(
+    r"^(?:\*|\*\.[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?|"
+    r"[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?)$"
+)
+_DEFAULT_DEVELOPMENT_HOSTS = ("testserver", "localhost", "*.localhost", "127.0.0.1")
+
+CONTENT_SECURITY_POLICY = "; ".join(
+    (
+        "default-src 'self'",
+        "base-uri 'none'",
+        "connect-src 'self'",
+        "font-src 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+        "img-src 'self' data:",
+        "object-src 'none'",
+        "script-src 'self'",
+        # The compiled UI uses bounded, application-authored style attributes
+        # for progress and SVG geometry. No student value is interpolated into
+        # CSS, but those attributes require this CSP allowance.
+        "style-src 'self' 'unsafe-inline'",
+    )
+)
+
+
+def trusted_hosts_from_environment(
+    *,
+    pilot_production: bool,
+    environ: Mapping[str, str],
+) -> tuple[str, ...]:
+    """Parse an explicit, bounded host allowlist for Starlette.
+
+    Development has a loopback-only default. Pilot production has no implicit
+    domain and rejects wildcard trust, so a deployment cannot accidentally
+    serve with host-header validation disabled.
+    """
+
+    raw = environ.get("TUTOR_TRUSTED_HOSTS", "")
+    if not raw.strip():
+        if pilot_production:
+            raise RuntimeError(
+                "TUTOR_PILOT_PRODUCTION requires explicit TUTOR_TRUSTED_HOSTS"
+            )
+        return _DEFAULT_DEVELOPMENT_HOSTS
+    hosts = tuple(dict.fromkeys(part.strip().lower() for part in raw.split(",")))
+    if any(not host for host in hosts):
+        raise ValueError("TUTOR_TRUSTED_HOSTS cannot contain empty entries")
+    if len(hosts) > 32:
+        raise ValueError("TUTOR_TRUSTED_HOSTS cannot contain more than 32 entries")
+    invalid = [host for host in hosts if _TRUSTED_HOST_PATTERN.fullmatch(host) is None]
+    if invalid:
+        raise ValueError(
+            "TUTOR_TRUSTED_HOSTS entries must be hostnames without schemes, ports, or paths"
+        )
+    if pilot_production and any(host == "*" for host in hosts):
+        raise RuntimeError("TUTOR_PILOT_PRODUCTION forbids wildcard trusted hosts")
+    return hosts
+
+
+class HttpSecurityHeadersMiddleware:
+    """Attach a fixed browser policy without inspecting response bodies."""
+
+    def __init__(self, app: Any, *, secure_transport: bool = False):
+        self.app = app
+        self.secure_transport = secure_transport
+
+    async def __call__(self, scope: dict, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def secure_send(message: dict[str, Any]) -> None:
+            if message.get("type") == "http.response.start":
+                headers = list(message.get("headers", ()))
+                names = {name.lower() for name, _ in headers}
+
+                def add(name: bytes, value: bytes) -> None:
+                    if name not in names:
+                        headers.append((name, value))
+                        names.add(name)
+
+                add(b"content-security-policy", CONTENT_SECURITY_POLICY.encode("ascii"))
+                add(b"cross-origin-opener-policy", b"same-origin")
+                add(b"cross-origin-resource-policy", b"same-origin")
+                add(b"permissions-policy", b"camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+                add(b"referrer-policy", b"no-referrer")
+                add(b"x-content-type-options", b"nosniff")
+                add(b"x-frame-options", b"DENY")
+                if self.secure_transport:
+                    add(
+                        b"strict-transport-security",
+                        b"max-age=31536000; includeSubDomains",
+                    )
+                path = str(scope.get("path", ""))
+                if path == "/" or path.startswith("/api/") or path.startswith("/sessions"):
+                    add(b"cache-control", b"no-store")
+                    add(b"pragma", b"no-cache")
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, secure_send)
 
 
 class RequestBodyLimitMiddleware:
@@ -106,4 +209,10 @@ class RequestBodyLimitMiddleware:
         await send({"type": "http.response.body", "body": body})
 
 
-__all__ = ["DEFAULT_MAX_REQUEST_BODY_BYTES", "RequestBodyLimitMiddleware"]
+__all__ = [
+    "CONTENT_SECURITY_POLICY",
+    "DEFAULT_MAX_REQUEST_BODY_BYTES",
+    "HttpSecurityHeadersMiddleware",
+    "RequestBodyLimitMiddleware",
+    "trusted_hosts_from_environment",
+]

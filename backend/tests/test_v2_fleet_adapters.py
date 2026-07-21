@@ -365,6 +365,7 @@ def test_pilot_production_builds_real_adapters_around_one_redis_client(monkeypat
         "independent-network-secret-at-least-32-bytes",
     )
     monkeypatch.setenv("TUTOR_TRUSTED_PROXY_CIDRS", "10.0.0.0/8")
+    monkeypatch.setenv("TUTOR_TRUSTED_HOSTS", "tutor.example.edu")
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.invalid")
     for name in (
         "TUTOR_V2_METRICS_SINK_FACTORY",
