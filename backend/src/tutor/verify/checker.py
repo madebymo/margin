@@ -773,11 +773,26 @@ def _verify_local(spec: AnswerSpec, given: str) -> VerificationResult:
                 functions=spec.functions,
             )
             variable = sympy.Symbol(spec.variable)
+            constant = sympy.Symbol("C")
             normalized = sympy.sstr(answer)
-            matched = _equivalent(
+            derivative_matches = _equivalent(
                 sympy.diff(expected, variable),
                 sympy.diff(answer, variable),
             )
+            if spec.require_explicit_constant and not _equivalent(
+                sympy.diff(expected, constant), sympy.Integer(1)
+            ):
+                return _invalid("invalid_answer_spec")
+            constant_matches = not spec.require_explicit_constant or _equivalent(
+                sympy.diff(answer, constant), sympy.Integer(1)
+            )
+            matched = derivative_matches and constant_matches
+            if derivative_matches and not constant_matches:
+                return VerificationResult(
+                    status=VerificationStatus.INCORRECT,
+                    code="explicit_constant_required",
+                    normalized_form=normalized,
+                )
         elif isinstance(spec, FiniteSetAnswerSpec):
             expected = [
                 _parse_symbolic(

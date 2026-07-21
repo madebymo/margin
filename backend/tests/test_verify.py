@@ -183,6 +183,36 @@ def test_typed_answer_specs():
         assert verdict.status == VerificationStatus.CORRECT, (spec, verdict)
 
 
+def test_antiderivative_can_require_one_explicit_additive_constant():
+    spec = AntiderivativeAnswerSpec(
+        expected="x^3 + C",
+        require_explicit_constant=True,
+    )
+
+    assert verify_answer(spec, "x^3 + C", supervised=False).status == "correct"
+    shifted = verify_answer(spec, "x^3 + C + 9", supervised=False)
+    assert shifted.status == VerificationStatus.CORRECT
+
+    missing = verify_answer(spec, "x^3", supervised=False)
+    assert missing.status == VerificationStatus.INCORRECT
+    assert missing.code == "explicit_constant_required"
+
+    repeated = verify_answer(spec, "x^3 + C + C", supervised=False)
+    assert repeated.status == VerificationStatus.INCORRECT
+    assert repeated.code == "explicit_constant_required"
+
+
+def test_explicit_constant_contract_rejects_malformed_expected_truth():
+    spec = AntiderivativeAnswerSpec(
+        expected="x^3",
+        require_explicit_constant=True,
+    )
+
+    verdict = verify_answer(spec, "x^3 + C", supervised=False)
+    assert verdict.status == VerificationStatus.INVALID
+    assert verdict.code == "invalid_answer_spec"
+
+
 def test_finite_set_uses_mathematical_set_semantics_for_duplicates():
     singleton = FiniteSetAnswerSpec(expected=["1"])
     duplicated_expected = FiniteSetAnswerSpec(

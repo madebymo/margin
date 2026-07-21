@@ -464,6 +464,10 @@ class AntiderivativeAnswerSpec(StrictFrozenModel):
     expected: str = Field(min_length=1)
     variable: str = Field(default="x", pattern=_VARIABLE_PATTERN)
     variables: list[str] = Field(default_factory=list)
+    # Older releases accepted any representative of the family. Content that
+    # explicitly assesses indefinite-integral notation opts into requiring one
+    # additive ``+C`` term while retaining exact replay for those releases.
+    require_explicit_constant: bool = False
     functions: list[
         Literal["sin", "cos", "tan", "sec", "csc", "cot", "exp", "log", "ln", "sqrt", "Abs"]
     ] = Field(default_factory=list)
