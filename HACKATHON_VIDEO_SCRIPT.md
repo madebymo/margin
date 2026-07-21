@@ -1,10 +1,9 @@
 # Margin — OpenAI Build Week submission video
 
-Target runtime: 2:45–2:55. The 399-word spoken script is intentionally below the
-three-minute submission limit. Record the product sequence against the guarded,
-single-instance engineering demo. Keep its persistent **Engineering demo** and
-**Synthetic content—not a released curriculum** labels visible whenever learner
-content is shown; the default production application correctly exposes no goals.
+Target runtime: 2:45–2:55. The spoken script is intentionally below the
+three-minute submission limit. Record the product sequence only against the real
+API v2 service, its durable PostgreSQL session store, and an exact reviewed
+release bundle. Do not substitute the browser-test fixture when recording.
 
 ## 0:00–0:15 — Inspiration
 
@@ -35,18 +34,18 @@ skills.
 
 ## 0:40–1:13 — Product demonstration
 
-**Picture:** Use the guarded engineering demo with its synthetic-content label
-visible. Answer one probe, show an adaptive route decision, complete guided
-practice, request a conceptual hint, and answer a fresh check-in. Reload while
-the demo instance remains running and show the same transcript, draft, widget
-state, and progress restored.
+**Picture:** Start a real Product and Quotient Rules session. Keep the **Saved**
+indicator and **GPT-5.6 coach** attribution visible. Answer one probe, show an
+adaptive route decision, complete guided practice, request a conceptual hint,
+and answer a fresh check-in. Reload and show the same transcript, draft, widget
+state, and progress restored from PostgreSQL.
 
 **Voiceover:**
 
 > One response changes this route. Margin explains the current skill and offers
 > keyboard-accessible guided practice, but evidence comes from a different,
 > unseen item family. A conceptual hint preserves the learner's draft; a
-> revealing hint retires that question. Reloading this demo session restores
+> revealing hint retires that question. Reloading this saved session restores
 > its transcript, draft, widget state, and progress—without duplicate advancement
 > or missing evidence.
 
@@ -132,6 +131,6 @@ release → canary pilot**. End on the Margin wordmark and repository URL.
   at least two seconds.
 - Do not expose expected answers, cookies, API keys, raw student data, or private
   reviewer artifacts in terminal or browser shots.
-- Do not call the demo curriculum reviewed, independently attested, or released.
-  Keep the engineering-demo disclosure visible and use the final
-  release-count claim only after it is factually true.
+- Do not record this script until the displayed release digest has an independent
+  family, KC, pedagogy, and exact-bundle attestation. Use final release-count
+  claims only after they are factually true.

@@ -20,7 +20,6 @@ WORKDIR /app
 COPY backend/pyproject.toml backend/pyproject.toml
 COPY backend/alembic.ini backend/alembic.ini
 COPY backend/src backend/src
-COPY backend/tests/__init__.py backend/tests/browser_v2_app.py backend/tests/v2_helpers.py backend/tests/
 COPY --from=frontend-build \
     /workspace/backend/src/tutor/api/static/dist \
     backend/src/tutor/api/static/dist
@@ -28,4 +27,4 @@ RUN python -m pip install --no-cache-dir "./backend[api,pilot]"
 
 USER tutor
 EXPOSE 8000
-CMD ["sh", "-c", "if [ \"${TUTOR_SUBMISSION_DEMO:-0}\" = \"1\" ]; then cd backend && exec uvicorn tests.browser_v2_app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${TUTOR_TRUSTED_PROXY_CIDRS:-127.0.0.1}; else exec uvicorn tutor.api.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${TUTOR_TRUSTED_PROXY_CIDRS:-127.0.0.1}; fi"]
+CMD ["sh", "-c", "exec uvicorn tutor.api.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${TUTOR_TRUSTED_PROXY_CIDRS:-127.0.0.1"]
