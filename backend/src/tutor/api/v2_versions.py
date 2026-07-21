@@ -9,6 +9,7 @@ version identifier.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import os
 import threading
@@ -28,6 +29,10 @@ from tutor.learner.evidence_trust import (
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.pedagogy import PedagogyPackCatalog
+
+
+V2_ACTIVE_RELEASE_BUNDLE_ENV = "TUTOR_V2_ACTIVE_RELEASE_BUNDLE"
+V2_ACTIVE_RELEASE_SHA256_ENV = "TUTOR_V2_ACTIVE_RELEASE_SHA256"
 
 
 class V2VersionUnavailable(KeyError):
@@ -214,35 +219,7 @@ class V2VersionRegistry:
             )
         registry = cls()
         for path in sorted(root.glob("*.json")):
-            try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                raise ValueError(f"invalid v2 release bundle {path}") from exc
-            expected_keys = {
-                "schema_version",
-                "graph",
-                "item_bank",
-                "pedagogy_catalog",
-            }
-            if (
-                not isinstance(payload, dict)
-                or set(payload) != expected_keys
-                or payload.get("schema_version") != 2
-            ):
-                raise ValueError(
-                    f"v2 release bundle {path} must be schema version 2 and "
-                    "contain only schema_version, graph, item_bank, and "
-                    "pedagogy_catalog"
-                )
-            try:
-                graph = GraphDocument.model_validate(payload["graph"])
-                item_bank = ItemBankDocument.model_validate(payload["item_bank"])
-                pedagogy_catalog = PedagogyPackCatalog.model_validate(
-                    payload["pedagogy_catalog"]
-                )
-                registry.register(graph, item_bank, pedagogy_catalog)
-            except (ValueError, TypeError) as exc:
-                raise ValueError(f"invalid v2 release bundle {path}") from exc
+            registry.register_bundle(path)
         return registry
 
     @classmethod
@@ -250,6 +227,104 @@ class V2VersionRegistry:
         """Load deployment-retained releases when the registry path is set."""
         directory = os.environ.get("TUTOR_V2_RELEASE_REGISTRY_DIR")
         return cls.from_release_directory(directory) if directory else cls()
+
+    @staticmethod
+    def _load_bundle(
+        source: str | Path,
+        *,
+        expected_sha256: str | None = None,
+    ) -> tuple[GraphDocument, ItemBankDocument, PedagogyPackCatalog]:
+        """Parse one exact schema-v2 release file without logging its payload."""
+
+        path = Path(source).expanduser()
+        try:
+            raw_bundle = path.read_bytes()
+        except OSError as exc:
+            raise ValueError(f"invalid v2 release bundle {path}") from exc
+        if expected_sha256 is not None:
+            if len(expected_sha256) != 64 or any(
+                character not in "0123456789abcdef"
+                for character in expected_sha256
+            ):
+                raise ValueError("invalid active v2 release SHA-256 pin")
+            actual_sha256 = hashlib.sha256(raw_bundle).hexdigest()
+            if not hmac.compare_digest(actual_sha256, expected_sha256):
+                # Do not expose the path, configured digest, actual digest, or
+                # any payload fragment through an exception that startup
+                # infrastructure might record.
+                raise V2VersionConflict("active v2 release SHA-256 mismatch")
+        try:
+            payload = json.loads(raw_bundle)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"invalid v2 release bundle {path}") from exc
+        expected_keys = {
+            "schema_version",
+            "graph",
+            "item_bank",
+            "pedagogy_catalog",
+        }
+        if (
+            not isinstance(payload, dict)
+            or set(payload) != expected_keys
+            or type(payload.get("schema_version")) is not int
+            or payload["schema_version"] != 2
+        ):
+            raise ValueError(
+                f"v2 release bundle {path} must be schema version 2 and "
+                "contain only schema_version, graph, item_bank, and "
+                "pedagogy_catalog"
+            )
+        try:
+            return (
+                GraphDocument.model_validate(payload["graph"]),
+                ItemBankDocument.model_validate(payload["item_bank"]),
+                PedagogyPackCatalog.model_validate(payload["pedagogy_catalog"]),
+            )
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"invalid v2 release bundle {path}") from exc
+
+    def register_bundle(
+        self,
+        source: str | Path,
+        *,
+        require_released_content: bool = False,
+        expected_sha256: str | None = None,
+    ) -> V2ContentRelease:
+        """Parse, validate, and register one explicitly declared release.
+
+        Retained history may include a release with no currently admitted KC,
+        but an operator-selected active bundle must contain at least one
+        explicit release declaration. This prevents a draft-only bank from
+        being treated as a successful deployment merely because its schemas
+        parse.
+        """
+
+        graph, item_bank, pedagogy_catalog = self._load_bundle(
+            source,
+            expected_sha256=expected_sha256,
+        )
+        if require_released_content and not item_bank.released_kcs:
+            raise V2VersionConflict(
+                "active v2 release bundle contains no released knowledge components"
+            )
+        if require_released_content:
+            key = (
+                graph.graph_version,
+                item_bank.bank_version,
+                pedagogy_catalog.catalog_version,
+            )
+            with self._lock:
+                exact_release_exists = key in self._releases
+                reuses_registered_component = (
+                    item_bank.bank_version in self._item_banks
+                    or pedagogy_catalog.catalog_version
+                    in self._pedagogy_catalogs
+                )
+            if reuses_registered_component and not exact_release_exists:
+                raise V2VersionConflict(
+                    "active v2 release bundle is an unregistered component cross-product"
+                )
+        return self.register(graph, item_bank, pedagogy_catalog)
 
     def register(
         self,

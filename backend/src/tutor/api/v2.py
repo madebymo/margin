@@ -11,6 +11,7 @@ import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -53,7 +54,12 @@ from tutor.api.v2_controls import (
     StaticMutationGate,
     safe_mutation_gate_snapshot,
 )
-from tutor.api.v2_versions import V2PolicyRegistry, V2VersionRegistry
+from tutor.api.v2_versions import (
+    V2_ACTIVE_RELEASE_BUNDLE_ENV,
+    V2_ACTIVE_RELEASE_SHA256_ENV,
+    V2PolicyRegistry,
+    V2VersionRegistry,
+)
 from tutor.learner.evidence_trust import EvidenceTrustPolicy
 from tutor.learner.params import DEFAULT_PARAMS_V2
 from tutor.schemas.assessment import ItemBankDocument
@@ -384,6 +390,8 @@ def install_v2_routes(
     resume_token_secret: bytes | str | None = None,
     version_registry: V2VersionRegistry | None = None,
     policy_registry: V2PolicyRegistry | None = None,
+    active_release_bundle: str | Path | None = None,
+    active_release_sha256: str | None = None,
     feature_flags: V2FeatureFlags | None = None,
     metrics_sink: MetricsSink | None = None,
     mutation_gate: MutationGate | None = None,
@@ -426,30 +434,71 @@ def install_v2_routes(
             "observed_at": snapshot.observed_at.isoformat(),
         }
 
-    active_item_bank = item_bank
-    active_pedagogy_catalog = pedagogy_catalog
-    if active_item_bank is None or active_pedagogy_catalog is None:
-        try:
-            from tutor.content.item_bank import load_item_bank
-            from tutor.packs.loader import load_pedagogy_catalog
-
-            if active_item_bank is None:
-                active_item_bank = load_item_bank()
-            if active_pedagogy_catalog is None:
-                active_pedagogy_catalog = load_pedagogy_catalog()
-        except (OSError, ValueError):
-            # The public catalog remains empty when the packaged release
-            # cannot be loaded and validated.
-            active_item_bank = None
-            active_pedagogy_catalog = None
     registry = version_registry or V2VersionRegistry.from_environment()
-    active_release = None
-    if active_item_bank is not None and active_pedagogy_catalog is not None:
-        active_release = registry.register(
-            graph,
-            active_item_bank,
-            active_pedagogy_catalog,
+    configured_bundle = (
+        active_release_bundle
+        if active_release_bundle is not None
+        else os.environ.get(V2_ACTIVE_RELEASE_BUNDLE_ENV) or None
+    )
+    configured_bundle_sha256 = (
+        active_release_sha256
+        if active_release_sha256 is not None
+        else os.environ.get(V2_ACTIVE_RELEASE_SHA256_ENV) or None
+    )
+    if configured_bundle is None and configured_bundle_sha256 is not None:
+        raise RuntimeError(
+            "an active v2 release SHA-256 pin requires an active bundle"
         )
+    pilot_production = os.environ.get("TUTOR_PILOT_PRODUCTION", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if (
+        pilot_production
+        and configured_bundle is not None
+        and configured_bundle_sha256 is None
+    ):
+        raise RuntimeError(
+            "TUTOR_PILOT_PRODUCTION requires an active v2 release SHA-256 pin"
+        )
+    active_release = None
+    if configured_bundle is not None:
+        # A configured release is deployment intent, not an optional content
+        # source. Any parse, compatibility, review, or coverage failure aborts
+        # startup instead of falling back to the packaged draft inventory.
+        active_release = registry.register_bundle(
+            configured_bundle,
+            require_released_content=True,
+            expected_sha256=configured_bundle_sha256,
+        )
+        active_graph = active_release.graph
+        active_item_bank = active_release.item_bank
+        active_pedagogy_catalog = active_release.pedagogy_catalog
+    else:
+        active_graph = graph
+        active_item_bank = item_bank
+        active_pedagogy_catalog = pedagogy_catalog
+        if active_item_bank is None or active_pedagogy_catalog is None:
+            try:
+                from tutor.content.item_bank import load_item_bank
+                from tutor.packs.loader import load_pedagogy_catalog
+
+                if active_item_bank is None:
+                    active_item_bank = load_item_bank()
+                if active_pedagogy_catalog is None:
+                    active_pedagogy_catalog = load_pedagogy_catalog()
+            except (OSError, ValueError):
+                # Preserve the packaged default's existing fail-closed empty
+                # catalog. Explicit deployment bundles never enter this path.
+                active_item_bank = None
+                active_pedagogy_catalog = None
+        if active_item_bank is not None and active_pedagogy_catalog is not None:
+            active_release = registry.register(
+                active_graph,
+                active_item_bank,
+                active_pedagogy_catalog,
+            )
     evidence_trust_policy = registry.evidence_trust_registry
     from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 
@@ -460,7 +509,7 @@ def install_v2_routes(
         SessionOrchestratorV2.restore,
     )
     eligible_goals = _goals(
-        graph,
+        active_graph,
         available_targets,
         active_item_bank,
         active_pedagogy_catalog,
@@ -491,11 +540,11 @@ def install_v2_routes(
         if callable(setter):
             setter(active_widget_manifest)
     store = V2SessionStore(
-        graph_nodes={node.id: node for node in graph.nodes},
+        graph_nodes={node.id: node for node in active_graph.nodes},
         persistence=persistence,
         metrics_sink=metrics_sink,
         metric_dimensions=V2MetricDimensions(
-            graph_version=str(graph.graph_version),
+            graph_version=str(active_graph.graph_version),
             item_bank_version=(
                 active_item_bank.bank_version
                 if active_item_bank is not None
@@ -1155,7 +1204,7 @@ def install_v2_routes(
         )
         try:
             orchestrator, content_mode = factory(
-                graph, goal.target_kc, profile, request_body
+                active_graph, goal.target_kc, profile, request_body
             )
             apply_runtime_widget_capabilities(orchestrator)
             remember_visible = getattr(
@@ -1523,7 +1572,7 @@ def install_v2_routes(
             "durable_persistence": persistence is not None,
             "reviewed_goal_count": len(eligible_goals),
             "active_versions": {
-                "graph": graph.graph_version,
+                "graph": active_graph.graph_version,
                 "item_bank": (
                     active_item_bank.bank_version
                     if active_item_bank is not None

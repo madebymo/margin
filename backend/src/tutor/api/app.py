@@ -132,6 +132,8 @@ def create_app(
     v2_metrics_sink: MetricsSink | None = None,
     v2_mutation_gate: MutationGate | None = None,
     v2_mutation_gate_max_age: timedelta | None = None,
+    v2_active_release_bundle: str | Path | None = None,
+    v2_active_release_sha256: str | None = None,
 ) -> FastAPI:
     """Build the API app around one graph version and an in-memory store.
 
@@ -451,6 +453,8 @@ def create_app(
             metrics_sink=resolved_v2_metrics_sink,
             mutation_gate=resolved_v2_mutation_gate,
             mutation_gate_max_age=resolved_v2_mutation_gate_max_age,
+            active_release_bundle=v2_active_release_bundle,
+            active_release_sha256=v2_active_release_sha256,
         )
 
     # Keep the mount last so API routes retain precedence. ``check_dir=False``
