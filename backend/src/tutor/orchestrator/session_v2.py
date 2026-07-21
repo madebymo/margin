@@ -21,6 +21,11 @@ from tutor.content.item_bank import (
 )
 from tutor.content.visible import extend_visible_texts
 from tutor.graph import service as graph_service
+from tutor.learner.evidence_trust import (
+    EVIDENCE_TRUST_POLICY_VERSION,
+    EvidenceTrustPolicy,
+    ReviewedEvidenceTrustRegistry,
+)
 from tutor.learner.params import BKTParams, DEFAULT_PARAMS_V2
 from tutor.learner.service_v2 import LearnerModelServiceV2
 from tutor.orchestrator.diagnosis_v2 import (
@@ -53,6 +58,8 @@ from tutor.schemas.assessment import (
 from tutor.schemas.common import ResponseClass
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import EvidenceEvent, LearnerProfile
+from tutor.schemas.pedagogy import PedagogyPackCatalog
+from tutor.packs.catalog import reviewed_misconception_ids
 from tutor.verify.checker import verify_answer
 
 LESSON_POLICY_VERSION = "lesson-flow-v2.2"
@@ -155,6 +162,8 @@ class SessionOrchestratorV2:
         item_bank: ItemBankDocument | None = None,
         probe_budget: int = 8,
         *,
+        pedagogy_catalog: PedagogyPackCatalog,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
         learner_id: UUID | None = None,
         as_of: datetime | None = None,
         learner_params: BKTParams | None = None,
@@ -179,6 +188,10 @@ class SessionOrchestratorV2:
             self._pinned_widget_capabilities
         )
         self._bank = item_bank or load_item_bank()
+        self._pedagogy_catalog = pedagogy_catalog
+        self._reviewed_misconceptions = reviewed_misconception_ids(
+            pedagogy_catalog
+        )
         if self._bank.graph_version != graph.graph_version:
             raise ValueError("item bank and graph versions do not match")
         required_kcs = graph_service.ancestor_subgraph(
@@ -193,6 +206,7 @@ class SessionOrchestratorV2:
         release_errors = validate_item_bank(
             self._bank,
             graph,
+            self._pedagogy_catalog,
             released_kcs=required_kcs,
         )
         if release_errors:
@@ -205,6 +219,15 @@ class SessionOrchestratorV2:
             raise ValueError(
                 f"item bank is not trusted for this target: {preview}{suffix}"
             )
+        self._evidence_trust_policy = (
+            evidence_trust_policy
+            if evidence_trust_policy is not None
+            else ReviewedEvidenceTrustRegistry.from_release(
+                graph,
+                self._bank,
+                self._pedagogy_catalog,
+            )
+        )
 
         floor = (
             {"Algebra 1", "Algebra 2", "Precalculus"}
@@ -220,6 +243,7 @@ class SessionOrchestratorV2:
             as_of=as_of,
             retention_half_life_days=retention_half_life_days,
             confirmation_window_days=confirmation_window_days,
+            evidence_trust_policy=self._evidence_trust_policy,
         )
         self._probe_budget = probe_budget
         self._diag = DiagnosisControllerV2(
@@ -321,10 +345,17 @@ class SessionOrchestratorV2:
         *,
         as_of: datetime,
         exposure_state: ContentExposureState | None = None,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
     ) -> None:
         """Seed prior evidence and retired content into a new intake episode."""
         if self.phase != SessionPhase.INTAKE:
             raise RuntimeError("longitudinal evidence must be seeded before begin")
+        trust_policy = (
+            evidence_trust_policy
+            if evidence_trust_policy is not None
+            else self._evidence_trust_policy
+        )
+        self._evidence_trust_policy = trust_policy
         learner = LearnerModelServiceV2(
             self._graph,
             params=self.learner.params,
@@ -333,8 +364,13 @@ class SessionOrchestratorV2:
             as_of=as_of,
             retention_half_life_days=self.learner.retention_half_life_days,
             confirmation_window_days=self.learner.confirmation_window_days,
+            evidence_trust_policy=trust_policy,
         )
-        self.learner = learner.replay(events, as_of=as_of)
+        self.learner = learner.replay(
+            events,
+            as_of=as_of,
+            evidence_trust_policy=trust_policy,
+        )
         if exposure_state is not None:
             self.exposure_state = exposure_state.model_copy(deep=True)
         self._diag = DiagnosisControllerV2(
@@ -346,14 +382,26 @@ class SessionOrchestratorV2:
             impact_decay=self._diag.state.impact_decay,
         )
 
-    def fresh_episode(self, *, as_of: datetime) -> "SessionOrchestratorV2":
+    def fresh_episode(
+        self,
+        *,
+        as_of: datetime,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
+    ) -> "SessionOrchestratorV2":
         """Start over on the same pinned release while retaining prior evidence."""
+        trust_policy = (
+            evidence_trust_policy
+            if evidence_trust_policy is not None
+            else self._evidence_trust_policy
+        )
         fresh = SessionOrchestratorV2(
             self._graph,
             self._target,
             self._profile,
             item_bank=self._bank,
             probe_budget=self._probe_budget,
+            pedagogy_catalog=self._pedagogy_catalog,
+            evidence_trust_policy=trust_policy,
             learner_id=self.learner.learner_id,
             as_of=as_of,
             learner_params=self.learner.params,
@@ -368,12 +416,25 @@ class SessionOrchestratorV2:
             list(self.learner.events),
             as_of=as_of,
             exposure_state=self.exposure_state,
+            evidence_trust_policy=trust_policy,
         )
         return fresh
 
     @property
     def pending_key(self) -> str | None:
         return self._pending.key if self._pending else None
+
+    @property
+    def pedagogy_catalog_version(self) -> str:
+        """The immutable reviewed pedagogy snapshot pinned to this episode."""
+
+        return self._pedagogy_catalog.catalog_version
+
+    @property
+    def evidence_trust_policy(self) -> EvidenceTrustPolicy:
+        """Policy applied to both longitudinal and current-episode evidence."""
+
+        return self._evidence_trust_policy
 
     @property
     def pending_kind(self) -> str | None:
@@ -681,6 +742,12 @@ class SessionOrchestratorV2:
             return None, None
         for signature in item.error_signatures:
             if answer.strip().casefold() == signature.expected_wrong.strip().casefold():
+                if (
+                    signature.misconception_id is not None
+                    and signature.misconception_id
+                    not in self._reviewed_misconceptions.get(item.kc_id, frozenset())
+                ):
+                    continue
                 return signature.implicated_prereq, signature.misconception_id
         return None, None
 
@@ -717,7 +784,12 @@ class SessionOrchestratorV2:
                 content_versions={
                     "graph": str(self._graph.graph_version),
                     "item_bank": self._bank.bank_version,
+                    "pedagogy_catalog": self.pedagogy_catalog_version,
+                    "pedagogy_pack": str(
+                        self._pedagogy_catalog.pack_by_kc[pending.kc_id].version
+                    ),
                 },
+                pedagogy_catalog_version=self.pedagogy_catalog_version,
                 episode_id=self._episode_id,
                 family_id=pending.family_id,
                 surface={
@@ -757,7 +829,12 @@ class SessionOrchestratorV2:
                 content_versions={
                     "graph": str(self._graph.graph_version),
                     "item_bank": self._bank.bank_version,
+                    "pedagogy_catalog": self.pedagogy_catalog_version,
+                    "pedagogy_pack": str(
+                        self._pedagogy_catalog.pack_by_kc[pending.kc_id].version
+                    ),
                 },
+                pedagogy_catalog_version=self.pedagogy_catalog_version,
                 episode_id=self._episode_id,
                 family_id=pending.family_id,
                 surface="instructional_practice",
@@ -1398,6 +1475,7 @@ class SessionOrchestratorV2:
             "plan_step": plan_step,
             "events_recorded": len(self.learner.events),
             "item_bank_version": self._bank.bank_version,
+            "pedagogy_catalog_version": self.pedagogy_catalog_version,
             "policy_versions": self._policy_versions(),
             "stop_reason": self._stop_reason,
         }
@@ -1410,7 +1488,9 @@ class SessionOrchestratorV2:
             "lesson": LESSON_POLICY_VERSION,
             "capstone": CAPSTONE_POLICY_VERSION,
             "allocator": ALLOCATOR_POLICY_VERSION,
+            "evidence_trust": EVIDENCE_TRUST_POLICY_VERSION,
             "widget_capabilities": WIDGET_CAPABILITY_VERSION,
+            "content_release": "content-release-v3.0",
         }
 
     @staticmethod
@@ -1666,9 +1746,10 @@ class SessionOrchestratorV2:
     def export_checkpoint(self) -> dict[str, Any]:
         """Serialize every control-plane field needed for exact process recovery."""
         return {
-            "schema_version": 2,
+            "schema_version": 3,
             "graph_version": self._graph.graph_version,
             "item_bank_version": self._bank.bank_version,
+            "pedagogy_catalog_version": self.pedagogy_catalog_version,
             "policy_versions": self._policy_versions(),
             "widget_capability_manifest": self._pinned_widget_capabilities,
             "episode_id": self._episode_id,
@@ -1715,15 +1796,24 @@ class SessionOrchestratorV2:
         graph: GraphDocument,
         checkpoint: dict[str, Any],
         item_bank: ItemBankDocument | None = None,
+        pedagogy_catalog: PedagogyPackCatalog | None = None,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
     ) -> "SessionOrchestratorV2":
         """Restore an exact checkpoint without regenerating any content."""
         bank = item_bank or load_item_bank()
-        if checkpoint.get("schema_version") != 2:
+        if pedagogy_catalog is None:
+            raise ValueError("checkpoint pedagogy catalog is unavailable")
+        if checkpoint.get("schema_version") != 3:
             raise ValueError("unsupported session checkpoint version")
         if checkpoint.get("graph_version") != graph.graph_version:
             raise ValueError("checkpoint graph version is unavailable")
         if checkpoint.get("item_bank_version") != bank.bank_version:
             raise ValueError("checkpoint item-bank version is unavailable")
+        if (
+            checkpoint.get("pedagogy_catalog_version")
+            != pedagogy_catalog.catalog_version
+        ):
+            raise ValueError("checkpoint pedagogy-catalog version is unavailable")
         expected_policies = cls._policy_versions()
         if checkpoint.get("policy_versions") != expected_policies:
             raise ValueError("checkpoint policy implementation is unavailable")
@@ -1736,6 +1826,8 @@ class SessionOrchestratorV2:
             LearnerProfile.model_validate(checkpoint["profile"]),
             item_bank=bank,
             probe_budget=int(checkpoint["probe_budget"]),
+            pedagogy_catalog=pedagogy_catalog,
+            evidence_trust_policy=evidence_trust_policy,
             learner_id=UUID(checkpoint["learner_id"]),
             as_of=datetime.fromisoformat(checkpoint["as_of"]),
             learner_params=BKTParams.model_validate(checkpoint["learner_params"]),
@@ -1754,6 +1846,24 @@ class SessionOrchestratorV2:
             EvidenceEvent.model_validate(payload)
             for payload in checkpoint.get("events", [])
         ]
+        episode_id = str(checkpoint["episode_id"])
+        for event in events:
+            if (
+                event.pedagogy_catalog_version != "legacy"
+                and event.content_versions.get("pedagogy_catalog")
+                != event.pedagogy_catalog_version
+            ):
+                raise ValueError(
+                    "checkpoint evidence pedagogy-catalog provenance is inconsistent"
+                )
+            if (
+                event.episode_id == episode_id
+                and event.pedagogy_catalog_version
+                != pedagogy_catalog.catalog_version
+            ):
+                raise ValueError(
+                    "checkpoint episode evidence uses another pedagogy catalog"
+                )
         orchestrator.learner = orchestrator.learner.replay(events)
         orchestrator._diag = DiagnosisControllerV2(
             graph,

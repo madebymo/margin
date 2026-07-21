@@ -15,6 +15,7 @@ from typing import Any
 from tutor.content.compiler import compile_default_blueprints
 from tutor.content.item_bank import load_item_bank, validate_item_bank
 from tutor.graph import service
+from tutor.packs.loader import load_pedagogy_catalog
 from tutor.schemas.common import WidgetType
 from tutor.schemas.kc import GraphDocument
 
@@ -99,10 +100,14 @@ def main(argv: list[str] | None = None) -> int:
     errors = validate_coverage(doc, coverage)
     try:
         bank = load_item_bank()
+        pedagogy_catalog = load_pedagogy_catalog()
     except Exception as exc:  # noqa: BLE001 - release validation boundary
-        print(f"item bank INVALID: {exc}", file=sys.stderr)
+        print(f"content release INVALID: {exc}", file=sys.stderr)
         return 1
-    errors.extend(f"item bank: {error}" for error in validate_item_bank(bank, doc))
+    errors.extend(
+        f"item bank: {error}"
+        for error in validate_item_bank(bank, doc, pedagogy_catalog)
+    )
     try:
         prototype_bank = compile_default_blueprints(doc)
     except Exception as exc:  # noqa: BLE001 - authoring validation boundary
@@ -110,7 +115,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     errors.extend(
         f"item blueprints: {error}"
-        for error in validate_item_bank(prototype_bank, doc)
+        for error in validate_item_bank(
+            prototype_bank,
+            doc,
+            pedagogy_catalog,
+        )
     )
     if errors:
         for error in errors:
@@ -121,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
         f"seed OK: {len(doc.nodes)} nodes, {len(doc.edges)} edges, "
         f"{len(service.roots(doc))} roots, max prerequisite depth {topo_depth(doc)}, "
         f"item bank {bank.bank_version} ({len(bank.items)} items), "
+        f"pedagogy catalog {pedagogy_catalog.catalog_version} "
+        f"({len(pedagogy_catalog.packs)} packs), "
         f"authoring prototypes {prototype_bank.bank_version} "
         f"({len(prototype_bank.items)} items)"
     )

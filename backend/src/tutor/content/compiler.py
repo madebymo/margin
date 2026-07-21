@@ -364,6 +364,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source", type=Path, default=DEFAULT_BLUEPRINT_PATH)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_REVIEW_MANIFEST_PATH)
     parser.add_argument("--graph", type=Path, default=DEFAULT_GRAPH_PATH)
+    parser.add_argument(
+        "--pedagogy-catalog",
+        type=Path,
+        default=None,
+        help="exact reviewed pedagogy catalog (defaults to the packaged release)",
+    )
     parser.add_argument("--check", action="store_true", help="validate compiled output")
     parser.add_argument("--out", type=Path, default=None, help="write compiled bank JSON")
     args = parser.parse_args(argv)
@@ -375,7 +381,13 @@ def main(argv: list[str] | None = None) -> int:
         manifest = load_review_manifest(args.manifest)
         graph = GraphDocument.model_validate_json(args.graph.read_text(encoding="utf-8"))
         bank = compile_blueprints(source, manifest, graph)
-        errors = validate_item_bank(bank, graph) if args.check else []
+        if args.check:
+            from tutor.packs.loader import load_pedagogy_catalog
+
+            pedagogy_catalog = load_pedagogy_catalog(args.pedagogy_catalog)
+            errors = validate_item_bank(bank, graph, pedagogy_catalog)
+        else:
+            errors = []
     except Exception as exc:  # noqa: BLE001 - CLI boundary reports a safe failure
         print(f"content compilation INVALID: {exc}", file=sys.stderr)
         return 1

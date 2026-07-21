@@ -6,6 +6,10 @@ import math
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from tutor.learner.evidence_trust import (
+    DENY_ALL_EVIDENCE,
+    EvidenceTrustPolicy,
+)
 from tutor.learner.params import BKTParams, DEFAULT_PARAMS_V2
 from tutor.learner.service import LearnerModelService
 from tutor.schemas.common import ResponseClass
@@ -26,6 +30,7 @@ class LearnerModelServiceV2(LearnerModelService):
         as_of: datetime | None = None,
         retention_half_life_days: int = 180,
         confirmation_window_days: int = 90,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
     ) -> None:
         super().__init__(
             graph,
@@ -36,12 +41,20 @@ class LearnerModelServiceV2(LearnerModelService):
         self.as_of = as_of or datetime.now(timezone.utc)
         self.retention_half_life_days = retention_half_life_days
         self.confirmation_window_days = confirmation_window_days
+        self._evidence_trust_policy = (
+            evidence_trust_policy or DENY_ALL_EVIDENCE
+        )
         self._priors = {kc: state.direct for kc, state in self._state.items()}
 
     def apply_event(self, event: EvidenceEvent) -> None:
         """Append evidence, but grant learning only for declared practice."""
         self._events.append(event)
-        if event.misconception_id and event.misconception_id not in self._misconceptions:
+        trusted_evidence = self._evidence_trust_policy.trusts(event)
+        if (
+            trusted_evidence
+            and event.misconception_id
+            and event.misconception_id not in self._misconceptions
+        ):
             self._misconceptions.append(event.misconception_id)
         if len(event.kc_ids) != 1:
             return
@@ -63,7 +76,7 @@ class LearnerModelServiceV2(LearnerModelService):
             self._aware(state.last_practiced) if state.last_practiced else None,
             timestamp,
         )
-        if event.surface == "instructional_practice":
+        if event.surface == "instructional_practice" and trusted_evidence:
             # A lesson transition is logged separately from the response that
             # completed practice. It applies learn once, without treating the
             # practice response itself as assessment evidence.
@@ -79,7 +92,7 @@ class LearnerModelServiceV2(LearnerModelService):
             numerator = prior * class_params.slip
             denominator = numerator + (1 - prior) * (1 - class_params.guess)
         posterior = numerator / denominator if denominator else prior
-        if event.surface == "legacy":
+        if event.surface == "legacy" or not trusted_evidence:
             # Legacy rows can only nudge the prior. They lack reviewed family
             # identity and therefore cannot carry v2-strength evidence.
             posterior = prior + 0.25 * (posterior - prior)
@@ -92,8 +105,14 @@ class LearnerModelServiceV2(LearnerModelService):
         state.direct = min(1.0, max(0.0, posterior))
         state.observations += 1
         state.last_practiced = timestamp
-        if event.correct and not assisted:
+        if event.correct and not assisted and trusted_evidence:
             self._propagate_up(kc)
+
+    @property
+    def evidence_trust_policy(self) -> EvidenceTrustPolicy:
+        """Immutable policy used to classify every replayed or new event."""
+
+        return self._evidence_trust_policy
 
     def aged_probability(self, kc: str, as_of: datetime | None = None) -> float:
         """Age direct belief toward its KC prior using a pinned half-life."""
@@ -145,6 +164,7 @@ class LearnerModelServiceV2(LearnerModelService):
             if (
                 event.kc_ids == [kc]
                 and event.family_id
+                and self._evidence_trust_policy.trusts(event)
                 and not event.assisted
                 and timestamp >= cutoff
                 and event.surface in {"diagnostic", "checkin"}
@@ -172,8 +192,14 @@ class LearnerModelServiceV2(LearnerModelService):
         events: list[EvidenceEvent] | None = None,
         *,
         as_of: datetime | None = None,
+        evidence_trust_policy: EvidenceTrustPolicy | None = None,
     ) -> "LearnerModelServiceV2":
         """Rebuild at a fixed session time so resume is deterministic."""
+        trust_policy = (
+            evidence_trust_policy
+            if evidence_trust_policy is not None
+            else self._evidence_trust_policy
+        )
         fresh = LearnerModelServiceV2(
             self._graph,
             params=self._params,
@@ -182,6 +208,7 @@ class LearnerModelServiceV2(LearnerModelService):
             as_of=as_of or self.as_of,
             retention_half_life_days=self.retention_half_life_days,
             confirmation_window_days=self.confirmation_window_days,
+            evidence_trust_policy=trust_policy,
         )
         source = events if events is not None else list(self._events)
         ordered = sorted(

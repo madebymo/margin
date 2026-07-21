@@ -16,6 +16,7 @@ from tutor.verify.checker import VerificationResult, VerificationStatus
 from tests.v2_helpers import (
     POWER_RULE_KC,
     approved_power_rule_bank,
+    approved_power_rule_catalog,
     power_rule_only_graph,
 )
 
@@ -30,6 +31,7 @@ def _session(*, budget: int = 8) -> SessionOrchestratorV2:
         PROFILE,
         item_bank=approved_power_rule_bank(),
         probe_budget=budget,
+        pedagogy_catalog=approved_power_rule_catalog(),
     )
 
 
@@ -92,6 +94,7 @@ def test_visible_text_ledger_round_trips_exactly_with_pending_skip():
         power_rule_only_graph(),
         checkpoint,
         item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
     )
 
     assert restored._visible_texts == session._visible_texts
@@ -180,6 +183,7 @@ def test_episode_capability_pin_cannot_be_widened_by_runtime_enable():
         PROFILE,
         item_bank=approved_power_rule_bank(),
         probe_budget=2,
+        pedagogy_catalog=approved_power_rule_catalog(),
         widget_capabilities=widget_capability_manifest(rich_widgets=False),
     )
     session.set_runtime_widget_capabilities(
@@ -219,6 +223,7 @@ def test_text_fallback_requires_genuine_practice_before_learning_transition():
         PROFILE,
         item_bank=approved_power_rule_bank(),
         probe_budget=2,
+        pedagogy_catalog=approved_power_rule_catalog(),
         widget_capabilities=legacy_live_input_manifest,
     )
     session.begin()
@@ -269,6 +274,7 @@ def test_runtime_gate_rejects_lesson_content_that_leaks_a_capstone_answer():
             PROFILE,
             item_bank=poisoned,
             probe_budget=2,
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -423,6 +429,7 @@ def test_checkpoint_restore_is_exact_and_continues_without_reallocation():
         power_rule_only_graph(),
         checkpoint,
         item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
     )
     assert restored.pending.model_dump() == session.pending.model_dump()
     assert restored.exposure_state == session.exposure_state
@@ -471,6 +478,7 @@ def test_checkpoint_restore_rejects_private_expected_answer_tampering():
             power_rule_only_graph(),
             checkpoint,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -505,6 +513,7 @@ def test_checkpoint_restore_rejects_pending_assistance_exposure_drift(
             power_rule_only_graph(),
             checkpoint,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -550,6 +559,7 @@ def test_checkpoint_restore_rejects_other_pending_authored_content_drift(
             power_rule_only_graph(),
             checkpoint,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -572,6 +582,7 @@ def test_checkpoint_restore_rejects_corrupt_lesson_content_references(corruption
             power_rule_only_graph(),
             checkpoint,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -590,6 +601,7 @@ def test_checkpoint_restore_requires_exact_pinned_policy_versions():
             power_rule_only_graph(),
             missing_versions,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
     changed_versions = dict(checkpoint)
@@ -602,6 +614,7 @@ def test_checkpoint_restore_requires_exact_pinned_policy_versions():
             power_rule_only_graph(),
             changed_versions,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
     missing_capabilities = dict(checkpoint)
@@ -611,6 +624,7 @@ def test_checkpoint_restore_requires_exact_pinned_policy_versions():
             power_rule_only_graph(),
             missing_capabilities,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -666,6 +680,7 @@ def test_runtime_rejects_packaged_draft_bank():
             TARGET,
             PROFILE,
             item_bank=load_item_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -676,6 +691,7 @@ def test_runtime_rejects_incomplete_hard_ancestor_release():
             TARGET,
             PROFILE,
             item_bank=approved_power_rule_bank(),
+            pedagogy_catalog=approved_power_rule_catalog(),
         )
 
 
@@ -692,4 +708,5 @@ def test_runtime_rejects_unreviewed_content_declared_released():
             TARGET,
             PROFILE,
             item_bank=unreviewed,
+            pedagogy_catalog=approved_power_rule_catalog(),
         )

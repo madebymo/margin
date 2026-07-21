@@ -30,6 +30,7 @@ from tutor.seed.load_seed import load_graph
 
 from tests.v2_helpers import (
     approved_power_rule_bank,
+    approved_power_rule_catalog,
     power_rule_only_graph,
 )
 
@@ -62,6 +63,7 @@ def _v2_app(
         persistence=persistence,
         available_targets=("kc.der.power_rule",),
         item_bank=item_bank,
+        pedagogy_catalog=approved_power_rule_catalog(),
         resume_token_secret=resume_token_secret,
         feature_flags=feature_flags,
     )
@@ -1633,6 +1635,12 @@ def test_persistence_is_atomic_and_tokens_are_hashed(monkeypatch):
         token = session.scalars(select(m.ResumeTokenRow)).one()
         assert checkpoint.revision == 1
         assert checkpoint.checkpoint["session_view"]["revision"] == 1
+        assert checkpoint.pedagogy_catalog_version == "test-approved-pedagogy-v1"
+        assert checkpoint.checkpoint["content_release"] == {
+            "graph_version": 1,
+            "item_bank_version": "test-approved-power-v2",
+            "pedagogy_catalog_version": "test-approved-pedagogy-v1",
+        }
         assert len(receipts) == 2  # create plus hint
         assert len(transcript) == len(advanced.json()["transcript"])
         assert token.token_hash != raw_cookie
@@ -1682,10 +1690,13 @@ def test_v2_evidence_uses_the_same_episode_id_in_memory_checkpoint_and_database(
     assert event.episode_id == view["session_id"]
     assert checkpoint["episode_id"] == view["session_id"]
     assert checkpoint["events"][-1]["episode_id"] == view["session_id"]
+    assert event.pedagogy_catalog_version == "test-approved-pedagogy-v1"
+    assert event.content_versions["pedagogy_catalog"] == event.pedagogy_catalog_version
 
     with Session(app.state.persistence.engine) as session:
         row = session.scalars(select(m.EvidenceEventRow)).one()
         assert row.episode_id == view["session_id"]
+        assert row.pedagogy_catalog_version == event.pedagogy_catalog_version
 
 
 def test_resume_expiry_rolls_on_get_new_action_and_receipt_replay(monkeypatch):
@@ -1871,6 +1882,92 @@ def test_durable_resume_fails_closed_when_evidence_ledger_is_missing():
     metrics = app.state.v2_store.metrics_snapshot()
     assert metrics["rollout_gates"]["missing_evidence_detected"] == 1
     assert metrics["rollout_gates"]["commit_integrity_failures"] == 1
+
+
+def test_durable_resume_rejects_a_checkpoint_row_catalog_mismatch():
+    app = _v2_app(durable=True)
+    client = TestClient(app)
+    created, _ = _create(client)
+    view = created.json()
+
+    with Session(app.state.persistence.engine) as session:
+        row = session.get(m.SessionCheckpointRow, view["session_id"])
+        row.pedagogy_catalog_version = "silently-rebound-catalog"
+        session.commit()
+    with app.state.v2_store._lock:
+        app.state.v2_store._sessions.clear()
+        app.state.v2_store._tokens.clear()
+
+    restored = client.get("/api/v2/sessions/current")
+
+    assert restored.status_code == 503
+    assert restored.json()["code"] == "session_restore_unavailable"
+    counters = app.state.v2_store.metrics_snapshot()["counters"]
+    assert counters["checkpoint_integrity_failures"] == 1
+
+
+def test_persistence_rejects_an_unrestorable_checkpoint_before_insert():
+    app = _v2_app(durable=True)
+    client = TestClient(app)
+    created, _ = _create(client)
+    handle = app.state.v2_store.get(created.json()["session_id"])
+    original = handle.orchestrator
+    view = app.state.v2_store.view(handle)
+
+    class MissingCatalogPin:
+        def export_checkpoint(self):
+            payload = original.export_checkpoint()
+            payload.pop("pedagogy_catalog_version")
+            return payload
+
+    handle.orchestrator = MissingCatalogPin()
+
+    with pytest.raises(
+        ValueError,
+        match="trusted pedagogy-catalog version",
+    ):
+        app.state.v2_persistence._checkpoint(
+            handle,
+            view,
+        )
+
+
+def test_durable_resume_rejects_internally_inconsistent_evidence_catalog():
+    app = _v2_app(durable=True)
+    client = TestClient(app)
+    created, _ = _create(client)
+    view = created.json()
+    handle = app.state.v2_store.get(view["session_id"])
+    answered = client.post(
+        f"/api/v2/sessions/{view['session_id']}/actions",
+        json=_answer(view, handle.orchestrator.pending_expected),
+    )
+    assert answered.status_code == 200
+
+    with Session(app.state.persistence.engine) as session:
+        checkpoint = session.get(m.SessionCheckpointRow, view["session_id"])
+        payload = deepcopy(checkpoint.checkpoint)
+        payload["orchestrator"]["events"][-1][
+            "pedagogy_catalog_version"
+        ] = "tampered-catalog"
+        checkpoint.checkpoint = payload
+        event = session.scalars(
+            select(m.EvidenceEventRow).where(
+                m.EvidenceEventRow.episode_id == view["session_id"]
+            )
+        ).one()
+        event.pedagogy_catalog_version = "tampered-catalog"
+        session.commit()
+    with app.state.v2_store._lock:
+        app.state.v2_store._sessions.clear()
+        app.state.v2_store._tokens.clear()
+
+    restored = client.get("/api/v2/sessions/current")
+
+    assert restored.status_code == 503
+    assert restored.json()["code"] == "session_restore_unavailable"
+    counters = app.state.v2_store.metrics_snapshot()["counters"]
+    assert counters["evidence_provenance_integrity_failures"] == 1
 
 
 def test_create_restores_durable_cookie_before_enforcing_one_active_episode():

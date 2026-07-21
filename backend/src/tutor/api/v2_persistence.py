@@ -22,8 +22,6 @@ from tutor.api.v2_store import (
     V2SessionHandle,
 )
 from tutor.content.visible import canonical_visible_texts
-from tutor.schemas.assessment import ContentExposureState
-from tutor.schemas.learner import EvidenceEvent
 from tutor.db.models import (
     EvidenceEventRow,
     ItemExposureRow,
@@ -34,6 +32,8 @@ from tutor.db.models import (
     TranscriptEntryRow,
     WidgetAttemptRow,
 )
+from tutor.schemas.assessment import ContentExposureState
+from tutor.schemas.learner import EvidenceEvent
 
 _RESUME_DAYS = 30
 _REQUIRED_TABLES = {
@@ -44,6 +44,7 @@ _REQUIRED_TABLES = {
     "widget_attempts",
 }
 _REQUIRED_EVIDENCE_COLUMNS = {
+    "pedagogy_catalog_version",
     "episode_id",
     "family_id",
     "surface",
@@ -54,6 +55,7 @@ _REQUIRED_EVIDENCE_COLUMNS = {
     "content_provenance",
     "learning_opportunity",
 }
+_REQUIRED_CHECKPOINT_COLUMNS = {"pedagogy_catalog_version"}
 _REQUIRED_RESUME_COLUMNS = {"session_id"}
 _REQUIRED_WIDGET_ATTEMPT_COLUMNS = {"verification_status", "counted"}
 
@@ -101,6 +103,17 @@ class V2PersistenceService:
             for column in inspector.get_columns("evidence_events")
         }
         missing_columns = sorted(_REQUIRED_EVIDENCE_COLUMNS - evidence_columns)
+        checkpoint_columns = (
+            {
+                column["name"]
+                for column in inspector.get_columns("session_checkpoints")
+            }
+            if "session_checkpoints" in table_names
+            else set()
+        )
+        missing_checkpoint_columns = sorted(
+            _REQUIRED_CHECKPOINT_COLUMNS - checkpoint_columns
+        )
         resume_columns = (
             {
                 column["name"]
@@ -124,6 +137,7 @@ class V2PersistenceService:
         if (
             missing_tables
             or missing_columns
+            or missing_checkpoint_columns
             or missing_resume_columns
             or missing_widget_columns
         ):
@@ -132,6 +146,10 @@ class V2PersistenceService:
                 details.append(f"tables={missing_tables}")
             if missing_columns:
                 details.append(f"evidence columns={missing_columns}")
+            if missing_checkpoint_columns:
+                details.append(
+                    f"checkpoint columns={missing_checkpoint_columns}"
+                )
             if missing_resume_columns:
                 details.append(f"resume-token columns={missing_resume_columns}")
             if missing_widget_columns:
@@ -240,6 +258,7 @@ class V2PersistenceService:
                         requested_content_mode=handle.content_mode.requested,
                         effective_content_mode=handle.content_mode.effective,
                         fallback_reason=handle.content_mode.fallback_reason,
+                        pedagogy_catalog_version=self._catalog_version(handle),
                         revision=handle.revision,
                         phase=view.phase,
                         checkpoint=checkpoint,
@@ -324,6 +343,10 @@ class V2PersistenceService:
             )
             if checkpoint_row is None:
                 raise KeyError(f"unknown v2 session: {handle.session_id}")
+            self._validate_checkpoint_release_pin(
+                checkpoint_row,
+                expected_catalog_version=self._catalog_version(handle),
+            )
 
             token = session.scalar(
                 select(ResumeTokenRow)
@@ -505,6 +528,10 @@ class V2PersistenceService:
             )
             if checkpoint is None:
                 raise KeyError(f"unknown v2 session: {handle.session_id}")
+            self._validate_checkpoint_release_pin(
+                checkpoint,
+                expected_catalog_version=self._catalog_version(handle),
+            )
 
             existing = session.scalar(
                 select(SessionMutationReceiptRow).where(
@@ -583,6 +610,7 @@ class V2PersistenceService:
                     requested_content_mode=replacement.content_mode.requested,
                     effective_content_mode=replacement.content_mode.effective,
                     fallback_reason=replacement.content_mode.fallback_reason,
+                    pedagogy_catalog_version=self._catalog_version(replacement),
                     revision=replacement.revision,
                     phase=replacement_view.phase,
                     checkpoint=self._checkpoint(replacement, replacement_view),
@@ -966,6 +994,7 @@ class V2PersistenceService:
                 "checkpoint_integrity_failures",
                 "durable checkpoint has no orchestrator state",
             )
+        cls._validate_checkpoint_release_pin(checkpoint)
         if view.revision != checkpoint.revision or view.phase != checkpoint.phase:
             raise DurableLedgerMismatch(
                 "checkpoint_integrity_failures",
@@ -1102,6 +1131,29 @@ class V2PersistenceService:
                 "missing_evidence_detected",
                 "append-only evidence log and checkpoint learner state disagree",
             )
+        episode_id = state.get("episode_id")
+        pinned_catalog_version = state.get("pedagogy_catalog_version")
+        for event in actual_events:
+            event_catalog_version = event["pedagogy_catalog_version"]
+            content_catalog_version = event["content_versions"].get(
+                "pedagogy_catalog"
+            )
+            if (
+                event_catalog_version != "legacy"
+                and content_catalog_version != event_catalog_version
+            ):
+                raise DurableLedgerMismatch(
+                    "evidence_provenance_integrity_failures",
+                    "evidence row and content provenance name different pedagogy catalogs",
+                )
+            if (
+                event["episode_id"] == episode_id
+                and event_catalog_version != pinned_catalog_version
+            ):
+                raise DurableLedgerMismatch(
+                    "evidence_provenance_integrity_failures",
+                    "current-episode evidence does not use the checkpoint pedagogy catalog",
+                )
 
         widget_receipts = [
             receipt
@@ -1148,6 +1200,7 @@ class V2PersistenceService:
             assisted=row.assisted,
             misconception_id=row.misconception_id,
             content_versions=dict(row.content_versions or {}),
+            pedagogy_catalog_version=row.pedagogy_catalog_version,
             episode_id=row.episode_id,
             family_id=row.family_id,
             surface=row.surface,
@@ -1163,8 +1216,19 @@ class V2PersistenceService:
     def _checkpoint(handle: V2SessionHandle, view: SessionView) -> dict[str, Any]:
         export = getattr(handle.orchestrator, "export_checkpoint", None)
         orchestrator_state = export() if callable(export) else None
-        return {
-            "schema_version": 2,
+        if not isinstance(orchestrator_state, dict):
+            raise ValueError("v2 orchestrator cannot export a durable checkpoint")
+        catalog_version = V2PersistenceService._catalog_version(handle)
+        content_release = {
+            "graph_version": orchestrator_state.get("graph_version"),
+            "item_bank_version": orchestrator_state.get("item_bank_version"),
+            "pedagogy_catalog_version": orchestrator_state.get(
+                "pedagogy_catalog_version"
+            ),
+        }
+        payload = {
+            "schema_version": 3,
+            "content_release": content_release,
             "session_view": view.model_dump(mode="json"),
             "orchestrator": orchestrator_state,
             "goal": handle.goal.model_dump(mode="json"),
@@ -1173,6 +1237,76 @@ class V2PersistenceService:
             "content_mode": handle.content_mode.model_dump(mode="json"),
             "learner_id": handle.learner_id,
         }
+        V2PersistenceService._validate_checkpoint_release_payload(
+            payload,
+            stored_catalog_version=catalog_version,
+            expected_catalog_version=catalog_version,
+        )
+        return payload
+
+    @staticmethod
+    def _validate_checkpoint_release_pin(
+        checkpoint: SessionCheckpointRow,
+        *,
+        expected_catalog_version: str | None = None,
+    ) -> None:
+        """Require one immutable content triple across every checkpoint layer."""
+        V2PersistenceService._validate_checkpoint_release_payload(
+            checkpoint.checkpoint,
+            stored_catalog_version=checkpoint.pedagogy_catalog_version,
+            expected_catalog_version=expected_catalog_version,
+        )
+
+    @staticmethod
+    def _validate_checkpoint_release_payload(
+        payload: Any,
+        *,
+        stored_catalog_version: str,
+        expected_catalog_version: str | None = None,
+    ) -> None:
+        """Validate a checkpoint before insert as well as after durable read."""
+        if not isinstance(payload, dict) or payload.get("schema_version") != 3:
+            raise DurableLedgerMismatch(
+                "checkpoint_integrity_failures",
+                "durable checkpoint has no supported content-release pin",
+            )
+        content_release = payload.get("content_release")
+        state = payload.get("orchestrator")
+        expected_keys = {
+            "graph_version",
+            "item_bank_version",
+            "pedagogy_catalog_version",
+        }
+        if (
+            not isinstance(content_release, dict)
+            or set(content_release) != expected_keys
+            or not isinstance(state, dict)
+        ):
+            raise DurableLedgerMismatch(
+                "checkpoint_integrity_failures",
+                "durable checkpoint has an invalid content-release pin",
+            )
+        state_release = {key: state.get(key) for key in expected_keys}
+        catalog_version = content_release["pedagogy_catalog_version"]
+        if (
+            content_release != state_release
+            or not isinstance(content_release["graph_version"], int)
+            or isinstance(content_release["graph_version"], bool)
+            or not isinstance(content_release["item_bank_version"], str)
+            or not content_release["item_bank_version"]
+            or not isinstance(catalog_version, str)
+            or not catalog_version
+            or catalog_version == "legacy"
+            or stored_catalog_version != catalog_version
+            or (
+                expected_catalog_version is not None
+                and expected_catalog_version != catalog_version
+            )
+        ):
+            raise DurableLedgerMismatch(
+                "checkpoint_integrity_failures",
+                "durable checkpoint content-release pins disagree",
+            )
 
     @staticmethod
     def _view_from_create_receipt(
@@ -1212,6 +1346,7 @@ class V2PersistenceService:
             assisted=event.assisted,
             misconception_id=event.misconception_id,
             content_versions=dict(event.content_versions),
+            pedagogy_catalog_version=event.pedagogy_catalog_version,
             episode_id=event.episode_id or handle.session_id,
             family_id=event.family_id,
             surface=event.surface,
@@ -1222,6 +1357,23 @@ class V2PersistenceService:
             content_provenance=event.content_provenance,
             learning_opportunity=event.learning_opportunity,
         )
+
+    @staticmethod
+    def _catalog_version(handle: V2SessionHandle) -> str:
+        version = getattr(
+            handle.orchestrator,
+            "pedagogy_catalog_version",
+            None,
+        )
+        if (
+            not isinstance(version, str)
+            or not version
+            or version == "legacy"
+        ):
+            raise ValueError(
+                "v2 orchestrator lacks a trusted pedagogy-catalog version"
+            )
+        return version
 
     @staticmethod
     def _exposure_row(

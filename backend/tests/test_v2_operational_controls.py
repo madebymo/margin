@@ -21,7 +21,11 @@ from tutor.db.persistence import PersistenceService
 from tutor.db.session import get_engine
 from tutor.seed.load_seed import load_graph
 
-from tests.v2_helpers import approved_power_rule_bank, power_rule_only_graph
+from tests.v2_helpers import (
+    approved_power_rule_bank,
+    approved_power_rule_catalog,
+    power_rule_only_graph,
+)
 
 _SECRET = b"operational-controls-test-secret-32-bytes"
 
@@ -53,6 +57,7 @@ def _app(
         persistence=persistence,
         available_targets=("kc.der.power_rule",),
         item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
         resume_token_secret=_SECRET,
         feature_flags=V2FeatureFlags(pause_v2_mutations=paused),
         metrics_sink=metrics_sink,
@@ -392,6 +397,10 @@ def test_metrics_sink_receives_only_stable_release_and_item_dimensions():
     dimensions = action_events[0][2]
     assert dimensions["graph_version"] == str(power_rule_only_graph().graph_version)
     assert dimensions["item_bank_version"] == approved_power_rule_bank().bank_version
+    assert (
+        dimensions["pedagogy_catalog_version"]
+        == approved_power_rule_catalog().catalog_version
+    )
     assert dimensions["learner_parameter_version"] == "bkt-v2"
     assert dimensions["capability_manifest_version"].startswith(
         "web-widget-capabilities-v2"
@@ -416,6 +425,7 @@ def test_health_reports_operator_active_version_readiness():
     versions = readiness["active_versions"]
     assert versions["graph"] == load_graph().graph_version
     assert isinstance(versions["item_bank"], str)
+    assert isinstance(versions["pedagogy_catalog"], str)
     assert versions["policies"]["diagnosis"].startswith("diagnosis-v2")
     assert versions["learner_parameters"] == "bkt-v2"
     assert versions["capability_manifest"].startswith("web-widget-capabilities-v2")

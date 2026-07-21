@@ -13,7 +13,7 @@ from tutor.schemas.content_authoring import ContentReviewManifest, ItemBlueprint
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import EvidenceEvent
 from tutor.schemas.lesson import MiniLessonPackage
-from tutor.schemas.pedagogy import PedagogyPack
+from tutor.schemas.pedagogy import PedagogyPack, PedagogyPackCatalog
 from tutor.schemas.probe import DiagnosticProbe
 from tutor.schemas.widgets import widget_config_adapter
 
@@ -29,6 +29,7 @@ def export_schemas(out_dir: Path) -> list[Path]:
         "mini_lesson_package": MiniLessonPackage.model_json_schema(),
         "diagnostic_probe": DiagnosticProbe.model_json_schema(),
         "pedagogy_pack": PedagogyPack.model_json_schema(),
+        "pedagogy_pack_catalog": PedagogyPackCatalog.model_json_schema(),
         "graph_document": GraphDocument.model_json_schema(),
         "evidence_event": EvidenceEvent.model_json_schema(),
         "answer_spec": answer_spec_adapter.json_schema(),

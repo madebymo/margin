@@ -8,7 +8,14 @@ student-eligible content.
 
 from tutor.content.item_bank import load_item_bank
 from tutor.schemas.assessment import ItemBankDocument
+from tutor.schemas.common import ReviewStatus
 from tutor.schemas.kc import GraphDocument
+from tutor.schemas.pedagogy import (
+    PedagogyPack,
+    PedagogyPackCatalog,
+    PedagogyPackProvenance,
+)
+from tutor.packs.loader import load_pedagogy_catalog
 from tutor.seed.load_seed import load_graph
 
 POWER_RULE_KC = "kc.der.power_rule"
@@ -32,6 +39,39 @@ def approved_power_rule_bank() -> ItemBankDocument:
             "reviewed_at": "2026-01-01T00:00:00Z",
         }
     return ItemBankDocument.model_validate(payload)
+
+
+def approved_power_rule_catalog(
+    *,
+    graph_version: int = 1,
+    catalog_version: str = "test-approved-pedagogy-v1",
+) -> PedagogyPackCatalog:
+    """Return a reviewed test-only pack catalog covering the power-rule KC."""
+
+    return PedagogyPackCatalog(
+        catalog_version=catalog_version,
+        graph_version=graph_version,
+        published_by="test release manager",
+        published_at="2026-01-01T00:00:00Z",
+        packs=[
+            PedagogyPack(
+                kc_id=POWER_RULE_KC,
+                sources=["test-only reviewed pedagogy fixture"],
+                review_status=ReviewStatus.HUMAN_APPROVED,
+                provenance=PedagogyPackProvenance(
+                    author="test curriculum author",
+                    reviewed_by="independent test reviewer",
+                    reviewed_at="2026-01-01T00:00:00Z",
+                ),
+            )
+        ],
+    )
+
+
+def empty_pedagogy_catalog() -> PedagogyPackCatalog:
+    """Return the exact packaged catalog used with unreleased draft banks."""
+
+    return load_pedagogy_catalog()
 
 
 def power_rule_only_graph() -> GraphDocument:

@@ -29,7 +29,11 @@ from tutor.api.v2_persistence import V2PersistenceService
 from tutor.db import models as m
 from tutor.db.session import create_all
 
-from tests.v2_helpers import approved_power_rule_bank, power_rule_only_graph
+from tests.v2_helpers import (
+    approved_power_rule_bank,
+    approved_power_rule_catalog,
+    power_rule_only_graph,
+)
 
 _POSTGRES_ENV = "TUTOR_TEST_POSTGRES_URL"
 _RESUME_SECRET = b"postgres-integration-resume-secret-32-bytes"
@@ -102,6 +106,7 @@ def _app(
         persistence=persistence,
         available_targets=("kc.der.power_rule",),
         item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
         resume_token_secret=_RESUME_SECRET,
     )
     return app

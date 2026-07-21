@@ -87,6 +87,7 @@ class PersistenceService:
                     assisted=event.assisted,
                     misconception_id=event.misconception_id,
                     content_versions=dict(event.content_versions),
+                    pedagogy_catalog_version=event.pedagogy_catalog_version,
                     episode_id=event.episode_id,
                     family_id=event.family_id,
                     surface=event.surface,
@@ -130,6 +131,9 @@ class PersistenceService:
                     assisted=row.assisted,
                     misconception_id=row.misconception_id,
                     content_versions=dict(row.content_versions or {}),
+                    pedagogy_catalog_version=(
+                        row.pedagogy_catalog_version or "legacy"
+                    ),
                     episode_id=row.episode_id,
                     family_id=row.family_id,
                     surface=row.surface or "legacy",

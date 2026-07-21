@@ -10,6 +10,7 @@ from tutor.content.compiler import (
     load_review_manifest,
 )
 from tutor.content.item_bank import load_item_bank, validate_item_bank
+from tutor.packs.loader import load_pedagogy_catalog
 from tutor.graph import service
 from tutor.schemas.kc import KC_ID_PATTERN, GraphDocument
 from tutor.seed.load_seed import load_coverage, load_graph, validate_coverage
@@ -71,7 +72,7 @@ def test_packaged_item_bank_is_valid_unreleased_draft(seed):
     assert bank.released_kcs == []
     assert {item.review_status.value for item in bank.items} == {"draft"}
     assert all(item.provenance.reviewed_by is None for item in bank.items)
-    assert validate_item_bank(bank, seed) == []
+    assert validate_item_bank(bank, seed, load_pedagogy_catalog()) == []
 
 
 def test_packaged_authoring_prototypes_are_valid_but_unreleased(seed):
@@ -83,4 +84,8 @@ def test_packaged_authoring_prototypes_are_valid_but_unreleased(seed):
     assert {entry.decision.value for entry in manifest.entries} == {"pending"}
     assert prototype_bank.released_kcs == []
     assert len(prototype_bank.items) == 6
-    assert validate_item_bank(prototype_bank, seed) == []
+    assert validate_item_bank(
+        prototype_bank,
+        seed,
+        load_pedagogy_catalog(),
+    ) == []

@@ -18,6 +18,9 @@ release is intentionally blocked by content review:
 
 - The packaged bank is `draft-v2.0.0`; its items have `review_status: draft`
   and `released_kcs: []`.
+- The packaged pedagogy catalog is an immutable, graph-pinned empty release;
+  reviewed packs must be published into a new catalog version before their KCs
+  can become student-eligible.
 - At local development's default 100% rollout setting, `GET /api/v2/goals` returns an
   empty catalog with `rollout.status: "content_unavailable"`. A target appears
   only when its complete hard-prerequisite closure is declared released and
@@ -45,15 +48,16 @@ not silently fall back to canonical examples or model-authored scored items.
 - `backend/src/tutor/api/` — FastAPI v1 compatibility routes, authoritative v2
   snapshots, idempotency, resume, persistence, and release registry
 - `backend/src/tutor/db/` — SQLAlchemy models and the additive v2 migration
-- `backend/src/tutor/seed/` — Calc-1 graph, coverage matrix, and packaged draft
-  item bank
+- `backend/src/tutor/seed/` — Calc-1 graph, coverage matrix, packaged draft item
+  bank, and exact reviewed pedagogy-catalog release
 - `backend/src/tutor/sim/` — v1 and v2 synthetic diagnosis harnesses
 - `frontend/` — one Svelte session state model with native accessible widget
   controls and Elm-rendered SVG scenes
 
-Every v2 session pins its graph, item-bank, diagnosis, lesson, allocator,
-learner-parameter, and widget-capability versions. Expected answers and scoring
-rules have no representation in the public `SessionView`.
+Every v2 session pins one explicitly registered graph/item-bank/pedagogy-catalog
+release triple plus its diagnosis, lesson, allocator, learner-parameter, and
+widget-capability versions. Expected answers and scoring rules have no
+representation in the public `SessionView`.
 
 ## Local setup
 
@@ -206,7 +210,9 @@ Each released KC must have, at minimum:
 Items carry stable item/revision/family/KC identifiers, structured prompt
 segments, three ordered hints, a discriminated answer contract, review status,
 and provenance. Reviewed error signatures must reference a human-approved
-misconception in the pedagogy pack for that KC.
+misconception in the exact graph-pinned pedagogy catalog released with the
+item bank. Runtime validation never merges the legacy CSV and generated draft
+directories into this trust decision.
 
 Run the release validator after any graph, coverage, pack, or item-bank change:
 
@@ -216,8 +222,17 @@ python -m tutor.seed.load_seed --validate
 
 Validation checks graph and coverage integrity, stable content identifiers,
 review/provenance rules, answer-spec parseability, family independence,
-surface coverage, production-family requirements, and answer leakage. The
-current draft passes structural validation while releasing no KC.
+surface coverage, production-family requirements, pedagogy-catalog coverage,
+reviewed misconception membership, and answer leakage. The current draft
+passes structural validation while releasing no KC.
+
+For a non-default authoring release, pass the exact reviewed catalog to the
+compiler check rather than relying on ambient pack directories:
+
+```bash
+python -m tutor.content.compiler --check \
+  --pedagogy-catalog /path/to/pedagogy-catalog.json
+```
 
 Do not add a KC to `released_kcs` merely to expose it in the UI. Author and
 review its complete family set and the complete hard-ancestor closure first.
@@ -257,19 +272,22 @@ percentage explicitly; the example starts closed before the reviewed 5/25/100
 canary progression. Non-pilot development reports `memory_only` durability
 when no database is configured.
 
-Durable sessions restore the exact graph and item-bank versions pinned in
-their checkpoint. Keep prior immutable release bundles available as JSON files
-with exactly two top-level keys, `graph` and `item_bank`, and configure:
+Durable sessions restore only the exact registered graph, item-bank, and
+pedagogy-catalog triple pinned in their checkpoint and checkpoint row. Keep
+prior immutable release bundles available as schema-v2 JSON files with exactly
+the top-level keys `schema_version`, `graph`, `item_bank`, and
+`pedagogy_catalog`, and configure:
 
 ```bash
 export TUTOR_V2_RELEASE_REGISTRY_DIR=/srv/tutor/releases
 ```
 
-Startup rejects malformed bundles, incompatible graph/bank pairs, and reuse of
-a version identifier for different content. A policy-version bump must retain
-the executable restore implementation too. Each configured Python module must
-expose `register_v2_policy_runtimes(registry)` and register the exact version
-set it can restore:
+Startup rejects malformed bundles, incompatible graph/bank/catalog triples,
+unregistered component cross-products, and reuse of any version identifier for
+different content. A policy-version bump must retain the executable restore
+implementation too. Each configured Python module must expose
+`register_v2_policy_runtimes(registry)` and register the exact version set it
+can restore:
 
 ```bash
 export TUTOR_V2_POLICY_RUNTIME_MODULES='tutor_retained.policy_v20,tutor_retained.policy_v21'
@@ -282,7 +300,13 @@ resume window.
 Resume reconciles the checkpoint against the ordered durable transcript,
 evidence, exposure-transition, widget-attempt, and mutation-receipt ledgers.
 Missing or divergent rows fail closed with `503` and an integrity metric; the
-checkpoint copy cannot silently mask missing append-only evidence. Expired
+checkpoint copy cannot silently mask missing append-only evidence. The
+additive migration labels pre-catalog evidence and checkpoints `legacy` rather
+than fabricating trust: legacy evidence may weakly seed belief, but cannot
+confirm mastery, carry misconception flags, propagate mastery, or receive a
+practice-learning transition. A pre-catalog v2 checkpoint is not silently
+rebound to the deployment's current catalog and therefore fails closed.
+Expired
 anonymous checkpoint, transcript, receipt, exposure, widget, and token rows
 are purged while learner identity and longitudinal evidence are retained.
 
@@ -409,8 +433,9 @@ removed by retention is classified as invalid because no durable row remains.
 The process-local snapshot remains useful for tests and one-worker
 development, but is not a fleet aggregator. A deployment can pass a
 `MetricsSink` to `create_app(v2_metrics_sink=...)`; every exported increment is
-tagged only with active release versions and, where applicable, a reviewed
-stable item ID. Sink failures increment the local `metrics_export_failures`
+tagged only with the active graph, item-bank, pedagogy-catalog, and policy
+versions and, where applicable, a reviewed stable item ID. Sink failures
+increment the local `metrics_export_failures`
 counter and never fail a tutoring request. Raw answers, expected answers,
 session/learner IDs, prompts, and student context are excluded from the sink
 contract.

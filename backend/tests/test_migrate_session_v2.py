@@ -69,7 +69,13 @@ def test_migration_adds_v2_columns_and_tables_to_legacy_schema():
         "learner_params_version",
         "content_provenance",
         "learning_opportunity",
+        "pedagogy_catalog_version",
     } <= columns
+    checkpoint_columns = {
+        column["name"]
+        for column in inspector.get_columns("session_checkpoints")
+    }
+    assert "pedagogy_catalog_version" in checkpoint_columns
     resume_columns = {
         column["name"] for column in inspector.get_columns("resume_tokens")
     }
@@ -80,8 +86,9 @@ def test_migration_adds_v2_columns_and_tables_to_legacy_schema():
     assert {"verification_status", "counted"} <= widget_columns
     with engine.connect() as connection:
         legacy = connection.exec_driver_sql(
-            "SELECT surface, item_revision, policy_version "
+            "SELECT surface, item_revision, policy_version, "
+            "pedagogy_catalog_version "
             "FROM evidence_events WHERE id = 1"
         ).one()
-    assert tuple(legacy) == ("legacy", 1, "legacy")
+    assert tuple(legacy) == ("legacy", 1, "legacy", "legacy")
     assert migrate(engine) is False

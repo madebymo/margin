@@ -47,10 +47,12 @@ from tutor.api.v2_store import (
     V2SessionStore,
 )
 from tutor.api.v2_versions import V2PolicyRegistry, V2VersionRegistry
+from tutor.learner.evidence_trust import EvidenceTrustPolicy
 from tutor.learner.params import DEFAULT_PARAMS_V2
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import LearnerProfile
+from tutor.schemas.pedagogy import PedagogyPackCatalog
 from tutor.runtime_capabilities import widget_capability_manifest
 
 _COOKIE_NAME = "tutor_resume_v2"
@@ -282,14 +284,17 @@ def _goals(
     graph: GraphDocument,
     available_targets: tuple[str, ...] | None = None,
     item_bank: ItemBankDocument | None = None,
+    pedagogy_catalog: PedagogyPackCatalog | None = None,
 ) -> list[GoalView]:
     nodes = {node.id: node for node in graph.nodes}
-    from tutor.content.item_bank import load_item_bank, validate_item_bank
+    from tutor.content.item_bank import validate_item_bank
     from tutor.graph.service import ancestor_subgraph
 
     candidates = _PILOT_TARGETS if available_targets is None else available_targets
     try:
-        bank = item_bank or load_item_bank()
+        if item_bank is None or pedagogy_catalog is None:
+            return []
+        bank = item_bank
         released = set(bank.released_kcs)
         eligible: list[str] = []
         for target in candidates:
@@ -298,7 +303,10 @@ def _goals(
                     graph, target, hard_only=True
                 ).node_ids()
                 if closure <= released and not validate_item_bank(
-                    bank, graph, released_kcs=closure
+                    bank,
+                    graph,
+                    pedagogy_catalog,
+                    released_kcs=closure,
                 ):
                     eligible.append(target)
         available_targets = tuple(eligible)
@@ -325,6 +333,8 @@ def _default_factory(
     request: CreateSessionV2Request,
     *,
     item_bank: ItemBankDocument | None = None,
+    pedagogy_catalog: PedagogyPackCatalog,
+    evidence_trust_policy: EvidenceTrustPolicy,
     widget_capabilities: dict[str, Any] | None = None,
 ) -> tuple[Any, ContentModeView]:
     """Build the best available deterministic v2 machine.
@@ -344,6 +354,8 @@ def _default_factory(
         target_kc,
         profile,
         item_bank=item_bank,
+        pedagogy_catalog=pedagogy_catalog,
+        evidence_trust_policy=evidence_trust_policy,
         widget_capabilities=widget_capabilities,
     )
     return orchestrator, ContentModeView(
@@ -361,6 +373,7 @@ def install_v2_routes(
     orchestrator_factory: _Factory | None = None,
     available_targets: tuple[str, ...] | None = None,
     item_bank: ItemBankDocument | None = None,
+    pedagogy_catalog: PedagogyPackCatalog | None = None,
     resume_token_secret: bytes | str | None = None,
     version_registry: V2VersionRegistry | None = None,
     policy_registry: V2PolicyRegistry | None = None,
@@ -374,18 +387,30 @@ def install_v2_routes(
         rich_widgets=flags.rich_widgets
     )
     active_item_bank = item_bank
-    if active_item_bank is None:
+    active_pedagogy_catalog = pedagogy_catalog
+    if active_item_bank is None or active_pedagogy_catalog is None:
         try:
             from tutor.content.item_bank import load_item_bank
+            from tutor.packs.loader import load_pedagogy_catalog
 
-            active_item_bank = load_item_bank()
+            if active_item_bank is None:
+                active_item_bank = load_item_bank()
+            if active_pedagogy_catalog is None:
+                active_pedagogy_catalog = load_pedagogy_catalog()
         except (OSError, ValueError):
             # The public catalog remains empty when the packaged release
             # cannot be loaded and validated.
             active_item_bank = None
+            active_pedagogy_catalog = None
     registry = version_registry or V2VersionRegistry.from_environment()
-    if active_item_bank is not None:
-        registry.register(graph, active_item_bank)
+    active_release = None
+    if active_item_bank is not None and active_pedagogy_catalog is not None:
+        active_release = registry.register(
+            graph,
+            active_item_bank,
+            active_pedagogy_catalog,
+        )
+    evidence_trust_policy = registry.evidence_trust_registry
     from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 
     active_policy_versions = SessionOrchestratorV2._policy_versions()
@@ -398,6 +423,7 @@ def install_v2_routes(
         graph,
         available_targets,
         active_item_bank,
+        active_pedagogy_catalog,
     )
     goals_by_id = {goal.goal_id: goal for goal in eligible_goals}
     if orchestrator_factory is None:
@@ -413,6 +439,8 @@ def install_v2_routes(
                 profile,
                 request,
                 item_bank=active_item_bank,
+                pedagogy_catalog=active_pedagogy_catalog,
+                evidence_trust_policy=evidence_trust_policy,
                 widget_capabilities=active_widget_manifest,
             )
     else:
@@ -431,6 +459,11 @@ def install_v2_routes(
             item_bank_version=(
                 active_item_bank.bank_version
                 if active_item_bank is not None
+                else "unavailable"
+            ),
+            pedagogy_catalog_version=(
+                active_pedagogy_catalog.catalog_version
+                if active_pedagogy_catalog is not None
                 else "unavailable"
             ),
             policy_versions=tuple(sorted(active_policy_versions.items())),
@@ -593,6 +626,8 @@ def install_v2_routes(
                 release.graph,
                 state,
                 release.item_bank,
+                release.pedagogy_catalog,
+                evidence_trust_policy,
             )
             apply_runtime_widget_capabilities(orchestrator)
             return store.restore(
@@ -1083,11 +1118,18 @@ def install_v2_routes(
             if prior_learner_id is not None and callable(seed_longitudinal):
                 from datetime import datetime, timezone
 
+                seed_kwargs = {
+                    "as_of": datetime.now(timezone.utc),
+                    "exposure_state": prior_exposure_state,
+                }
+                if isinstance(orchestrator, SessionOrchestratorV2):
+                    seed_kwargs["evidence_trust_policy"] = (
+                        evidence_trust_policy
+                    )
                 seed_longitudinal(
                     prior_learner_id,
                     prior_events,
-                    as_of=datetime.now(timezone.utc),
-                    exposure_state=prior_exposure_state,
+                    **seed_kwargs,
                 )
             interactions = orchestrator.begin()
             handle = store.create(
@@ -1401,6 +1443,8 @@ def install_v2_routes(
         ),
     )
     app.state.v2_version_registry = registry
+    app.state.v2_active_release = active_release
+    app.state.v2_evidence_trust_registry = evidence_trust_policy
     app.state.v2_policy_registry = policies
     app.state.v2_feature_flags = flags
     app.state.v2_readiness = {
@@ -1413,6 +1457,11 @@ def install_v2_routes(
             "item_bank": (
                 active_item_bank.bank_version
                 if active_item_bank is not None
+                else None
+            ),
+            "pedagogy_catalog": (
+                active_pedagogy_catalog.catalog_version
+                if active_pedagogy_catalog is not None
                 else None
             ),
             "policies": dict(sorted(active_policy_versions.items())),

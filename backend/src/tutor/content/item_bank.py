@@ -30,6 +30,11 @@ from tutor.schemas.assessment import (
 )
 from tutor.schemas.common import EdgeType, ReviewStatus
 from tutor.schemas.kc import GraphDocument
+from tutor.schemas.pedagogy import PedagogyPackCatalog
+from tutor.packs.catalog import (
+    reviewed_misconception_ids,
+    validate_pedagogy_catalog,
+)
 from tutor.verify.checker import (
     VerificationResult,
     VerificationStatus,
@@ -786,48 +791,51 @@ def _validate_item_bank_uncached(
 def _cached_validation(
     bank_json: str,
     graph_json: str,
+    pedagogy_catalog_json: str,
     released_kcs: tuple[str, ...],
-    reviewed_misconceptions: tuple[tuple[str, tuple[str, ...]], ...],
 ) -> tuple[str, ...]:
     """Memoize immutable release documents across catalog and session gates."""
     bank = ItemBankDocument.model_validate_json(bank_json)
     graph = GraphDocument.model_validate_json(graph_json)
+    pedagogy_catalog = PedagogyPackCatalog.model_validate_json(
+        pedagogy_catalog_json
+    )
+    requested = set(released_kcs)
+    catalog_errors = validate_pedagogy_catalog(
+        pedagogy_catalog,
+        graph,
+        required_kcs=requested,
+    )
+    bank_errors = _validate_item_bank_uncached(
+        bank,
+        graph,
+        released_kcs=requested,
+        reviewed_misconceptions={
+            kc_id: set(ids)
+            for kc_id, ids in reviewed_misconception_ids(
+                pedagogy_catalog
+            ).items()
+        },
+    )
     return tuple(
-        _validate_item_bank_uncached(
-            bank,
-            graph,
-            released_kcs=set(released_kcs),
-            reviewed_misconceptions={
-                kc_id: set(ids) for kc_id, ids in reviewed_misconceptions
-            },
-        )
+        [f"pedagogy catalog: {error}" for error in catalog_errors]
+        + bank_errors
     )
 
 
 def validate_item_bank(
     bank: ItemBankDocument,
     graph: GraphDocument,
+    pedagogy_catalog: PedagogyPackCatalog,
     released_kcs: set[str] | None = None,
 ) -> list[str]:
-    """Return cached, deterministic release-blocking bank errors."""
-    from tutor.packs.loader import load_packs
-
+    """Return deterministic errors for one explicit immutable release triple."""
     requested = set(bank.released_kcs) if released_kcs is None else set(released_kcs)
-    reviewed = tuple(
-        sorted(
-            (
-                kc_id,
-                tuple(sorted(misconception.id for misconception in pack.misconceptions)),
-            )
-            for kc_id, pack in load_packs().items()
-            if pack.review_status == ReviewStatus.HUMAN_APPROVED
-        )
-    )
     return list(
         _cached_validation(
             bank.model_dump_json(),
             graph.model_dump_json(),
+            pedagogy_catalog.model_dump_json(),
             tuple(sorted(requested)),
-            reviewed,
         )
     )

@@ -33,7 +33,12 @@ from tutor.schemas.learner import EvidenceEvent
 from tutor.seed.load_seed import load_graph
 from tutor.verify.checker import VerificationResult, VerificationStatus
 
-from tests.v2_helpers import approved_power_rule_bank, power_rule_only_graph
+from tests.v2_helpers import (
+    approved_power_rule_bank,
+    approved_power_rule_catalog,
+    empty_pedagogy_catalog,
+    power_rule_only_graph,
+)
 
 
 @pytest.fixture(scope="module")
@@ -46,12 +51,40 @@ def graph():
     return load_graph()
 
 
-def test_explicitly_approved_power_rule_fixture_is_release_valid(bank, graph):
+@pytest.fixture(scope="module")
+def catalog():
+    return approved_power_rule_catalog()
+
+
+def test_explicitly_approved_power_rule_fixture_is_release_valid(
+    bank, graph, catalog
+):
     assert len(bank.items) == 11
-    assert validate_item_bank(bank, graph) == []
+    assert validate_item_bank(bank, graph, catalog) == []
 
 
-def test_release_gate_treats_graph_descriptions_as_student_visible_content(bank):
+def test_release_requires_reviewed_catalog_coverage(bank, graph):
+    errors = validate_item_bank(bank, graph, empty_pedagogy_catalog())
+
+    assert any(
+        "required KC has no reviewed pedagogy pack: kc.der.power_rule" in error
+        for error in errors
+    )
+
+
+def test_release_rejects_a_catalog_pinned_to_another_graph(bank, graph, catalog):
+    payload = catalog.model_dump(mode="json")
+    payload["graph_version"] = graph.graph_version + 1
+    mismatched = type(catalog).model_validate(payload)
+
+    errors = validate_item_bank(bank, graph, mismatched)
+
+    assert any("pedagogy catalog: graph version mismatch" in error for error in errors)
+
+
+def test_release_gate_treats_graph_descriptions_as_student_visible_content(
+    bank, catalog
+):
     graph = power_rule_only_graph()
     payload = graph.model_dump(mode="json")
     payload["nodes"][0]["description"] = (
@@ -59,7 +92,7 @@ def test_release_gate_treats_graph_descriptions_as_student_visible_content(bank)
     )
     poisoned_graph = type(graph).model_validate(payload)
 
-    errors = validate_item_bank(bank, poisoned_graph)
+    errors = validate_item_bank(bank, poisoned_graph, catalog)
 
     assert any(
         "student-visible graph content" in error
@@ -75,7 +108,7 @@ def test_packaged_bank_is_an_unreleased_honest_draft(graph):
     assert {item.review_status.value for item in draft.items} == {"draft"}
     assert all(item.provenance.reviewed_by is None for item in draft.items)
     assert all(item.provenance.reviewed_at is None for item in draft.items)
-    assert validate_item_bank(draft, graph) == []
+    assert validate_item_bank(draft, graph, empty_pedagogy_catalog()) == []
 
 
 def test_legacy_prompt_and_task_fields_receive_safe_defaults():
@@ -172,8 +205,13 @@ def test_durable_identifier_and_provenance_widths_fail_at_schema_boundary(bank):
         EvidenceEvent.model_validate(event)
 
 
-def test_incomplete_requested_kc_is_release_blocked(bank, graph):
-    errors = validate_item_bank(bank, graph, {"kc.der.chain_rule"})
+def test_incomplete_requested_kc_is_release_blocked(bank, graph, catalog):
+    errors = validate_item_bank(
+        bank,
+        graph,
+        catalog,
+        {"kc.der.chain_rule"},
+    )
     assert any("no assessment items" in error for error in errors)
     assert any("diagnostic has 0" in error for error in errors)
 
@@ -316,12 +354,13 @@ def test_item_revisions_cannot_change_identity_lineage(bank, updates):
         ItemBankDocument.model_validate(payload)
 
 
-def test_release_requires_unique_authored_family_orders(bank, graph):
+def test_release_requires_unique_authored_family_orders(bank, graph, catalog):
     missing_payload = bank.model_dump(mode="json")
     missing_payload["items"][0]["allocation_order"] = None
     missing_errors = validate_item_bank(
         ItemBankDocument.model_validate(missing_payload),
         graph,
+        catalog,
     )
     assert any("released item lacks allocation_order" in error for error in missing_errors)
 
@@ -335,6 +374,7 @@ def test_release_requires_unique_authored_family_orders(bank, graph):
     duplicate_errors = validate_item_bank(
         ItemBankDocument.model_validate(duplicate_payload),
         graph,
+        catalog,
     )
     assert any(
         "allocation_order" in error and "is reused across families" in error
@@ -342,7 +382,7 @@ def test_release_requires_unique_authored_family_orders(bank, graph):
     )
 
 
-def test_same_family_revisions_may_share_allocation_order(bank, graph):
+def test_same_family_revisions_may_share_allocation_order(bank, graph, catalog):
     payload = bank.model_dump(mode="json")
     revised = deepcopy(payload["items"][0])
     revised["revision"] = 2
@@ -351,7 +391,7 @@ def test_same_family_revisions_may_share_allocation_order(bank, graph):
 
     assert not any(
         "allocation_order" in error
-        for error in validate_item_bank(versioned, graph)
+        for error in validate_item_bank(versioned, graph, catalog)
     )
 
 
@@ -418,18 +458,20 @@ def test_exposure_updates_monotonically_and_third_hint_retires_family(bank):
         )
 
 
-def test_validator_detects_answer_reuse_across_families(bank, graph):
+def test_validator_detects_answer_reuse_across_families(bank, graph, catalog):
     payload = bank.model_dump(mode="json")
     clone = deepcopy(payload["items"][0])
     clone["item_id"] = "item.power.diagnostic.cloned"
     clone["family_id"] = "family.power.diagnostic.cloned"
     payload["items"].append(clone)
     duplicated = ItemBankDocument.model_validate(payload)
-    errors = validate_item_bank(duplicated, graph)
+    errors = validate_item_bank(duplicated, graph, catalog)
     assert any("expected answer reused across families" in error for error in errors)
 
 
-def test_validator_requires_production_inventory_for_mastery_surfaces(bank, graph):
+def test_validator_requires_production_inventory_for_mastery_surfaces(
+    bank, graph, catalog
+):
     payload = bank.model_dump(mode="json")
     checkins = [
         item
@@ -443,7 +485,9 @@ def test_validator_requires_production_inventory_for_mastery_surfaces(bank, grap
             "expected_choice_id": f"right-{index}",
         }
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "checkin has 0 production families; requires 4" in error
@@ -452,7 +496,7 @@ def test_validator_requires_production_inventory_for_mastery_surfaces(bank, grap
 
 
 def test_validator_blocks_choice_items_until_semantic_answer_reuse_is_checkable(
-    bank, graph
+    bank, graph, catalog
 ):
     payload = bank.model_dump(mode="json")
     payload["items"][0]["answer"] = {
@@ -461,7 +505,9 @@ def test_validator_blocks_choice_items_until_semantic_answer_reuse_is_checkable(
         "expected_choice_id": "correct",
     }
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "choice items cannot be released" in error
@@ -469,7 +515,9 @@ def test_validator_blocks_choice_items_until_semantic_answer_reuse_is_checkable(
     )
 
 
-def test_validator_rejects_families_that_span_assessment_surfaces(bank, graph):
+def test_validator_rejects_families_that_span_assessment_surfaces(
+    bank, graph, catalog
+):
     payload = bank.model_dump(mode="json")
     reused_families = [
         item["family_id"]
@@ -484,12 +532,14 @@ def test_validator_rejects_families_that_span_assessment_surfaces(bank, graph):
     for item, family_id in zip(checkins, reused_families, strict=True):
         item["family_id"] = family_id
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any("family spans surfaces" in error for error in errors)
 
 
-def test_validator_rejects_unreviewed_misconception_ids(bank, graph):
+def test_validator_rejects_unreviewed_misconception_ids(bank, graph, catalog):
     payload = bank.model_dump(mode="json")
     payload["items"][0]["error_signatures"] = [
         {
@@ -498,7 +548,9 @@ def test_validator_rejects_unreviewed_misconception_ids(bank, graph):
         }
     ]
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "misconception m.power.invented is not in a human-approved pedagogy pack"
@@ -507,7 +559,9 @@ def test_validator_rejects_unreviewed_misconception_ids(bank, graph):
     )
 
 
-def test_validator_detects_equivalent_answer_reuse_across_families(bank, graph):
+def test_validator_detects_equivalent_answer_reuse_across_families(
+    bank, graph, catalog
+):
     payload = bank.model_dump(mode="json")
     clone = deepcopy(payload["items"][0])
     clone["item_id"] = "item.power.diagnostic.equivalent_clone"
@@ -515,7 +569,9 @@ def test_validator_detects_equivalent_answer_reuse_across_families(bank, graph):
     clone["answer"]["expected"] = "x^2 + x^2 + x^2"
     payload["items"].append(clone)
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "expected answer reused across families" in error
@@ -524,7 +580,7 @@ def test_validator_detects_equivalent_answer_reuse_across_families(bank, graph):
     )
 
 
-def test_validator_detects_literal_cross_family_hint_leak(bank, graph):
+def test_validator_detects_literal_cross_family_hint_leak(bank, graph, catalog):
     payload = bank.model_dump(mode="json")
     source = next(
         item
@@ -533,7 +589,9 @@ def test_validator_detects_literal_cross_family_hint_leak(bank, graph):
     )
     source["hints"][0]["text"] = "For the later check, the answer is 10*x^4."
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "item.power.diagnostic.cube" in error
@@ -546,7 +604,9 @@ def test_validator_detects_literal_cross_family_hint_leak(bank, graph):
     )
 
 
-def test_validator_checks_revealing_hint_against_other_scored_families(bank, graph):
+def test_validator_checks_revealing_hint_against_other_scored_families(
+    bank, graph, catalog
+):
     payload = bank.model_dump(mode="json")
     source = next(
         item
@@ -555,7 +615,9 @@ def test_validator_checks_revealing_hint_against_other_scored_families(bank, gra
     )
     source["hints"][2]["text"] = "For the later check, the answer is 10*x^4."
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "item.power.diagnostic.cube" in error
@@ -564,7 +626,9 @@ def test_validator_checks_revealing_hint_against_other_scored_families(bank, gra
     )
 
 
-def test_validator_detects_equivalent_cross_family_hint_leak(bank, graph):
+def test_validator_detects_equivalent_cross_family_hint_leak(
+    bank, graph, catalog
+):
     payload = bank.model_dump(mode="json")
     source = next(
         item
@@ -573,7 +637,9 @@ def test_validator_detects_equivalent_cross_family_hint_leak(bank, graph):
     )
     source["hints"][0]["text"] = "The result is 5*x^4 + 5*x^4."
 
-    errors = validate_item_bank(ItemBankDocument.model_validate(payload), graph)
+    errors = validate_item_bank(
+        ItemBankDocument.model_validate(payload), graph, catalog
+    )
 
     assert any(
         "item.power.diagnostic.cube" in error
@@ -729,6 +795,7 @@ def test_short_numeric_literal_gate_respects_math_token_boundaries(bank, visible
 def test_release_gate_fails_closed_when_prompt_leakage_check_times_out(
     bank,
     graph,
+    catalog,
     monkeypatch,
 ):
     payload = bank.model_dump(mode="json")
@@ -753,7 +820,7 @@ def test_release_gate_fails_closed_when_prompt_leakage_check_times_out(
 
     monkeypatch.setattr(item_bank_module, "verify_answer", timed_out_prompt)
 
-    errors = validate_item_bank(isolated_bank, graph)
+    errors = validate_item_bank(isolated_bank, graph, catalog)
 
     assert any(
         "visible math segment answer-separation check is indeterminate"
@@ -766,6 +833,7 @@ def test_release_gate_fails_closed_when_prompt_leakage_check_times_out(
 def test_release_and_boolean_helpers_fail_closed_on_worker_error(
     bank,
     graph,
+    catalog,
     monkeypatch,
 ):
     payload = bank.model_dump(mode="json")
@@ -805,7 +873,7 @@ def test_release_and_boolean_helpers_fail_closed_on_worker_error(
 
     with pytest.raises(AnswerSeparationIndeterminate, match="worker_unavailable"):
         _answers_equivalent(cube, quartic)
-    errors = validate_item_bank(isolated_bank, graph)
+    errors = validate_item_bank(isolated_bank, graph, catalog)
 
     assert any(
         "expected-answer comparison indeterminate across families" in error

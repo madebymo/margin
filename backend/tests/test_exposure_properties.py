@@ -17,6 +17,7 @@ from tutor.schemas.learner import LearnerProfile
 from tests.v2_helpers import (
     POWER_RULE_KC,
     approved_power_rule_bank,
+    approved_power_rule_catalog,
     power_rule_only_graph,
 )
 
@@ -63,7 +64,7 @@ def test_generated_lesson_bundles_are_disjoint_from_every_prior_surface(
 ):
     bank = approved_power_rule_bank()
     graph = power_rule_only_graph()
-    assert validate_item_bank(bank, graph) == []
+    assert validate_item_bank(bank, graph, approved_power_rule_catalog()) == []
     allocator = ItemAllocator(bank)
     state = ContentExposureState()
     for surface, count in (
@@ -98,6 +99,7 @@ def test_any_shown_diagnostic_family_stays_unavailable_after_restart(hints_seen)
         POWER_RULE_KC,
         LearnerProfile(course="AP Calculus AB", age_band="16-18"),
         item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
     )
     session.begin()
     shown_family = session.pending.family_id

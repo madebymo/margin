@@ -144,6 +144,9 @@ class EvidenceEventRow(Base):
     assisted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     misconception_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     content_versions: Mapped[dict] = mapped_column(JSONVariant, nullable=False, default=dict)
+    pedagogy_catalog_version: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="legacy"
+    )
     # v2 provenance is additive so legacy evidence remains valid and replayable.
     episode_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     family_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -256,6 +259,9 @@ class SessionCheckpointRow(Base):
     requested_content_mode: Mapped[str] = mapped_column(String(32), nullable=False)
     effective_content_mode: Mapped[str] = mapped_column(String(32), nullable=False)
     fallback_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pedagogy_catalog_version: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="legacy"
+    )
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     phase: Mapped[str] = mapped_column(String(32), nullable=False)
     checkpoint: Mapped[dict] = mapped_column(JSONVariant, nullable=False)

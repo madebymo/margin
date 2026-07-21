@@ -235,6 +235,7 @@ class V2SessionStore:
         self._metric_dimensions = metric_dimensions or V2MetricDimensions(
             graph_version="unknown",
             item_bank_version="unknown",
+            pedagogy_catalog_version="unknown",
             policy_versions=(),
             learner_parameter_version="unknown",
             capability_manifest_version="unknown",
@@ -1164,6 +1165,29 @@ class V2SessionStore:
         ):
             self._integrity_failure("evidence_provenance_failures")
             raise SessionIntegrityError("new evidence is not bound to this episode")
+        pinned_catalog_version = getattr(
+            next_handle.orchestrator,
+            "pedagogy_catalog_version",
+            None,
+        )
+        if new_events and (
+            not isinstance(pinned_catalog_version, str)
+            or not pinned_catalog_version
+            or pinned_catalog_version == "legacy"
+            or any(
+                getattr(event, "pedagogy_catalog_version", "legacy")
+                != pinned_catalog_version
+                or getattr(event, "content_versions", {}).get(
+                    "pedagogy_catalog"
+                )
+                != pinned_catalog_version
+                for event in new_events
+            )
+        ):
+            self._integrity_failure("evidence_provenance_failures")
+            raise SessionIntegrityError(
+                "new evidence is not bound to the pinned pedagogy catalog"
+            )
 
         advanced = self._pending_key(next_handle.orchestrator) != pending_key_before
         evidence_required = (

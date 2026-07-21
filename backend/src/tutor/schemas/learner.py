@@ -37,6 +37,9 @@ class EvidenceEvent(BaseModel):
     assisted: bool = False
     misconception_id: str | None = Field(default=None, max_length=128)
     content_versions: dict[str, str] = Field(default_factory=dict)
+    pedagogy_catalog_version: str = Field(
+        default="legacy", min_length=1, max_length=128
+    )
     episode_id: str | None = Field(default=None, max_length=36)
     family_id: str | None = Field(default=None, max_length=128)
     surface: Literal[

@@ -15,7 +15,11 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from tests.v2_helpers import approved_power_rule_bank, power_rule_only_graph
+from tests.v2_helpers import (
+    approved_power_rule_bank,
+    approved_power_rule_catalog,
+    power_rule_only_graph,
+)
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_features import V2FeatureFlags
 from tutor.api.v2_schemas import ContentModeView, CreateSessionV2Request
@@ -36,6 +40,7 @@ _DIST_DIR = (
 )
 _GRAPH = power_rule_only_graph()
 _BANK = approved_power_rule_bank()
+_PEDAGOGY_CATALOG = approved_power_rule_catalog()
 
 
 def _orchestrator_factory(
@@ -56,6 +61,7 @@ def _orchestrator_factory(
             profile,
             item_bank=_BANK,
             probe_budget=2,
+            pedagogy_catalog=_PEDAGOGY_CATALOG,
         ),
         ContentModeView(
             requested=request.content_mode,
@@ -72,6 +78,7 @@ install_v2_routes(
     orchestrator_factory=_orchestrator_factory,
     available_targets=("kc.der.power_rule",),
     item_bank=_BANK,
+    pedagogy_catalog=_PEDAGOGY_CATALOG,
     resume_token_secret=b"browser-test-only-resume-secret-32-bytes",
     feature_flags=V2FeatureFlags(student_rollout_percent=100),
 )

@@ -21,6 +21,7 @@ class V2MetricDimensions:
 
     graph_version: str
     item_bank_version: str
+    pedagogy_catalog_version: str
     policy_versions: tuple[tuple[str, str], ...]
     learner_parameter_version: str
     capability_manifest_version: str
@@ -29,6 +30,7 @@ class V2MetricDimensions:
         labels = {
             "graph_version": self.graph_version,
             "item_bank_version": self.item_bank_version,
+            "pedagogy_catalog_version": self.pedagogy_catalog_version,
             "learner_parameter_version": self.learner_parameter_version,
             "capability_manifest_version": self.capability_manifest_version,
         }
