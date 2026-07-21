@@ -81,6 +81,19 @@ _INLINE_IMPLICIT_COEFFICIENT = re.compile(
     rf"(?:\s*(?:\*\*|\^|[+\-*/])\s*(?:[+-]\s*)?{_INLINE_ATOM})*"
     rf"(?![A-Za-z0-9_])"
 )
+# The grammar also accepts adjacency between parenthesized factors and between
+# a declared variable and a parenthesized factor.  Keep these fragments
+# separate from ``_INLINE_EXPRESSION``: adjacency has no operator for that
+# pattern to anchor on, which previously let forms such as
+# ``(4*x^2)(7*x)`` evade bundle leakage checks.
+_INLINE_IMPLICIT_GROUP_PRODUCT = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"(?:\([^()\n]{1,128}\)\s*\([^()\n]{1,128}\)"
+    r"(?:\s*\([^()\n]{1,128}\))*"
+    r"|[A-Za-z]\s*\([^()\n]{1,128}\)"
+    r"|\([^()\n]{1,128}\)\s*[A-Za-z](?![A-Za-z0-9]))"
+    r"(?![A-Za-z0-9_])"
+)
 _INLINE_CONTAINER = re.compile(
     r"(?:\{[^{}\n]{1,256}\}|\[[^\[\]\n]{1,256}\]|"
     r"\([^(),\n]{1,128},[^()\n]{1,128}\))"
@@ -306,6 +319,7 @@ def _candidate_answer_texts(visible: str) -> list[str]:
             for pattern in (
                 _INLINE_INTERVAL_SET,
                 _INLINE_IMPLICIT_COEFFICIENT,
+                _INLINE_IMPLICIT_GROUP_PRODUCT,
                 _INLINE_EXPRESSION,
                 _INLINE_CONTAINER,
                 _INLINE_NUMERIC_TOKEN,

@@ -701,6 +701,32 @@ def test_bundle_gate_catches_implicit_multiplication_embedded_in_prose(bank):
     ]
 
 
+@pytest.mark.parametrize(
+    "visible",
+    [
+        "An equivalent form is (4*x^2)(3/4).",
+        "An equivalent form is (3*x)x.",
+    ],
+)
+def test_bundle_gate_catches_implicit_group_products_embedded_in_prose(
+    bank,
+    visible,
+):
+    upcoming = next(
+        item
+        for item in bank.items
+        if item.item_id == "item.power.diagnostic.cube"
+    )
+
+    assert bundle_leakage_problems(
+        [visible],
+        [upcoming],
+        supervised=False,
+    ) == [
+        "item.power.diagnostic.cube: expected answer leaks into visible content"
+    ]
+
+
 def test_bundle_gate_fails_closed_when_implicit_product_check_times_out(
     bank,
     monkeypatch,
