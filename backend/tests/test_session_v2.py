@@ -17,6 +17,8 @@ from tests.v2_helpers import (
     POWER_RULE_KC,
     approved_power_rule_bank,
     approved_power_rule_catalog,
+    approved_power_rule_catalog_v2,
+    approved_power_rule_prerequisite_release,
     power_rule_only_graph,
 )
 
@@ -172,6 +174,77 @@ def test_lesson_preserves_worked_segments_without_repeating_the_answer():
     ]
 
 
+def test_schema_v2_catalog_drives_structured_lesson_and_remediation_copy():
+    graph = power_rule_only_graph()
+    session = SessionOrchestratorV2(
+        graph,
+        TARGET,
+        PROFILE,
+        item_bank=approved_power_rule_bank(),
+        probe_budget=2,
+        pedagogy_catalog=approved_power_rule_catalog_v2(
+            graph_version=graph.graph_version
+        ),
+    )
+    session.begin()
+    session.submit("0")
+    lesson_interactions = session.submit("0")
+
+    lesson = next(item for item in lesson_interactions if item.kind == "lesson")
+    narrative = next(
+        block for block in lesson.content_blocks if block["kind"] == "narrative"
+    )
+    assert "Reviewed narrative marker" in lesson.text
+    assert narrative["segments"][0]["text"].startswith(
+        "Reviewed narrative marker"
+    )
+    assert session._nodes[TARGET].description not in lesson.text
+
+    session.submit(session.pending_expected)
+    remediation_interactions = []
+    for _ in range(3):
+        remediation_interactions = session.submit("0")
+    remediation = next(
+        item
+        for item in remediation_interactions
+        if item.content_blocks
+        and item.content_blocks[0]["kind"] == "remediation"
+    )
+    assert "Reviewed remediation marker" in remediation.text
+    assert remediation.content_blocks[0]["segments"][0]["text"].startswith(
+        "Reviewed remediation marker"
+    )
+
+
+def test_schema_v2_catalog_drives_structured_capstone_remediation():
+    graph = power_rule_only_graph()
+    session = SessionOrchestratorV2(
+        graph,
+        TARGET,
+        PROFILE,
+        item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog_v2(
+            graph_version=graph.graph_version
+        ),
+    )
+    session.begin()
+    session.submit(session.pending_expected)
+    session.submit(session.pending_expected)
+
+    interactions = session.submit("0")
+
+    remediation = next(
+        item
+        for item in interactions
+        if item.content_blocks
+        and item.content_blocks[0]["kind"] == "remediation"
+    )
+    assert "Reviewed remediation marker" in remediation.text
+    assert remediation.content_blocks[0]["segments"][0]["text"].startswith(
+        "Reviewed remediation marker"
+    )
+
+
 def test_three_guided_misses_create_no_learning_transition():
     session = _session(budget=2)
     session.begin()
@@ -217,6 +290,116 @@ def test_three_failed_checks_show_one_bounded_remediation_round():
     )
     assert restored.pending == session.pending
     assert restored._remediation_state == session._remediation_state
+
+
+def test_checkin_exhaustion_verifies_and_teaches_one_implicated_prerequisite():
+    graph, bank, catalog = approved_power_rule_prerequisite_release()
+    session = SessionOrchestratorV2(
+        graph,
+        TARGET,
+        PROFILE,
+        item_bank=bank,
+        probe_budget=2,
+        pedagogy_catalog=catalog,
+    )
+    session.begin()
+    session.submit("0")
+    session.submit("0")
+    assert session.pending.kind == "guided_widget"
+    session.submit(session.pending_expected)
+
+    for _ in range(3):
+        session.submit("0")
+
+    prerequisite = "kc.alg.exponent_rules"
+    assert session.pending.kind == "probe"
+    assert session.pending.kc_id == prerequisite
+    assert session._prerequisite_detour is not None
+    checkpoint = session.export_checkpoint()
+    restored = SessionOrchestratorV2.restore(
+        graph,
+        checkpoint,
+        item_bank=bank,
+        pedagogy_catalog=catalog,
+    )
+    assert restored.pending == session.pending
+    assert restored._prerequisite_detour == session._prerequisite_detour
+
+    # Two fresh direct failures confirm the suspected gap. Only then may the
+    # lesson descend to the prerequisite.
+    restored.submit("0")
+    restored.submit("0")
+    assert restored._prerequisite_detour is not None
+    assert restored._prerequisite_detour.stage == "teach"
+    assert restored.pending.kc_id == prerequisite
+    assert restored.pending.kind == "guided_widget"
+
+    restored = SessionOrchestratorV2.restore(
+        graph,
+        restored.export_checkpoint(),
+        item_bank=bank,
+        pedagogy_catalog=catalog,
+    )
+    assert restored._prerequisite_detour is not None
+    assert restored._prerequisite_detour.stage == "teach"
+
+    restored.submit(restored.pending_expected)
+    for _ in range(5):
+        assert restored.pending is not None
+        restored.submit(restored.pending_expected)
+        if (
+            restored._prerequisite_detour is None
+            and restored.pending is not None
+            and restored.pending.kc_id == TARGET
+        ):
+            break
+
+    assert restored._prerequisite_detour is None
+    assert restored.pending.kind == "checkin"
+    assert restored.pending.kc_id == TARGET
+    assert restored.pending.attempt_number == 4
+    diagnostic_families = [
+        event.family_id
+        for event in restored.learner.events
+        if event.kc_ids == [prerequisite] and event.surface == "diagnostic"
+    ]
+    assert len(diagnostic_families) == 2
+    assert len(set(diagnostic_families)) == 2
+
+
+def test_implicated_prerequisite_is_not_taught_after_two_direct_successes():
+    graph, bank, catalog = approved_power_rule_prerequisite_release()
+    session = SessionOrchestratorV2(
+        graph,
+        TARGET,
+        PROFILE,
+        item_bank=bank,
+        probe_budget=2,
+        pedagogy_catalog=catalog,
+    )
+    session.begin()
+    session.submit("0")
+    session.submit("0")
+    session.submit(session.pending_expected)
+    for _ in range(3):
+        session.submit("0")
+
+    prerequisite = "kc.alg.exponent_rules"
+    assert session.pending.kc_id == prerequisite
+    session.submit(session.pending_expected)
+    assert session.pending.kc_id == prerequisite
+    assert session.pending.kind == "probe"
+    session.submit(session.pending_expected)
+
+    assert session._prerequisite_detour is None
+    assert session.pending.kc_id == TARGET
+    assert session.pending.kind == "checkin"
+    assert session.pending.attempt_number == 4
+    assert all(
+        event.surface != "instructional_practice"
+        for event in session.learner.events
+        if event.kc_ids == [prerequisite]
+    )
 
 
 def test_dynamic_collision_replaces_only_the_unsafe_queued_checkin():
@@ -757,12 +940,16 @@ def test_runtime_rejects_packaged_draft_bank():
 
 
 def test_runtime_rejects_incomplete_hard_ancestor_release():
+    bank = approved_power_rule_bank()
+    graph = load_graph().model_copy(
+        update={"graph_version": bank.graph_version}
+    )
     with pytest.raises(ValueError, match="kc.alg.exponent_rules"):
         SessionOrchestratorV2(
-            load_graph(),
+            graph,
             TARGET,
             PROFILE,
-            item_bank=approved_power_rule_bank(),
+            item_bank=bank,
             pedagogy_catalog=approved_power_rule_catalog(),
         )
 

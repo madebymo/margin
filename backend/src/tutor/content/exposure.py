@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from tutor.schemas.assessment import (
     AssessmentItem,
@@ -159,6 +159,73 @@ class ItemAllocator:
             items=tuple(allocation.item for allocation in allocations),
             state=current,
         )
+
+    def qualify_episode(
+        self,
+        state: ContentExposureState,
+        *,
+        kc_ids: Sequence[str],
+        target_kc: str,
+        visible_texts: Iterable[str] = (),
+    ) -> None:
+        """Prove the remaining inventory can support one bounded episode.
+
+        Qualification is deliberately a dry run over immutable exposure-state
+        copies.  It reserves the maximum content the current policies can make
+        mandatory: three diagnostic observations, a complete lesson plus two
+        post-remediation checks for every routeable KC, and both target
+        capstones.  A successful check changes neither the caller's ledger nor
+        allocator state.
+
+        The released bank contract gives every family exactly one surface, but
+        this method still uses the real allocator rather than counting rows so
+        family retirement, latest revisions, allocation order, and dynamic
+        answer-separation all participate in the proof.
+        """
+        ordered_kcs = tuple(dict.fromkeys(kc_ids))
+        if target_kc not in ordered_kcs:
+            raise AllocationError("episode target is outside its qualified KC closure")
+
+        current = state
+        visible = tuple(visible_texts)
+        try:
+            for kc_id in ordered_kcs:
+                for _ in range(3):
+                    allocation = self.reserve_item(
+                        current,
+                        kc_id=kc_id,
+                        surface=AssessmentSurface.DIAGNOSTIC,
+                        visible_texts=visible,
+                    )
+                    current = allocation.state
+
+                bundle = self.reserve_lesson_bundle(
+                    current,
+                    kc_id,
+                    visible_texts=visible,
+                )
+                current = bundle.state
+                for _ in range(2):
+                    allocation = self.reserve_item(
+                        current,
+                        kc_id=kc_id,
+                        surface=AssessmentSurface.CHECKIN,
+                        visible_texts=visible,
+                    )
+                    current = allocation.state
+
+            for _ in range(2):
+                allocation = self.reserve_item(
+                    current,
+                    kc_id=target_kc,
+                    surface=AssessmentSurface.CAPSTONE,
+                    visible_texts=visible,
+                )
+                current = allocation.state
+        except AllocationError as exc:
+            raise AllocationError(
+                "remaining reviewed inventory cannot support a complete bounded episode"
+            ) from exc
 
     @staticmethod
     def answer_separated(

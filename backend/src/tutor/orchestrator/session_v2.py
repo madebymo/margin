@@ -17,9 +17,10 @@ from tutor.content.exposure import AllocationError, ItemAllocator
 from tutor.content.item_bank import (
     bundle_leakage_problems,
     load_item_bank,
+    render_prompt_segments,
     validate_item_bank,
 )
-from tutor.content.visible import extend_visible_texts
+from tutor.content.visible import extend_visible_texts, visible_fragments
 from tutor.graph import service as graph_service
 from tutor.learner.evidence_trust import (
     EVIDENCE_TRUST_POLICY_VERSION,
@@ -62,9 +63,9 @@ from tutor.schemas.pedagogy import PedagogyPackCatalog
 from tutor.packs.catalog import reviewed_misconception_ids
 from tutor.verify.checker import verify_answer
 
-LESSON_POLICY_VERSION = "lesson-flow-v2.3"
-CAPSTONE_POLICY_VERSION = "capstone-v2.0"
-ALLOCATOR_POLICY_VERSION = "allocator-v2.1"
+LESSON_POLICY_VERSION = "lesson-flow-v2.4"
+CAPSTONE_POLICY_VERSION = "capstone-v2.1"
+ALLOCATOR_POLICY_VERSION = "allocator-v2.2"
 
 
 class PendingInteractionV2(BaseModel):
@@ -120,6 +121,13 @@ class HintResultV2(BaseModel):
     interactions: list[Interaction] = Field(default_factory=list)
 
 
+class RemediationContent(BaseModel):
+    """Reviewed remediation rendered consistently in text and structured UI."""
+
+    text: str
+    segments: list[PromptSegment] = Field(default_factory=list)
+
+
 class RemediationState(BaseModel):
     """Bounded post-check remediation for the current lesson step."""
 
@@ -127,19 +135,23 @@ class RemediationState(BaseModel):
     round_number: int = Field(default=1, ge=1, le=1)
     checks_issued: int = Field(default=0, ge=0, le=2)
     implicated_prereq: str | None = None
+    prerequisite_detour_used: bool = False
+
+
+class PrerequisiteDetourState(BaseModel):
+    """One direct prerequisite verification and its optional lesson detour."""
+
+    origin_kc: str
+    prerequisite_kc: str
+    stage: Literal["verify", "teach"] = "verify"
+    suspended_bundle: LessonBundleReservation
+    suspended_checkin_queue: list[ItemReservation] = Field(default_factory=list)
+    suspended_remediation: RemediationState
 
 
 def render_assessment_prompt(item: AssessmentItem) -> str:
     """Render structured segments without rewriting their mathematical meaning."""
-    chunks: list[str] = []
-    for segment in item.prompt:
-        if segment.kind == "text":
-            chunks.append(segment.text)
-        elif segment.kind == "math":
-            chunks.append(segment.expression)
-        else:
-            chunks.append("____")
-    return " ".join(chunk.strip() for chunk in chunks if chunk.strip())
+    return render_prompt_segments(item.prompt)
 
 
 def assessment_prompt_segments(item: AssessmentItem) -> list[dict[str, Any]]:
@@ -291,8 +303,10 @@ class SessionOrchestratorV2:
         self._checkin_queue: list[ItemReservation] = []
         self._checkin_attempts: dict[str, int] = {}
         self._checkin_success_families: dict[str, list[str]] = {}
+        self._checkin_implicated_prereqs: dict[str, str] = {}
         self._verification_mode_kc: str | None = None
         self._remediation_state: RemediationState | None = None
+        self._prerequisite_detour: PrerequisiteDetourState | None = None
         self._widget_attempts: dict[str, int] = {}
         self._learning_transition_keys: set[str] = set()
         self._capstone_attempts = 0
@@ -445,6 +459,21 @@ class SessionOrchestratorV2:
             evidence_trust_policy=trust_policy,
         )
         return fresh
+
+    def qualify_episode(self) -> None:
+        """Fail before intake when a complete bounded episode cannot be allocated."""
+
+        closure = graph_service.ancestor_subgraph(
+            self._graph,
+            self._target,
+            hard_only=True,
+        )
+        self._allocator.qualify_episode(
+            self.exposure_state,
+            kc_ids=graph_service.topological_order(closure),
+            target_kc=self._target,
+            visible_texts=self._visible_history(),
+        )
 
     @property
     def pending_key(self) -> str | None:
@@ -616,7 +645,33 @@ class SessionOrchestratorV2:
 
         pending = self._pending
         self._pending = None
-        if pending.kind == "probe":
+        if (
+            pending.kind == "probe"
+            and self._prerequisite_detour is not None
+            and self._prerequisite_detour.stage == "verify"
+            and pending.kc_id == self._prerequisite_detour.prerequisite_kc
+        ):
+            self._diag.record_result(
+                DiagnosticObservation(
+                    kc_id=pending.kc_id,
+                    family_id=pending.family_id,
+                    correct=False,
+                    assisted=True,
+                    response_class=(
+                        ResponseClass.MULTIPLE_CHOICE
+                        if pending.answer_spec.kind == "choice"
+                        else ResponseClass.SYMBOLIC_ENTRY
+                    ),
+                )
+            )
+            transitions = [
+                self._message(
+                    "That hint revealed the answer, so this prerequisite check "
+                    "will not be scored."
+                ),
+                *self._continue_prerequisite_verification(),
+            ]
+        elif pending.kind == "probe":
             # Record only that this family was assisted so the diagnosis policy
             # allocates another family. No learner evidence is created.
             self._diag.record_result(
@@ -696,6 +751,26 @@ class SessionOrchestratorV2:
         )
         if pending.kind == "guided_widget":
             return self._after_guided_text_attempt(pending, correct)
+        if (
+            pending.kind == "probe"
+            and self._prerequisite_detour is not None
+            and self._prerequisite_detour.stage == "verify"
+            and pending.kc_id == self._prerequisite_detour.prerequisite_kc
+        ):
+            self._diag.record_result(
+                DiagnosticObservation(
+                    kc_id=pending.kc_id,
+                    family_id=pending.family_id,
+                    correct=correct,
+                    assisted=pending.assisted,
+                    response_class=(
+                        ResponseClass.MULTIPLE_CHOICE
+                        if pending.answer_spec.kind == "choice"
+                        else ResponseClass.SYMBOLIC_ENTRY
+                    ),
+                )
+            )
+            return self._continue_prerequisite_verification()
         if pending.kind == "probe":
             self._diag.record_result(
                 DiagnosticObservation(
@@ -979,13 +1054,26 @@ class SessionOrchestratorV2:
         self._remediation_state = None
         worked = self._item_for(allocation.bundle.worked_example)
         widget_item = self._item_for(allocation.bundle.guided_widget)
-        lesson_narrative = (
-            f"{self._nodes[kc_id].name}\n\n{self._nodes[kc_id].description}"
-        )
+        pack = self._pedagogy_catalog.pack_by_kc[kc_id]
+        if self._pedagogy_catalog.schema_version >= 2:
+            lesson_segments = list(pack.lesson_narrative)
+            lesson_narrative = render_prompt_segments(lesson_segments)
+        else:
+            lesson_segments = []
+            lesson_narrative = (
+                f"{self._nodes[kc_id].name}\n\n{self._nodes[kc_id].description}"
+            )
         worked_text = worked_example_text(worked)
         narrative = f"{lesson_narrative}\n\n{worked_text}"
         content_blocks: list[dict[str, Any]] = [
-            {"kind": "narrative", "text": lesson_narrative},
+            {
+                "kind": "narrative",
+                "text": lesson_narrative,
+                "segments": [
+                    segment.model_dump(mode="json")
+                    for segment in lesson_segments
+                ],
+            },
             {
                 "kind": "worked_example",
                 "segments": assessment_prompt_segments(worked),
@@ -1010,6 +1098,7 @@ class SessionOrchestratorV2:
         leakage = bundle_leakage_problems(
             [
                 narrative,
+                *visible_fragments(lesson_segments),
                 render_assessment_prompt(widget_item),
                 *(hint.text for hint in widget_item.hints[:2]),
             ],
@@ -1282,6 +1371,16 @@ class SessionOrchestratorV2:
                 )
             return [self._message(note), *self._start_current_plan_step()]
 
+        if (
+            implicated_prereq is not None
+            and kc_id not in self._checkin_implicated_prereqs
+            and implicated_prereq in self._strict_hard_ancestors(kc_id)
+        ):
+            # An error signature is only a suspicion. Retain the first reviewed
+            # implication so it can be checked directly if ordinary lesson
+            # evidence remains unresolved after the initial three families.
+            self._checkin_implicated_prereqs[kc_id] = implicated_prereq
+
         successes = self._checkin_success_families.setdefault(kc_id, [])
         if (
             correct
@@ -1293,6 +1392,14 @@ class SessionOrchestratorV2:
             self._record_learning_transition(pending)
         if len(successes) >= 2 and self.learner.mastery_status(kc_id) == "confirmed_mastered":
             self._remediation_state = None
+            if (
+                self._prerequisite_detour is not None
+                and self._prerequisite_detour.stage == "teach"
+                and self._prerequisite_detour.prerequisite_kc == kc_id
+            ):
+                return self._resume_from_prerequisite_detour(
+                    f"{self._nodes[kc_id].name} is now independently confirmed."
+                )
             self._plan_index += 1
             return [
                 self._message(f"{self._nodes[kc_id].name}: independently confirmed."),
@@ -1312,40 +1419,15 @@ class SessionOrchestratorV2:
             self._remediation_state = RemediationState(
                 kc_id=kc_id,
                 implicated_prereq=(
-                    implicated_prereq if implicated_prereq in self._nodes else None
+                    self._checkin_implicated_prereqs.get(kc_id)
                 ),
             )
-            worked = (
-                self._item_for(self._current_bundle.worked_example)
-                if self._current_bundle is not None
-                else None
-            )
-            remediation = (
-                f"Review this worked example: {worked_example_text(worked)}"
-                if worked is not None
-                else f"Review this idea: {self._nodes[kc_id].description}"
-            )
-            if self._remediation_state.implicated_prereq:
-                name = self._nodes[self._remediation_state.implicated_prereq].name
-                remediation += (
-                    f" Your response may also involve {name}, but it will not be "
-                    "called a gap without a direct check."
-                )
-            blocks = (
-                [
-                    {
-                        "kind": "remediation",
-                        "text": "Mastery is still uncertain after three checks.",
-                        "segments": assessment_prompt_segments(worked),
-                    }
-                ]
-                if worked is not None
-                else [{"kind": "remediation", "text": remediation}]
-            )
-            return [
-                self._message(remediation, content_blocks=blocks),
-                *self._issue_next_checkin(kc_id),
-            ]
+            if (
+                self._prerequisite_detour is None
+                and self._remediation_state.implicated_prereq is not None
+            ):
+                return self._begin_prerequisite_detour()
+            return self._show_lesson_remediation(kc_id)
 
         if (
             self._remediation_state is not None
@@ -1361,6 +1443,14 @@ class SessionOrchestratorV2:
             ]
 
         self._remediation_state = None
+        if (
+            self._prerequisite_detour is not None
+            and self._prerequisite_detour.stage == "teach"
+            and self._prerequisite_detour.prerequisite_kc == kc_id
+        ):
+            return self._resume_from_prerequisite_detour(
+                f"{self._nodes[kc_id].name} remains uncertain after its bounded lesson."
+            )
         if kc_id == self._target:
             return self._stop(
                 "Independent mastery is not confirmed after review and fresh checks. "
@@ -1373,6 +1463,179 @@ class SessionOrchestratorV2:
                 "The learning path will continue without calling this skill mastered."
             ),
             *self._start_current_plan_step(),
+        ]
+
+    def _strict_hard_ancestors(self, kc_id: str) -> set[str]:
+        return (
+            graph_service.ancestor_subgraph(
+                self._graph,
+                kc_id,
+                hard_only=True,
+            ).node_ids()
+            - {kc_id}
+        )
+
+    def _begin_prerequisite_detour(self) -> list[Interaction]:
+        """Directly verify one suspected prerequisite before teaching it."""
+
+        remediation = self._remediation_state
+        if (
+            remediation is None
+            or remediation.implicated_prereq is None
+            or remediation.prerequisite_detour_used
+            or self._current_bundle is None
+        ):
+            return self._show_lesson_remediation(
+                remediation.kc_id if remediation is not None else self._target
+            )
+        prerequisite = remediation.implicated_prereq
+        remediation = remediation.model_copy(
+            update={"prerequisite_detour_used": True}
+        )
+        self._remediation_state = remediation
+        self._prerequisite_detour = PrerequisiteDetourState(
+            origin_kc=remediation.kc_id,
+            prerequisite_kc=prerequisite,
+            suspended_bundle=self._current_bundle,
+            suspended_checkin_queue=list(self._checkin_queue),
+            suspended_remediation=remediation,
+        )
+        return self._continue_prerequisite_verification()
+
+    def _continue_prerequisite_verification(self) -> list[Interaction]:
+        detour = self._prerequisite_detour
+        if detour is None or detour.stage != "verify":
+            raise RuntimeError("no prerequisite verification is active")
+        prerequisite = detour.prerequisite_kc
+        if self.learner.mastery_status(prerequisite) == "confirmed_mastered":
+            return self._resume_from_prerequisite_detour(
+                f"{self._nodes[prerequisite].name} is already independently "
+                "confirmed, so it will not be taught again."
+            )
+        status = self._diag.status(prerequisite)
+        if status == "confirmed_gap":
+            if self._checkin_attempts.get(prerequisite, 0) > 0:
+                return self._resume_from_prerequisite_detour(
+                    f"{self._nodes[prerequisite].name} is now a confirmed gap, "
+                    "but its one bounded lesson has already been used in this "
+                    "episode. I will not repeat or relabel that instruction."
+                )
+            self._prerequisite_detour = detour.model_copy(
+                update={"stage": "teach"}
+            )
+            return [
+                self._message(
+                    f"Two different questions confirm a gap in "
+                    f"{self._nodes[prerequisite].name}. I will teach it before "
+                    "returning to the current skill."
+                ),
+                *self._issue_lesson(
+                    prerequisite,
+                    LearningPlanStep(
+                        kind="teach_confirmed_gap",
+                        kc_id=prerequisite,
+                    ),
+                ),
+            ]
+        if status == "confirmed_mastered":
+            return self._resume_from_prerequisite_detour(
+                f"{self._nodes[prerequisite].name} is independently confirmed, "
+                "so it will not be taught as a gap."
+            )
+        if len(self._diag.attempts_for(prerequisite)) >= 3:
+            return self._resume_from_prerequisite_detour(
+                f"{self._nodes[prerequisite].name} remains uncertain after direct checks, "
+                "so it will not be taught as a confirmed gap."
+            )
+        try:
+            allocation = self._allocator.reserve_item(
+                self.exposure_state,
+                kc_id=prerequisite,
+                surface=AssessmentSurface.DIAGNOSTIC,
+                visible_texts=self._visible_history(),
+            )
+        except AllocationError:
+            return self._resume_from_prerequisite_detour(
+                f"No unused direct check remains for "
+                f"{self._nodes[prerequisite].name}; it stays uncertain."
+            )
+        self.exposure_state = allocation.state
+        pending = self._set_pending(allocation.reservation, "probe")
+        introduction = (
+            f"Before changing the lesson path, check "
+            f"{self._nodes[prerequisite].name} directly."
+        )
+        return [
+            self._message(introduction),
+            self._interaction(
+                "probe",
+                pending.prompt,
+                key=pending.key,
+                kc_id=prerequisite,
+                prompt_segments=assessment_prompt_segments(
+                    self._item_for(pending.reservation)
+                ),
+            ),
+        ]
+
+    def _resume_from_prerequisite_detour(self, note: str) -> list[Interaction]:
+        detour = self._prerequisite_detour
+        if detour is None:
+            raise RuntimeError("no prerequisite detour is active")
+        self._current_bundle = detour.suspended_bundle
+        self._checkin_queue = list(detour.suspended_checkin_queue)
+        self._remediation_state = detour.suspended_remediation
+        self._prerequisite_detour = None
+        return [self._message(note), *self._show_lesson_remediation(detour.origin_kc)]
+
+    def _show_lesson_remediation(self, kc_id: str) -> list[Interaction]:
+        """Show one reviewed review block, then use the two held-back checks."""
+
+        pack = self._pedagogy_catalog.pack_by_kc[kc_id]
+        worked = (
+            self._item_for(self._current_bundle.worked_example)
+            if self._current_bundle is not None
+            and self._current_bundle.worked_example.kc_id == kc_id
+            else None
+        )
+        if self._pedagogy_catalog.schema_version >= 2:
+            segments = list(pack.remediation)
+            review_text = render_prompt_segments(segments)
+            remediation = f"Review before the next independent check: {review_text}"
+        elif worked is not None:
+            segments = list(worked.prompt)
+            remediation = f"Review this worked example: {worked_example_text(worked)}"
+        else:
+            segments = []
+            remediation = f"Review this idea: {self._nodes[kc_id].description}"
+
+        remaining = sorted(
+            (
+                item
+                for item in self._bank.items
+                if item.family_id not in self.exposure_state.used_family_ids
+                and AssessmentSurface.WORKED_EXAMPLE not in item.eligible_surfaces
+            ),
+            key=lambda item: (item.kc_id, item.item_id, item.revision),
+        )
+        if bundle_leakage_problems(
+            [remediation, *visible_fragments(segments)],
+            remaining,
+        ):
+            return self._stop(
+                "The reviewed review could reveal an upcoming answer. "
+                "The session stopped before showing unsafe content."
+            )
+        blocks = [
+            {
+                "kind": "remediation",
+                "text": "Mastery is still uncertain after three checks.",
+                "segments": [segment.model_dump(mode="json") for segment in segments],
+            }
+        ]
+        return [
+            self._message(remediation, content_blocks=blocks),
+            *self._issue_next_checkin(kc_id),
         ]
 
     def _start_capstone(self, *, retry_after_remediation: bool = False) -> list[Interaction]:
@@ -1460,8 +1723,18 @@ class SessionOrchestratorV2:
                 )
             return [
                 self._message(
-                    f"{reason}. {remediation} "
-                    "Next I will use a different, unseen goal problem."
+                    f"{reason}. {remediation.text} "
+                    "Next I will use a different, unseen goal problem.",
+                    content_blocks=[
+                        {
+                            "kind": "remediation",
+                            "text": remediation.text,
+                            "segments": [
+                                segment.model_dump(mode="json")
+                                for segment in remediation.segments
+                            ],
+                        }
+                    ],
                 ),
                 *self._start_capstone(retry_after_remediation=True),
             ]
@@ -1470,7 +1743,10 @@ class SessionOrchestratorV2:
             "targeted lesson and return for a new session."
         )
 
-    def _capstone_remediation(self, implicated_prereq: str | None) -> str | None:
+    def _capstone_remediation(
+        self,
+        implicated_prereq: str | None,
+    ) -> RemediationContent | None:
         """Return answer-separated remediation before the second capstone.
 
         Reserving a worked family is safe before the gate, but no solution is
@@ -1478,30 +1754,42 @@ class SessionOrchestratorV2:
         remaining capstone family is proven answer-separated.
         """
         worked_reservation = None
-        if (
-            self._current_bundle is not None
-            and self._current_bundle.worked_example.kc_id == self._target
-        ):
-            worked_reservation = self._current_bundle.worked_example
+        if self._pedagogy_catalog.schema_version >= 2:
+            pack = self._pedagogy_catalog.pack_by_kc[self._target]
+            remediation_segments = list(pack.remediation)
+            remediation = (
+                "Review this targeted explanation: "
+                f"{render_prompt_segments(remediation_segments)}"
+            )
         else:
-            try:
-                allocation = self._allocator.reserve_item(
-                    self.exposure_state,
-                    kc_id=self._target,
-                    surface=AssessmentSurface.WORKED_EXAMPLE,
-                    visible_texts=self._visible_history(),
-                )
-            except AllocationError:
-                allocation = None
-            if allocation is not None:
-                self.exposure_state = allocation.state
-                worked_reservation = allocation.reservation
+            remediation_segments = []
+            if (
+                self._current_bundle is not None
+                and self._current_bundle.worked_example.kc_id == self._target
+            ):
+                worked_reservation = self._current_bundle.worked_example
+            else:
+                try:
+                    allocation = self._allocator.reserve_item(
+                        self.exposure_state,
+                        kc_id=self._target,
+                        surface=AssessmentSurface.WORKED_EXAMPLE,
+                        visible_texts=self._visible_history(),
+                    )
+                except AllocationError:
+                    allocation = None
+                if allocation is not None:
+                    self.exposure_state = allocation.state
+                    worked_reservation = allocation.reservation
 
-        if worked_reservation is not None:
-            worked = self._item_for(worked_reservation)
-            remediation = f"Review this worked pattern: {worked_example_text(worked)}"
-        else:
-            remediation = f"Review: {self._nodes[self._target].description}"
+            if worked_reservation is not None:
+                worked = self._item_for(worked_reservation)
+                remediation_segments = list(worked.prompt)
+                remediation = (
+                    f"Review this worked pattern: {worked_example_text(worked)}"
+                )
+            else:
+                remediation = f"Review: {self._nodes[self._target].description}"
         if implicated_prereq and implicated_prereq in self._nodes:
             remediation += (
                 f" Also revisit {self._nodes[implicated_prereq].name}; "
@@ -1519,7 +1807,7 @@ class SessionOrchestratorV2:
             key=lambda item: (item.item_id, item.revision),
         )
         if not remaining_capstones or bundle_leakage_problems(
-            [remediation],
+            [remediation, *visible_fragments(remediation_segments)],
             remaining_capstones,
         ):
             return None
@@ -1531,12 +1819,16 @@ class SessionOrchestratorV2:
                 solution_exposed=True,
                 answer_revealed=True,
             )
-        return remediation
+        return RemediationContent(
+            text=remediation,
+            segments=remediation_segments,
+        )
 
     def _stop(self, text: str) -> list[Interaction]:
         self.phase = SessionPhase.STOPPED
         self._pending = None
         self._remediation_state = None
+        self._prerequisite_detour = None
         self._stop_reason = text
         return [self._message(text)]
 
@@ -1696,6 +1988,47 @@ class SessionOrchestratorV2:
             for reservation in bundle_reservations:
                 registered_item(reservation, role="lesson-bundle reservation")
 
+        if self._prerequisite_detour is not None:
+            detour = self._prerequisite_detour
+            for reservation in (
+                detour.suspended_bundle.worked_example,
+                detour.suspended_bundle.guided_widget,
+                *detour.suspended_bundle.checkins,
+                *detour.suspended_checkin_queue,
+            ):
+                registered_item(
+                    reservation,
+                    role="prerequisite-detour suspended reservation",
+                )
+            if detour.suspended_remediation.kc_id != detour.origin_kc:
+                raise ValueError(
+                    "checkpoint prerequisite detour has mismatched remediation"
+                )
+            if (
+                detour.prerequisite_kc
+                not in self._strict_hard_ancestors(detour.origin_kc)
+            ):
+                raise ValueError(
+                    "checkpoint prerequisite detour is not a strict hard ancestor"
+                )
+            if detour.stage == "verify":
+                if (
+                    self._current_bundle != detour.suspended_bundle
+                    or self._checkin_queue != detour.suspended_checkin_queue
+                    or self._remediation_state != detour.suspended_remediation
+                ):
+                    raise ValueError(
+                        "checkpoint prerequisite verification lost its suspended lesson"
+                    )
+            elif (
+                self._current_bundle is None
+                or self._current_bundle.guided_widget.kc_id
+                != detour.prerequisite_kc
+            ):
+                raise ValueError(
+                    "checkpoint prerequisite lesson does not match its detour"
+                )
+
         queue_signatures = [
             self._reservation_signature(reservation)
             for reservation in self._checkin_queue
@@ -1737,6 +2070,14 @@ class SessionOrchestratorV2:
                 raise ValueError(
                     "checkpoint remediation state does not match its lesson round"
                 )
+        for kc_id, prerequisite in self._checkin_implicated_prereqs.items():
+            if (
+                kc_id not in self._nodes
+                or prerequisite not in self._strict_hard_ancestors(kc_id)
+            ):
+                raise ValueError(
+                    "checkpoint check-in implication is not a strict hard ancestor"
+                )
 
         pending = self._pending
         if pending is None:
@@ -1744,6 +2085,8 @@ class SessionOrchestratorV2:
                 raise ValueError(
                     "checkpoint verification mode has no pending check-in"
                 )
+            if self._prerequisite_detour is not None:
+                raise ValueError("checkpoint prerequisite detour has no pending item")
             return
 
         item = registered_item(pending.reservation, role="pending reservation")
@@ -1813,7 +2156,12 @@ class SessionOrchestratorV2:
             raise ValueError("checkpoint pending delivery mode is invalid")
 
         expected_phase = {
-            "probe": SessionPhase.DIAGNOSE,
+            "probe": (
+                SessionPhase.TEACH
+                if self._prerequisite_detour is not None
+                and self._prerequisite_detour.stage == "verify"
+                else SessionPhase.DIAGNOSE
+            ),
             "guided_widget": SessionPhase.TEACH,
             "checkin": SessionPhase.TEACH,
             "capstone": SessionPhase.CAPSTONE,
@@ -1822,6 +2170,17 @@ class SessionOrchestratorV2:
             raise ValueError("checkpoint pending kind does not match its phase")
         if pending.kind == "capstone" and pending.kc_id != self._target:
             raise ValueError("checkpoint capstone does not measure the target skill")
+        if (
+            pending.kind == "probe"
+            and self._prerequisite_detour is not None
+            and (
+                self._prerequisite_detour.stage != "verify"
+                or pending.kc_id != self._prerequisite_detour.prerequisite_kc
+            )
+        ):
+            raise ValueError(
+                "checkpoint prerequisite probe does not match its detour"
+            )
 
         if self._verification_mode_kc is not None:
             if (
@@ -1910,10 +2269,18 @@ class SessionOrchestratorV2:
             ],
             "checkin_attempts": dict(self._checkin_attempts),
             "checkin_success_families": dict(self._checkin_success_families),
+            "checkin_implicated_prereqs": dict(
+                self._checkin_implicated_prereqs
+            ),
             "verification_mode_kc": self._verification_mode_kc,
             "remediation_state": (
                 self._remediation_state.model_dump(mode="json")
                 if self._remediation_state is not None
+                else None
+            ),
+            "prerequisite_detour": (
+                self._prerequisite_detour.model_dump(mode="json")
+                if self._prerequisite_detour is not None
                 else None
             ),
             "widget_attempts": dict(self._widget_attempts),
@@ -2055,6 +2422,12 @@ class SessionOrchestratorV2:
                 "checkin_success_families", {}
             ).items()
         }
+        orchestrator._checkin_implicated_prereqs = {
+            str(key): str(value)
+            for key, value in checkpoint.get(
+                "checkin_implicated_prereqs", {}
+            ).items()
+        }
         orchestrator._verification_mode_kc = checkpoint.get(
             "verification_mode_kc"
         )
@@ -2062,6 +2435,12 @@ class SessionOrchestratorV2:
         orchestrator._remediation_state = (
             RemediationState.model_validate(remediation_state)
             if remediation_state is not None
+            else None
+        )
+        prerequisite_detour = checkpoint.get("prerequisite_detour")
+        orchestrator._prerequisite_detour = (
+            PrerequisiteDetourState.model_validate(prerequisite_detour)
+            if prerequisite_detour is not None
             else None
         )
         orchestrator._widget_attempts = {

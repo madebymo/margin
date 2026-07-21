@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -18,6 +19,7 @@ from tests.v2_helpers import (
     POWER_RULE_KC,
     approved_power_rule_bank,
     approved_power_rule_catalog,
+    approved_power_rule_episode_bank,
     power_rule_only_graph,
 )
 
@@ -113,3 +115,28 @@ def test_any_shown_diagnostic_family_stays_unavailable_after_restart(hints_seen)
 
     assert shown_family in fresh.exposure_state.used_family_ids
     assert fresh.pending.family_id != shown_family
+
+
+def test_episode_qualification_is_non_mutating_and_requires_held_back_checks():
+    allocator = ItemAllocator(approved_power_rule_episode_bank())
+    state = ContentExposureState()
+    before = state.model_dump(mode="json")
+
+    allocator.qualify_episode(
+        state,
+        kc_ids=[POWER_RULE_KC],
+        target_kc=POWER_RULE_KC,
+    )
+
+    assert state.model_dump(mode="json") == before
+    depleted = allocator.reserve_item(
+        state,
+        kc_id=POWER_RULE_KC,
+        surface=AssessmentSurface.CHECKIN,
+    ).state
+    with pytest.raises(AllocationError, match="complete bounded episode"):
+        allocator.qualify_episode(
+            depleted,
+            kc_ids=[POWER_RULE_KC],
+            target_kc=POWER_RULE_KC,
+        )
