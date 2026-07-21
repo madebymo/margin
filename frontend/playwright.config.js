@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,6 +7,19 @@ import { defineConfig } from "@playwright/test";
 const frontendDir = path.dirname(fileURLToPath(import.meta.url));
 const backendDir = path.resolve(frontendDir, "../backend");
 const baseURL = "http://127.0.0.1:8766";
+const projectPython = path.resolve(
+  frontendDir,
+  process.platform === "win32"
+    ? "../.venv/Scripts/python.exe"
+    : "../.venv/bin/python",
+);
+const pythonExecutable =
+  process.env.PYTHON ||
+  (existsSync(projectPython)
+    ? projectPython
+    : process.platform === "win32"
+      ? "python"
+      : "python3");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -30,8 +44,10 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
   },
   webServer: {
-    command:
-      "python -m uvicorn tests.browser_v2_app:app --host 127.0.0.1 --port 8766",
+    command: [
+      JSON.stringify(pythonExecutable),
+      "-m uvicorn tests.browser_v2_app:app --host 127.0.0.1 --port 8766",
+    ].join(" "),
     cwd: backendDir,
     env: {
       ...process.env,

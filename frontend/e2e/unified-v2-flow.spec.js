@@ -110,6 +110,7 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
   await expectNoAccessibilityViolations(page, "mobile lesson");
 
   await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(page.locator(".assessment-bubble").last()).toContainText("2*x^5");
   const revisionBeforeRetry = await page.locator(".revision").textContent();
   let droppedCommittedResponse = false;
   await page.route("**/api/v2/sessions/*/actions", async (route) => {
@@ -122,7 +123,7 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
     await route.abort("failed");
   });
 
-  await answer.fill("(1/2)*x^(-1/2)");
+  await answer.fill("10*x^4");
   await answer.press("Enter");
   await expect(page.getByRole("alert")).toContainText(/could not be reached/i);
   await expect(page.locator(".revision")).toHaveText(revisionBeforeRetry);
@@ -133,12 +134,14 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
   await answer.press("Enter");
   await expect(page.getByText("Update 5")).toBeVisible();
   await page.unroute("**/api/v2/sessions/*/actions");
+  await expect(page.locator(".assessment-bubble").last()).toContainText("7*x^2");
 
-  await answer.fill("-2*x^(-3)");
+  await answer.fill("14*x");
   await answer.press("Enter");
   await expect(page.getByText("Update 6")).toBeVisible();
+  await expect(page.locator(".assessment-bubble").last()).toContainText("x^(-2)");
 
-  await answer.fill("10*x^4");
+  await answer.fill("-2*x^(-3)");
   await answer.press("Enter");
   await expect(page.getByText("Update 7")).toBeVisible();
   await expect(
