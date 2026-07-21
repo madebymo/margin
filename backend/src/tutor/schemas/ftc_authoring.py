@@ -188,6 +188,12 @@ class AreaMissingHeightTask(StrictFrozenModel):
     width_or_base: int = Field(ge=1, le=12)
     height: int = Field(ge=1, le=20)
 
+    @model_validator(mode="after")
+    def _triangle_area_is_integral(self) -> "AreaMissingHeightTask":
+        if self.shape == "triangle" and self.width_or_base * self.height % 2:
+            raise ValueError("triangle parameters must produce an integer area")
+        return self
+
 
 class AreaOrderedPartsTask(StrictFrozenModel):
     kind: Literal["area_ordered_parts"] = "area_ordered_parts"
