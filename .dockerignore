@@ -1,0 +1,17 @@
+.git
+.github
+.ai
+.env
+.DS_Store
+.hypothesis
+.pytest_cache
+.ruff_cache
+.venv
+backend/uv.lock
+frontend/elm-stuff
+frontend/node_modules
+frontend/playwright-report
+frontend/test-results
+schemas/json
+scripts/try_llm_call.py
+

@@ -257,6 +257,11 @@ bound family digest before promotion.
 
 ## Persistence and deployment
 
+The production deployment, readiness, backup/restore, quarantine, rollback,
+and canary procedure is maintained in
+[`docs/pilot-runbook.md`](docs/pilot-runbook.md). The commands below remain the
+development and component-level setup reference.
+
 Development and tests can run memory-only. A production pilot must use
 PostgreSQL and a stable resume-token secret:
 

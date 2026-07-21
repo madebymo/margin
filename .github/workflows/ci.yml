@@ -141,3 +141,16 @@ jobs:
             frontend/test-results
           if-no-files-found: ignore
           retention-days: 7
+
+  container:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build non-root pilot image
+        run: docker build --tag adaptive-math-tutor:ci .
+
+      - name: Assert runtime user is unprivileged
+        run: |
+          test "$(docker image inspect adaptive-math-tutor:ci --format '{{.Config.User}}')" = "tutor"
