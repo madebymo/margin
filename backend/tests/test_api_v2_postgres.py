@@ -545,6 +545,63 @@ def test_postgres_pool_exhaustion_does_not_advance_and_exact_retry_commits(
         )
 
 
+def test_postgres_lock_timeout_does_not_advance_and_exact_retry_commits(
+    postgres_engine: Engine,
+) -> None:
+    app = _app(postgres_engine)
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/v2/sessions",
+            json={
+                "request_id": str(uuid4()),
+                "goal_id": "goal.der.power_rule",
+            },
+        )
+        assert created.status_code == 200
+        initial = created.json()
+        session_id = initial["session_id"]
+        baseline = _durable_state(postgres_engine, session_id)
+        expected = app.state.v2_store.get(
+            session_id
+        ).orchestrator.pending_expected
+        request_id = uuid4()
+        action = _answer(initial, expected, request_id)
+        action_url = f"/api/v2/sessions/{session_id}/actions"
+
+        def set_short_lock_timeout(connection: Any) -> None:
+            connection.exec_driver_sql("SET LOCAL lock_timeout TO '250ms'")
+
+        event.listen(postgres_engine, "begin", set_short_lock_timeout)
+        try:
+            with Session(postgres_engine) as blocker:
+                locked = blocker.scalar(
+                    select(m.SessionCheckpointRow)
+                    .where(m.SessionCheckpointRow.session_id == session_id)
+                    .with_for_update()
+                )
+                assert locked is not None
+                failed = client.post(action_url, json=action)
+        finally:
+            event.remove(postgres_engine, "begin", set_short_lock_timeout)
+
+        assert failed.status_code == 503
+        assert failed.json()["code"] == "persistence_unavailable"
+        assert failed.json()["retryable"] is True
+        assert failed.json()["session"] == initial
+        assert _durable_state(postgres_engine, session_id) == baseline
+        assert app.state.v2_store.view(
+            app.state.v2_store.get(session_id)
+        ).model_dump(mode="json") == initial
+
+        committed = client.post(action_url, json=action)
+        assert committed.status_code == 200
+        _assert_one_answer_committed(
+            _durable_state(postgres_engine, session_id),
+            view=committed.json(),
+            request_id=request_id,
+        )
+
+
 def test_postgres_process_kill_before_commit_rolls_back_then_replays(
     postgres_engine: Engine,
 ) -> None:
