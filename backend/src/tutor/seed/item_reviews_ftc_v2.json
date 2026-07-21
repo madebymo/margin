@@ -1,0 +1,710 @@
+{
+  "schema_version": 1,
+  "manifest_version": "ftc-review-manifest-v2",
+  "graph_version": 2,
+  "compiler_version": "ftc-item-compiler-v1",
+  "entries": [
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.01",
+      "revision": 1,
+      "source_digest": "237a1cf1715685d75435976cd134d635466e769d68e0df0c60cf661382874078",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.02",
+      "revision": 1,
+      "source_digest": "f52648fc4039d40687192fa6d3eada4821fad9bfbec1d7a5c0613e4282c4e301",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.03",
+      "revision": 1,
+      "source_digest": "3534ffb12cadfa87477fa886cb34c3d23cd48201c722dd4157d07f983358ff71",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.04",
+      "revision": 1,
+      "source_digest": "e54dbb5f843b0e9f4c81bc082229b438f9f9b39e42e008c62635ae8120d6389e",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.01",
+      "revision": 1,
+      "source_digest": "0f2ace0db0c05d7bd22f1f22e48a5bfab7d0dea1ffefd4f2dadeaaf444db5491",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.02",
+      "revision": 1,
+      "source_digest": "6064fe81848f8845935dc8826154c73981ad7985902f82ae43d1edce01a3e2dd",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.03",
+      "revision": 1,
+      "source_digest": "feae7fe469e6276bd05319e35d6a1a25c911b0880f184136e321ba2286ab45e4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.04",
+      "revision": 1,
+      "source_digest": "4ccb24d558e5d87751ccbb54e9a6d53efb059b1ad7db7ae6347d88b2e854a500",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.05",
+      "revision": 1,
+      "source_digest": "442cae8b313f744d6952d35611427e9c652d1492589e448016c8c86c815fe6b9",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.guided_widget.01",
+      "revision": 1,
+      "source_digest": "12c49387dd86cf8cfac5a1e3b97806160fc7921eb38a0956f1d9cb300ee3d8f8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.capstone.01",
+      "revision": 1,
+      "source_digest": "55843bedb37ac06daf721694977435d51b362bee37bf4e381a2f82936a263079",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.capstone.02",
+      "revision": 1,
+      "source_digest": "f034e3180263405e134d4f45aab574cf2aba03061949418dacb5ee11d2fbf3fc",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.worked_example.01",
+      "revision": 1,
+      "source_digest": "6fb2875defdecb5da5b191d77e19ade3b6c6dfaee3c0a4e5523b9bdea2673ec6",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.01",
+      "revision": 1,
+      "source_digest": "f05b2074158b1283c653e0d9cfb0f6b47a05915d58f858dc85db1a136cc949d8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.02",
+      "revision": 1,
+      "source_digest": "124a3ecb495e7fdb00db8d81111367b1ed4d1ddcf7ab01be2d7be192f430b87b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.03",
+      "revision": 1,
+      "source_digest": "f07b7d962027d79672908fa4ff2aa1a509020641b173566d2ed4a31931bc6b72",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.04",
+      "revision": 1,
+      "source_digest": "93f06fa0d9f9137dd9d113289151ea37e052009792b9852f6a3e585e1c5113b1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.01",
+      "revision": 1,
+      "source_digest": "a3228c06e59169715c96c4e94d9ec0bf5aceaa02e40a6f55ce1facfbc32d8069",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.02",
+      "revision": 1,
+      "source_digest": "7eae59ebdc5278e2707b397b078c7db3845e11099e6b1e49b757924af39a2503",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.03",
+      "revision": 1,
+      "source_digest": "ccabcc25d2fcad21190473cc07886f530c919ec8e8285ac26d5f1e02494cf264",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.04",
+      "revision": 1,
+      "source_digest": "1bd2da84da35ee43c0ff8ae32d328d2961b609ac6a9470c3f996c56ee6d64d3b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.05",
+      "revision": 1,
+      "source_digest": "1abfae4d129a33861f67caa07c8e96ad14e4661630eb33a65e80655ae4547bd4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.guided_widget.01",
+      "revision": 1,
+      "source_digest": "208b248e665a63a3aeb8ee07d6b7fecb024d637e9dfc8243afb802a6163f74a8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.capstone.01",
+      "revision": 1,
+      "source_digest": "518fcfa7c7ea156ebc1e8fd712a515b93c636e25d77e9ba805bb670ee281a1e2",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.capstone.02",
+      "revision": 1,
+      "source_digest": "9d6dd6f05fe8e68c8e1be9b8ad97b70ba9a4da2a1c5a92a86e0490aa92f1f8a1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.worked_example.01",
+      "revision": 1,
+      "source_digest": "1d07ba512624dd75a5eeb48cfae3cc4f372f10c70d6fdab55a6b34212aeaf808",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.01",
+      "revision": 1,
+      "source_digest": "1171d1a53e7dfa30321c1952cb15680ecf4b8f1a0f91be95eab74af3dc127fdb",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.02",
+      "revision": 1,
+      "source_digest": "3f4a51b1890d1804c4e73062d878ceb627b4d7744a86c57da15f626927aa2fb9",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.03",
+      "revision": 1,
+      "source_digest": "41b763cce655ddc768db7116c8a0f7599b3de5ed1ee5eaa53d3db0d4766acbd3",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.04",
+      "revision": 1,
+      "source_digest": "d4322aa764eb6f04c97c5e0090544626838c2f2b4e4cd5275a6969b7df559bf7",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.01",
+      "revision": 1,
+      "source_digest": "2963318b96cee3d3f043a9b1c64007a994b694f583ce3434437c99f51f5414cf",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.02",
+      "revision": 1,
+      "source_digest": "23dee2c3d0109bd5780eae177d907b46a4b8a460aa8dcc9b9094ec9e9de157a2",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.03",
+      "revision": 1,
+      "source_digest": "296bd72d46e310270082cdffcd1348efbb8fbb32aee3b0bf6e2315707474b3a8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.04",
+      "revision": 1,
+      "source_digest": "8ec85e2846bccad66c8e50870abf0f7dd0fe5609bc373db30179c5620dfc9aaf",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.05",
+      "revision": 1,
+      "source_digest": "6dadb7f96a7a42061379e2013681ce03880098f93e22d2a48dca9d2503961bc7",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.guided_widget.01",
+      "revision": 1,
+      "source_digest": "3509ada951802ae9cf458775d53f1dfd9089b6c65842f2a618581ca0d57e3c09",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.capstone.01",
+      "revision": 1,
+      "source_digest": "918b6b3ebde73f7642d9311bd0c561fa5305a93543619c3f00d87b85fcac9a2a",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.capstone.02",
+      "revision": 1,
+      "source_digest": "72764d9d32d2946a2de951def765b29227d3d5043e4209f3fa40534777d9ab38",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.worked_example.01",
+      "revision": 1,
+      "source_digest": "76742eee4e5f74051faf8af1c7a8c10e7b67483171bb7354e3b1c82ff4280252",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.01",
+      "revision": 1,
+      "source_digest": "0fa9981baf21c8f480f457f5494fccb60c3e3a0179fe6f3ad34657b09536e993",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.02",
+      "revision": 1,
+      "source_digest": "6f06c559962de0809aa0424adc18aeb8a670d80150c2101939e79615ddb0f566",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.03",
+      "revision": 1,
+      "source_digest": "0d4fe7f757612929046721869a998ac533f3f7c0d00d1596225ad5e924a6abc1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.04",
+      "revision": 1,
+      "source_digest": "8574d9f721c776b2d9a347578062964c9fb0328409a470608d487a25daee8bf5",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.01",
+      "revision": 1,
+      "source_digest": "a5d3b912afa441302b8902b039d1ea52c42eb8a4002d39271f75030a59c5fc13",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.02",
+      "revision": 1,
+      "source_digest": "7dd5de9dc5e6c1959aff3aff6e31e8302b162fef5e4f8cb80ce89a443efa6275",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.03",
+      "revision": 1,
+      "source_digest": "243255bc822792f40a61b94060ac35aec93ca30c6877d26074562a38b6c3221a",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.04",
+      "revision": 1,
+      "source_digest": "2992d02073f17cead0e6a6ff3d18fc1b93eb1e71139bf3b350e520bf1438e99d",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.05",
+      "revision": 1,
+      "source_digest": "5884e83bfeb5624a96262722d51d8cc744e8c70e832bf44783f3d053ff89ee33",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.guided_widget.01",
+      "revision": 1,
+      "source_digest": "280e5ba1e08961ed6e1be7b409de692a28928c68d2bc6e0822b2cee62a443125",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.capstone.01",
+      "revision": 1,
+      "source_digest": "63230f179cffcfbe4ce10bafbb63f5d94bf5853dc942d8842c5cfea813d4a9d9",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.capstone.02",
+      "revision": 1,
+      "source_digest": "c4e4212132dba98e22cd755275c50210de877aaaf902dd6c53e34fa382cb7168",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.worked_example.01",
+      "revision": 1,
+      "source_digest": "acdc172cc3002211192f18ced88693eba641b18706c5617752d24f1199b6023e",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.01",
+      "revision": 1,
+      "source_digest": "d60e3f84f66665b8ec6a9a0f6c3137ea54a1335fa1b0a34fbb4a1569f742a483",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.02",
+      "revision": 1,
+      "source_digest": "3f2bc121160a063acbac1513286ecb03591a5701b520f0ea507cbab109c80877",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.03",
+      "revision": 1,
+      "source_digest": "1ebb85963eb5f6b90360438c05db90a654f3c2ff7f63d9744535d846f111bd72",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.04",
+      "revision": 1,
+      "source_digest": "61005760ae96b9e1c3392524ff587c36fd28930c2801237e16ff7f2abf2b72c1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.01",
+      "revision": 1,
+      "source_digest": "9704fade841b7508afa2f8077ce0263189a214e6f42d0f7c6bc0c0ac61946bc7",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.02",
+      "revision": 1,
+      "source_digest": "50689e4e232b87609476f6e2ccd129c9c2ca9c1dc6960e7d0a3b9e8709b872e6",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.03",
+      "revision": 1,
+      "source_digest": "948639fd9b18641d3ff75ed24ebb3f7bf82d7552ba626d94f77f5ac0e20736d2",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.04",
+      "revision": 1,
+      "source_digest": "41bf9e587cf3578b4f75e4173b23cde9fe3f24fe3e1a9aa23d252e9f3a5eb5f8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.05",
+      "revision": 1,
+      "source_digest": "413c662cf9d2b0e907f7f83ff80597e3550cebd6e0061840ea1ee2318fa67596",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.guided_widget.01",
+      "revision": 1,
+      "source_digest": "19f0159dc0ccc91add08411f39d85a7660e6a6fde14357d00ad5575b9523a633",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.capstone.01",
+      "revision": 1,
+      "source_digest": "7d617de91c05da73497f88f26cfbfbefffaae337b147940a887974fc68074a05",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.capstone.02",
+      "revision": 1,
+      "source_digest": "29503983d0e28a66121779328cc951394042c0767c17545004b0af5b9e4e1474",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.worked_example.01",
+      "revision": 1,
+      "source_digest": "95e1a3fdfea3075307bda0f834e7470dc97f1b35fda90934c56325ca18cb6338",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.01",
+      "revision": 1,
+      "source_digest": "f977142cf92c5e133b067e1b0872bd6f1bfee6a0de24016d6a5bffeaeff9cd47",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.02",
+      "revision": 1,
+      "source_digest": "c8af60042019db78b4a5afd4ddac0efe2d5bcd2a914e78950e18769a5c2e37d5",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.03",
+      "revision": 1,
+      "source_digest": "0ad67cf64b998b8ccfb416ab81aecc5d060847a7d61f362b5a4563e7d1073c2b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.04",
+      "revision": 1,
+      "source_digest": "89c0954e1b9cf7d67b70bd92770faba1cb732101cc19f4481d145ee0dc570e14",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.01",
+      "revision": 1,
+      "source_digest": "185fffd183b1132d07a40d191d0b6dd5c1499a088b3f1d2431d01ea72d0a66cd",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.02",
+      "revision": 1,
+      "source_digest": "529c863f981cc214593f252f5f0fc74f0fa8f87bc36f6597880be23ad79bdf39",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.03",
+      "revision": 1,
+      "source_digest": "072f3c96a7b9e84c42041e55be4038f6374aa39f191cf3c0a011ab0f33683d10",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.04",
+      "revision": 1,
+      "source_digest": "c62132b436e7708b77494fc5994193cff94749ee526e75f174c4ee7a7d355d60",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.05",
+      "revision": 1,
+      "source_digest": "cb5af16f88d2c575555878ff76e1793a20a7659f97b88cb5167db873f820106b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.guided_widget.01",
+      "revision": 1,
+      "source_digest": "a9be4c1e32c211f891e7200bbba64012424723b0ed2e5807d91f438c14934a72",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.capstone.01",
+      "revision": 1,
+      "source_digest": "3acb46b05c07b36faee92903ab95fffdfbae7529e87755d96c86a99b0f9a3b35",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.capstone.02",
+      "revision": 1,
+      "source_digest": "fc3ca0d24b6a6b820be49b07fa5421c04db13e5bece32f1c9c4f490546570d6e",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.worked_example.01",
+      "revision": 1,
+      "source_digest": "212d29729a8cdeab0e034372ae6fc17349544fba1bb82721394b28a5490a41b8",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    }
+  ]
+}

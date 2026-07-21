@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "manifest_version": "ftc-pedagogy-review-manifest-v2",
+  "graph_version": 2,
+  "compiler_version": "pedagogy-review-compiler-v1",
+  "entries": [
+    {
+      "source_id": "pedagogy.source.graph_reading",
+      "revision": 1,
+      "source_digest": "1a36f34e17d3a9a1d0cb84138b81b82187062109a9908cd02f18932c0cf04d24",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.area_under_curve",
+      "revision": 1,
+      "source_digest": "63cabd290fef9fa2a8a6472599e36bb596e0c338d1e265a45b86bdc55ace68a6",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.riemann_sums",
+      "revision": 1,
+      "source_digest": "37a43d46f4d51ded39401d37157325fd30a69d09bb650f200f022b1a374e34c9",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.definite_integral",
+      "revision": 1,
+      "source_digest": "6a7dcf58c3060c42919a14894fb5a1d1ec968f8c4d1bdec424ed48f168cef192",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.antiderivatives",
+      "revision": 1,
+      "source_digest": "a2f326a3596414f71061aa120e47b3037817b1fdebd26f3562562e8a274e3025",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "source_id": "pedagogy.source.ftc",
+      "revision": 1,
+      "source_digest": "70b06f6019dfbe9eaa34cb342e14842d64265209c1e834f06dce27b53bb24e02",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    }
+  ]
+}
