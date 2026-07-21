@@ -152,7 +152,7 @@
     },
     {
       "blueprint_id": "blueprint.pqv1.exponent_rules.checkin.05",
-      "revision": 2,
+      "revision": 3,
       "item_id": "item.pqv1.exponent_rules.checkin.05",
       "family_id": "family.pqv1.exponent_rules.checkin.05",
       "kc_id": "kc.alg.exponent_rules",
@@ -161,7 +161,9 @@
       "difficulty": "foundation",
       "task": {
         "kind": "exponent_zero",
-        "base": "z"
+        "base": "z",
+        "left_factor": 5,
+        "right_factor": 11
       },
       "construct_id": "exponent.zero"
     },

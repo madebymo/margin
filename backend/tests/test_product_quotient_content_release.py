@@ -155,7 +155,9 @@ def test_packaged_inventory_is_exactly_52_pending_candidate_families(
     assert all(item.provenance.reviewed_by is None for item in bank.items)
     assert all(item.provenance.source_id for item in bank.items)
     assert bank.schema_version == 3
-    assert all(item.provenance.source_revision == 2 for item in bank.items)
+    assert Counter(item.provenance.source_revision for item in bank.items) == Counter(
+        {2: 51, 3: 1}
+    )
     assert all(item.provenance.source_digest for item in bank.items)
     assert all(
         item.provenance.compiler_version == COMPILER_VERSION
@@ -395,6 +397,7 @@ def test_compiler_derives_representative_truth_for_each_typed_builder(compiled):
 
     assert expected_by_id["item.pqv1.exponent_rules.diagnostic.01"] == "z^5"
     assert expected_by_id["item.pqv1.exponent_rules.checkin.01"] == "z^13"
+    assert expected_by_id["item.pqv1.exponent_rules.checkin.05"] == "55"
     assert expected_by_id["item.pqv1.power_rule.diagnostic.01"] == "300*x^14"
     assert expected_by_id["item.pqv1.power_rule.diagnostic.02"] == "-160*x^-9"
     assert expected_by_id["item.pqv1.power_rule.diagnostic.04"] == "266*x^13"
@@ -427,7 +430,7 @@ def _independent_truth(task):
     if isinstance(task, ExponentNegativeTask):
         return z ** (-task.magnitude)
     if isinstance(task, ExponentZeroTask):
-        return sympy.Integer(1)
+        return sympy.Integer(task.left_factor * task.right_factor)
     if isinstance(task, ExponentCompoundTask):
         exponent = (
             -task.negative_magnitude

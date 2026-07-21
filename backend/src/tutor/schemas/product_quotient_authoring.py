@@ -100,10 +100,12 @@ class ExponentNegativeTask(StrictFrozenModel):
 
 
 class ExponentZeroTask(StrictFrozenModel):
-    """Apply the zero-exponent identity to a declared non-zero base."""
+    """Apply the zero-exponent identity inside a nontrivial constant multiple."""
 
     kind: Literal["exponent_zero"] = "exponent_zero"
     base: Literal["z"] = "z"
+    left_factor: int = Field(default=1, ge=1, le=12)
+    right_factor: int = Field(default=1, ge=1, le=12)
 
 
 class ExponentCompoundTask(StrictFrozenModel):

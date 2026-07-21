@@ -84,7 +84,7 @@ from tutor.schemas.product_quotient_authoring import (
 )
 from tutor.verify.checker import VerificationStatus, parse_restricted, verify_answer
 
-COMPILER_VERSION = "product-quotient-item-compiler-v3"
+COMPILER_VERSION = "product-quotient-item-compiler-v4"
 TARGET_KC = "kc.der.product_quotient"
 TARGET_CLOSURE = frozenset(
     {
@@ -695,18 +695,21 @@ def _derive_task_unregistered(task: ReleaseMathTask) -> _DerivedTask:
             ),
         )
     if isinstance(task, ExponentZeroTask):
+        product = task.left_factor * task.right_factor
         return _DerivedTask(
             instruction=(
                 "Simplify using the zero-exponent rule. "
                 f"Assume {task.base} is non-zero."
             ),
-            givens=(f"{task.base}^0",),
-            expected="1",
+            givens=(f"{task.left_factor}*{task.right_factor}*{task.base}^0",),
+            expected=str(product),
             conceptual_hint=(
-                "Use the multiplicative-identity result of the zero-exponent rule."
+                "Replace the zero-exponent factor with its multiplicative-identity "
+                "value, then preserve the outside factors."
             ),
             operation_hint=(
-                "The ratio interpretation of a zero exponent has equal numerator and denominator."
+                "The zero-exponent factor becomes one; multiply that value by the "
+                "two constants already shown."
             ),
         )
     if isinstance(task, ExponentCompoundTask):
