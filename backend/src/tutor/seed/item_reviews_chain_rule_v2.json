@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "manifest_version": "chain-rule-wave-review-v2.1.0",
+  "graph_version": 2,
+  "compiler_version": "chain-rule-item-compiler-v3",
+  "entries": [
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.01",
+      "revision": 1,
+      "source_digest": "60e10e0c7cff0316a8e8ae89b6ca1eb9e103d0b1bf1faca1945d5a434e3d7b27",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.02",
+      "revision": 1,
+      "source_digest": "4c037266964b7ea7f07e68e51bc8e08c9b4b82260be0016c9a055b5638b6658e",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.03",
+      "revision": 1,
+      "source_digest": "8eda87421dc2db44bf75cd869ac607d579f1fe2008bdfff9cab31a2f48c85653",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.04",
+      "revision": 1,
+      "source_digest": "c12695fcee00eb8ec89869328444b14c42ddffdd9daa023cffc8ca8f32607e73",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.01",
+      "revision": 1,
+      "source_digest": "f295b8a5930bad9501488440c1f3fee067d1a2181812fb34beb0774efaa379ff",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.02",
+      "revision": 1,
+      "source_digest": "df7a1598619d6c6fbe0af0014cfd5821b253c6cd0616cc0590bacdae40734100",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.03",
+      "revision": 1,
+      "source_digest": "0cb985db10473fbc5f949fc144f7297b6a9c58ff5b7d2892e6fbd07edbfae4d6",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.04",
+      "revision": 1,
+      "source_digest": "bc7eb14a43e95c6c8c2eb52954e833441016be7e0bb30cb5d1714908b7548d78",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.05",
+      "revision": 1,
+      "source_digest": "1b812c89aaedd53916cfa342176628890cd8dcfc8d4051f8d5896343e07aaf39",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.guided_widget.01",
+      "revision": 1,
+      "source_digest": "a689d22a04fb73a6e5be8aed09f0f794cd80a7f97f2129cd2d0c7bdb0f45d71f",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.capstone.01",
+      "revision": 1,
+      "source_digest": "fa42cb0187f0dfcf2f516c32f5922cbfad71b6efa37fb2180eac70384565919e",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.capstone.02",
+      "revision": 1,
+      "source_digest": "e7c2c803719ce1b71b5172be4176b7cf21d7699ea221b3d66038bfc240eed2fd",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.worked_example.01",
+      "revision": 1,
+      "source_digest": "9c14d49d84619f3af520f9343215309a73f80351a0ccf67c6cd65a7fa8675fa4",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.01",
+      "revision": 1,
+      "source_digest": "95f2d2e3967eb02a795b44d4ed6e0853fe4e0da46c97c8eb7d53630556d4a537",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.02",
+      "revision": 1,
+      "source_digest": "a209bd72152876c1da74f10eb25673b86ae48e225ba34bae02de85e3135c0659",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.03",
+      "revision": 1,
+      "source_digest": "53bc207932e341a18162c0451f33db38df00d9e88a906bb786d93f44e53423c4",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.04",
+      "revision": 1,
+      "source_digest": "8d250d95a19132ca069d46b7a4c9cc6697be3b3663b3b84a64dab5f2c522a22b",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.01",
+      "revision": 1,
+      "source_digest": "f81fc389e0cde366765f2c3b28bd6c92c28a83b2f6dd895e53f1a5f1c8caed56",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.02",
+      "revision": 1,
+      "source_digest": "be4dd0c5044b3948d5b1808f3cb6c338e0450daa3bf94fbda6d0722f98a75961",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.03",
+      "revision": 1,
+      "source_digest": "71277b9f2689cdcc79dac7fb0daa45602c7dd3ae1b0428b75c4d96852a85bb7a",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.04",
+      "revision": 1,
+      "source_digest": "6a24454bd1dc60d9ac5ce3d5232ae21cfb6a69e6b0dd16ad69081691b067b074",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.05",
+      "revision": 1,
+      "source_digest": "54b3f7094ca7dc6ed65242de57c3e77dc6b2adddc2527ed12e1c00253b133468",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.guided_widget.01",
+      "revision": 1,
+      "source_digest": "22f11db8b948bb6054d1cc8c61bbbd023665a88edb49051178780ba394176260",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.capstone.01",
+      "revision": 1,
+      "source_digest": "e82537d9237bd67300062ab46c461dc5eab9f67e9cc9352b9eae3417d37d2775",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.capstone.02",
+      "revision": 1,
+      "source_digest": "28b60a302403c4503280f9f96f42dd6cd527b7b7c281ab530851bd44d66ac14d",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.worked_example.01",
+      "revision": 1,
+      "source_digest": "ec1990e280f07c010ca1b639091674517eb0a4ff5e02f8759e68b39e3bf74291",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.01",
+      "revision": 1,
+      "source_digest": "5ea2c77f68b0972685e1292a5f4a5b40ffdbf79604b7b20ff7cd229a6195e346",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.02",
+      "revision": 1,
+      "source_digest": "03b101af87717513cbf806b065470bbdcc694da494b8a82f3e7a2049ed1318ae",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.03",
+      "revision": 1,
+      "source_digest": "138351096109bc8703eb71fdd1442c8f5b85b66f0aef41d702ac1e6afbeb3058",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.04",
+      "revision": 1,
+      "source_digest": "cbf807d6b6d8a71d081a2a96092159a991130001f124816d547f79d3fde6d0fb",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.01",
+      "revision": 1,
+      "source_digest": "e8adcd459655499df06153867baeb6666b8bbc337d179aaecd14c5ab40c620a3",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.02",
+      "revision": 1,
+      "source_digest": "6b9fd6c662de0548cc7ea18f34735042a62c253691b9dac083112c92cca31bfe",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.03",
+      "revision": 1,
+      "source_digest": "17cf85b35bd5d0f6e211a7760dfd79428113fb55f73d9ec97266eff67bdefd4b",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.04",
+      "revision": 1,
+      "source_digest": "ed34a3c1ef0f79ebd7c25867d9611f3d165ba371b6df53a1de68dcee62c5c3b3",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.05",
+      "revision": 1,
+      "source_digest": "658f4ff647839a18893f922e084b9b7ded416987de68d65ecb968daa4b5f1b61",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.guided_widget.01",
+      "revision": 1,
+      "source_digest": "71fa505ec040b0e3320a316b69dd6b8bcfed6d570f6862b18453c3b0010a31a5",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.capstone.01",
+      "revision": 1,
+      "source_digest": "57be12a1363e521d6c1d00379402a4c0ae116a8e457fefd29651a71a56a11918",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.capstone.02",
+      "revision": 1,
+      "source_digest": "e3c616537a60731600bc36fa0f431ca860114f7cd43b4f24e6f7081265e094e6",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.worked_example.01",
+      "revision": 1,
+      "source_digest": "2aba09b42b673aa1a8955a61ac6f3c901b962fed04cc3ae41d40e86d2d4823b7",
+      "decision": "pending",
+      "notes": "Awaiting independent human mathematics, accessibility, pedagogy, and family-independence review."
+    }
+  ]
+}

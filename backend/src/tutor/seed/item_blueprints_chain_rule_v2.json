@@ -1,0 +1,727 @@
+{
+  "schema_version": 1,
+  "blueprint_version": "chain-rule-wave-v2.1.0",
+  "output_bank_version": "draft-chain-rule-wave-v2.1.0",
+  "graph_version": 2,
+  "authoring_source": "assessment-draft/chain-rule-wave-v2.1",
+  "author": "AI-assisted implementation draft (unreviewed)",
+  "target_kcs": [
+    "kc.fun.function_notation",
+    "kc.fun.composition",
+    "kc.der.chain_rule"
+  ],
+  "released_kcs": [],
+  "families": [
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.diagnostic.01",
+      "family_id": "family.crv2.function_notation.diagnostic.01",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.affine_value",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "function_affine_value",
+        "coefficient": 7,
+        "constant": -3,
+        "input_value": 20
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.diagnostic.02",
+      "family_id": "family.crv2.function_notation.diagnostic.02",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.expression_value",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_expression_value",
+        "function_coefficient": 4,
+        "function_constant": 2,
+        "input_coefficient": 3,
+        "input_constant": -2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.diagnostic.03",
+      "family_id": "family.crv2.function_notation.diagnostic.03",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.table_combination",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_table_combination",
+        "left_input": -4,
+        "left_output": -59,
+        "right_input": 7,
+        "right_output": 80,
+        "operation": "left_minus_right"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.diagnostic.04",
+      "family_id": "family.crv2.function_notation.diagnostic.04",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.plot_change",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_plot_change",
+        "start_input": -3,
+        "start_output": -69,
+        "end_input": 6,
+        "end_output": 80
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.01",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.checkin.01",
+      "family_id": "family.crv2.function_notation.checkin.01",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.quadratic_value",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "function_quadratic_value",
+        "quadratic": 5,
+        "linear": 3,
+        "constant": 11,
+        "input_value": 5
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.02",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.checkin.02",
+      "family_id": "family.crv2.function_notation.checkin.02",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.expression_value",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_expression_value",
+        "function_coefficient": -3,
+        "function_constant": 5,
+        "input_coefficient": 2,
+        "input_constant": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.03",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.checkin.03",
+      "family_id": "family.crv2.function_notation.checkin.03",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.table_combination",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_table_combination",
+        "left_input": -6,
+        "left_output": 78,
+        "right_input": 9,
+        "right_output": 79,
+        "operation": "sum"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.04",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.checkin.04",
+      "family_id": "family.crv2.function_notation.checkin.04",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.plot_change",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "function_plot_change",
+        "start_input": -5,
+        "start_output": -83,
+        "end_input": 4,
+        "end_output": 80
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.checkin.05",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.checkin.05",
+      "family_id": "family.crv2.function_notation.checkin.05",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.ordered_values",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "function_ordered_values",
+        "coefficient": 11,
+        "constant": 0,
+        "first_input": 12,
+        "second_input": 17
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.guided_widget.01",
+      "family_id": "family.crv2.function_notation.guided_widget.01",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.affine_value",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "function_affine_value",
+        "coefficient": -4,
+        "constant": 2,
+        "input_value": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.capstone.01",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.capstone.01",
+      "family_id": "family.crv2.function_notation.capstone.01",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.expression_value",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "function_expression_value",
+        "function_coefficient": 5,
+        "function_constant": -2,
+        "input_coefficient": -2,
+        "input_constant": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.capstone.02",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.capstone.02",
+      "family_id": "family.crv2.function_notation.capstone.02",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.ordered_values",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "function_ordered_values",
+        "coefficient": -11,
+        "constant": -3,
+        "first_input": 19,
+        "second_input": -16
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.function_notation.worked_example.01",
+      "revision": 1,
+      "item_id": "item.crv2.function_notation.worked_example.01",
+      "family_id": "family.crv2.function_notation.worked_example.01",
+      "kc_id": "kc.fun.function_notation",
+      "construct_id": "function.affine_value",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "function_affine_value",
+        "coefficient": -2,
+        "constant": 3,
+        "input_value": 6
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.crv2.composition.diagnostic.01",
+      "family_id": "family.crv2.composition.diagnostic.01",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.affine",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "composition_affine",
+        "f_coefficient": 2,
+        "f_constant": 7,
+        "g_coefficient": 3,
+        "g_constant": 5,
+        "order": "f_after_g"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.crv2.composition.diagnostic.02",
+      "family_id": "family.crv2.composition.diagnostic.02",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.quadratic_outer",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_quadratic_outer",
+        "outer_scale": 2,
+        "outer_constant": 3,
+        "inner_coefficient": 2,
+        "inner_constant": -4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.crv2.composition.diagnostic.03",
+      "family_id": "family.crv2.composition.diagnostic.03",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.at_point",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_at_point",
+        "f_coefficient": 6,
+        "f_constant": 2,
+        "g_coefficient": 3,
+        "g_constant": 2,
+        "point": 10,
+        "order": "f_after_g"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.crv2.composition.diagnostic.04",
+      "family_id": "family.crv2.composition.diagnostic.04",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.table_path",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_table_path",
+        "point": 2,
+        "g_at_point": -31,
+        "f_at_g": 83,
+        "distractor_input": 6,
+        "f_at_distractor": 11
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.01",
+      "revision": 1,
+      "item_id": "item.crv2.composition.checkin.01",
+      "family_id": "family.crv2.composition.checkin.01",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.quadratic_outer",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_quadratic_outer",
+        "outer_scale": -2,
+        "outer_constant": 5,
+        "inner_coefficient": 3,
+        "inner_constant": 2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.02",
+      "revision": 1,
+      "item_id": "item.crv2.composition.checkin.02",
+      "family_id": "family.crv2.composition.checkin.02",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.at_point",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_at_point",
+        "f_coefficient": 4,
+        "f_constant": 3,
+        "g_coefficient": 5,
+        "g_constant": 16,
+        "point": 8,
+        "order": "g_after_f"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.03",
+      "revision": 1,
+      "item_id": "item.crv2.composition.checkin.03",
+      "family_id": "family.crv2.composition.checkin.03",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.table_path",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "composition_table_path",
+        "point": -3,
+        "g_at_point": 38,
+        "f_at_g": -93,
+        "distractor_input": 4,
+        "f_at_distractor": 13
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.04",
+      "revision": 1,
+      "item_id": "item.crv2.composition.checkin.04",
+      "family_id": "family.crv2.composition.checkin.04",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.paired_orders",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "composition_paired_orders",
+        "f_coefficient": 5,
+        "f_constant": 2,
+        "g_coefficient": -4,
+        "g_constant": 3,
+        "point": 6
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.checkin.05",
+      "revision": 1,
+      "item_id": "item.crv2.composition.checkin.05",
+      "family_id": "family.crv2.composition.checkin.05",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.plot_sum",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "composition_plot_sum",
+        "point": 2,
+        "g_at_point": 4,
+        "f_at_g": 94,
+        "f_at_point": -3,
+        "g_at_f": 99
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.crv2.composition.guided_widget.01",
+      "family_id": "family.crv2.composition.guided_widget.01",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.at_point",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "composition_at_point",
+        "f_coefficient": -2,
+        "f_constant": -2,
+        "g_coefficient": 2,
+        "g_constant": 2,
+        "point": 3,
+        "order": "f_after_g"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.capstone.01",
+      "revision": 1,
+      "item_id": "item.crv2.composition.capstone.01",
+      "family_id": "family.crv2.composition.capstone.01",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.paired_orders",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "composition_paired_orders",
+        "f_coefficient": -3,
+        "f_constant": 4,
+        "g_coefficient": 5,
+        "g_constant": -2,
+        "point": -5
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.capstone.02",
+      "revision": 1,
+      "item_id": "item.crv2.composition.capstone.02",
+      "family_id": "family.crv2.composition.capstone.02",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.quadratic_outer",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "composition_quadratic_outer",
+        "outer_scale": 3,
+        "outer_constant": -4,
+        "inner_coefficient": 2,
+        "inner_constant": 2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.composition.worked_example.01",
+      "revision": 1,
+      "item_id": "item.crv2.composition.worked_example.01",
+      "family_id": "family.crv2.composition.worked_example.01",
+      "kc_id": "kc.fun.composition",
+      "construct_id": "composition.affine",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "composition_affine",
+        "f_coefficient": 4,
+        "f_constant": -2,
+        "g_coefficient": 2,
+        "g_constant": 6,
+        "order": "g_after_f"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.diagnostic.01",
+      "family_id": "family.crv2.chain_rule.diagnostic.01",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.affine_power",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "chain_affine_power",
+        "inner_coefficient": 3,
+        "inner_constant": 2,
+        "outer_power": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.diagnostic.02",
+      "family_id": "family.crv2.chain_rule.diagnostic.02",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.quadratic_power",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_quadratic_power",
+        "quadratic_coefficient": 2,
+        "inner_constant": -3,
+        "outer_power": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.diagnostic.03",
+      "family_id": "family.crv2.chain_rule.diagnostic.03",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.at_point",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_at_point",
+        "point": 2,
+        "inner_value": 2,
+        "inner_derivative": 6,
+        "outer_power": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.diagnostic.04",
+      "family_id": "family.crv2.chain_rule.diagnostic.04",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.correction",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_correction",
+        "inner_kind": "affine",
+        "inner_coefficient": -4,
+        "inner_constant": 2,
+        "outer_power": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.01",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.checkin.01",
+      "family_id": "family.crv2.chain_rule.checkin.01",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.affine_power",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_affine_power",
+        "inner_coefficient": -2,
+        "inner_constant": 5,
+        "outer_power": 6
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.02",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.checkin.02",
+      "family_id": "family.crv2.chain_rule.checkin.02",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.quadratic_power",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_quadratic_power",
+        "quadratic_coefficient": -4,
+        "inner_constant": 4,
+        "outer_power": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.03",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.checkin.03",
+      "family_id": "family.crv2.chain_rule.checkin.03",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.at_point",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "chain_at_point",
+        "point": -3,
+        "inner_value": 2,
+        "inner_derivative": 7,
+        "outer_power": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.04",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.checkin.04",
+      "family_id": "family.crv2.chain_rule.checkin.04",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.table_values",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "chain_table_values",
+        "outer_power": 3,
+        "first_point": -2,
+        "first_inner_value": 3,
+        "first_inner_derivative": 5,
+        "second_point": 4,
+        "second_inner_value": -3,
+        "second_inner_derivative": -6
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.checkin.05",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.checkin.05",
+      "family_id": "family.crv2.chain_rule.checkin.05",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.correction",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "chain_correction",
+        "inner_kind": "affine",
+        "inner_coefficient": 5,
+        "inner_constant": -2,
+        "outer_power": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.guided_widget.01",
+      "family_id": "family.crv2.chain_rule.guided_widget.01",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.at_point",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "chain_at_point",
+        "point": 4,
+        "inner_value": 2,
+        "inner_derivative": -2,
+        "outer_power": 2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.capstone.01",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.capstone.01",
+      "family_id": "family.crv2.chain_rule.capstone.01",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.correction",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "chain_correction",
+        "inner_kind": "quadratic",
+        "inner_coefficient": 4,
+        "inner_constant": 2,
+        "outer_power": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.capstone.02",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.capstone.02",
+      "family_id": "family.crv2.chain_rule.capstone.02",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.affine_power",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "chain_affine_power",
+        "inner_coefficient": -3,
+        "inner_constant": -2,
+        "outer_power": 5
+      }
+    },
+    {
+      "blueprint_id": "blueprint.crv2.chain_rule.worked_example.01",
+      "revision": 1,
+      "item_id": "item.crv2.chain_rule.worked_example.01",
+      "family_id": "family.crv2.chain_rule.worked_example.01",
+      "kc_id": "kc.der.chain_rule",
+      "construct_id": "chain.quadratic_power",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "chain_quadratic_power",
+        "quadratic_coefficient": 1,
+        "inner_constant": 2,
+        "outer_power": 3
+      }
+    }
+  ]
+}
