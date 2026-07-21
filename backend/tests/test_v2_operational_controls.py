@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
+from types import ModuleType
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI
@@ -14,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from tutor.api.app import create_app
 from tutor.api.v2 import install_v2_routes
+from tutor.api.v2_controls import MutationGate, MutationGateSnapshot
 from tutor.api.v2_features import V2FeatureFlags
 from tutor.api.v2_persistence import V2PersistenceService
 from tutor.db import models as m
@@ -44,11 +47,44 @@ class RecordingMetricsSink:
         self.events.append((name, amount, dict(dimensions)))
 
 
+class MutableMutationGate:
+    def __init__(self, paused: bool = False) -> None:
+        self.paused = paused
+        self.revision = "operator-1"
+
+    def set(self, paused: bool, revision: str) -> None:
+        self.paused = paused
+        self.revision = revision
+
+    def snapshot(self) -> MutationGateSnapshot:
+        return MutationGateSnapshot(
+            paused=self.paused,
+            revision=self.revision,
+            source="test_control_plane",
+            observed_at=datetime.now(timezone.utc),
+        )
+
+
+class BrokenMutationGate:
+    def snapshot(self) -> MutationGateSnapshot:
+        raise RuntimeError("private-provider-error-do-not-expose")
+
+
+class FixedMutationGate:
+    def __init__(self, snapshot: MutationGateSnapshot) -> None:
+        self._snapshot = snapshot
+
+    def snapshot(self) -> MutationGateSnapshot:
+        return self._snapshot
+
+
 def _app(
     *,
     persistence: V2PersistenceService | None = None,
     paused: bool = False,
     metrics_sink: RecordingMetricsSink | None = None,
+    mutation_gate: MutationGate | None = None,
+    mutation_gate_max_age: timedelta | None = None,
 ) -> FastAPI:
     app = FastAPI()
     install_v2_routes(
@@ -61,6 +97,8 @@ def _app(
         resume_token_secret=_SECRET,
         feature_flags=V2FeatureFlags(pause_v2_mutations=paused),
         metrics_sink=metrics_sink,
+        mutation_gate=mutation_gate,
+        mutation_gate_max_age=mutation_gate_max_age,
     )
     return app
 
@@ -233,6 +271,180 @@ def test_mutation_pause_replays_committed_reset_but_blocks_a_new_reset():
     assert blocked.status_code == 503
     assert blocked.json()["code"] == "v2_mutations_paused"
     assert paused.get("/api/v2/sessions/current").json() == committed.json()["session"]
+
+
+def test_live_mutation_gate_toggles_without_restart_and_preserves_all_replays():
+    gate = MutableMutationGate()
+    client = TestClient(_app(mutation_gate=gate))
+    create_payload = _create_payload(uuid4())
+    created = client.post("/api/v2/sessions", json=create_payload)
+    assert created.status_code == 200
+    original_cookie = client.cookies.get("tutor_resume_v2")
+    action_payload = _hint(created.json(), uuid4())
+    advanced = client.post(
+        f"/api/v2/sessions/{created.json()['session_id']}/actions",
+        json=action_payload,
+    )
+    assert advanced.status_code == 200
+
+    gate.set(True, "operator-2-paused")
+    assert client.get("/api/v2/goals").json()["rollout"]["status"] == "paused"
+    readiness = client.app.state.v2_readiness_provider()
+    assert readiness["mutations_paused"] is True
+    assert readiness["accepting_mutations"] is False
+    assert readiness["mutation_gate"] == {
+        "revision": "operator-2-paused",
+        "source": "test_control_plane",
+        "observed_at": readiness["mutation_gate"]["observed_at"],
+    }
+
+    replayed_create = client.post("/api/v2/sessions", json=create_payload)
+    assert replayed_create.status_code == 200
+    assert replayed_create.json() == created.json()
+    replayed_action = client.post(
+        f"/api/v2/sessions/{created.json()['session_id']}/actions",
+        json=action_payload,
+    )
+    assert replayed_action.status_code == 200
+    assert replayed_action.json() == advanced.json()
+    blocked_action = client.post(
+        f"/api/v2/sessions/{created.json()['session_id']}/actions",
+        json=_hint(advanced.json(), uuid4()),
+    )
+    assert blocked_action.status_code == 503
+    assert blocked_action.json()["code"] == "v2_mutations_paused"
+
+    gate.set(False, "operator-3-open")
+    reset_payload = _reset(advanced.json(), uuid4())
+    reset = client.post("/api/v2/sessions/current/reset", json=reset_payload)
+    assert reset.status_code == 200
+    replacement_cookie = client.cookies.get("tutor_resume_v2")
+
+    gate.set(True, "operator-4-paused")
+    _set_resume_cookie(client, original_cookie)
+    replayed_reset = client.post(
+        "/api/v2/sessions/current/reset",
+        json=reset_payload,
+    )
+    assert replayed_reset.status_code == 200
+    assert replayed_reset.json() == reset.json()
+    assert client.cookies.get("tutor_resume_v2") == replacement_cookie
+
+    new_reset_payload = _reset(reset.json()["session"], uuid4())
+    blocked_reset = client.post(
+        "/api/v2/sessions/current/reset",
+        json=new_reset_payload,
+    )
+    assert blocked_reset.status_code == 503
+    assert blocked_reset.json()["code"] == "v2_mutations_paused"
+
+    gate.set(False, "operator-5-open")
+    committed_after_toggle = client.post(
+        "/api/v2/sessions/current/reset",
+        json=new_reset_payload,
+    )
+    assert committed_after_toggle.status_code == 200
+    assert client.get("/api/v2/goals").json()["rollout"]["status"] == "available"
+
+
+def test_broken_and_stale_mutation_gate_observations_fail_closed_safely():
+    broken_app = create_app(load_graph(), v2_mutation_gate=BrokenMutationGate())
+    broken = TestClient(broken_app)
+    health = broken.get("/healthz")
+    assert health.status_code == 200
+    readiness = health.json()["v2_readiness"]
+    assert readiness["mutations_paused"] is True
+    assert readiness["accepting_mutations"] is False
+    assert readiness["mutation_gate"]["revision"] == "fail-closed-v1"
+    assert readiness["mutation_gate"]["source"] == "fail_closed"
+    assert set(readiness["mutation_gate"]) == {
+        "revision",
+        "source",
+        "observed_at",
+    }
+    assert "private-provider-error-do-not-expose" not in repr(readiness)
+    assert broken.get("/api/v2/goals").json()["rollout"]["status"] == "paused"
+    blocked = broken.post(
+        "/api/v2/sessions",
+        json=_create_payload(uuid4()),
+    )
+    assert blocked.status_code == 503
+    assert blocked.json()["code"] == "v2_mutations_paused"
+
+    stale_gate = FixedMutationGate(
+        MutationGateSnapshot(
+            paused=False,
+            revision="stale-open-state",
+            source="test_control_plane",
+            observed_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+        )
+    )
+    stale = TestClient(
+        _app(
+            mutation_gate=stale_gate,
+            mutation_gate_max_age=timedelta(seconds=30),
+        )
+    )
+    assert stale.get("/api/v2/goals").json()["rollout"]["status"] == "paused"
+    stale_readiness = stale.app.state.v2_readiness_provider()
+    assert stale_readiness["mutations_paused"] is True
+    assert stale_readiness["mutation_gate"]["revision"] == "fail-closed-v1"
+    assert stale_readiness["mutation_gate"]["source"] == "fail_closed"
+
+
+def test_static_pause_flag_is_a_ceiling_over_an_open_dynamic_gate():
+    gate = MutableMutationGate(paused=False)
+    client = TestClient(_app(paused=True, mutation_gate=gate))
+
+    assert client.get("/api/v2/goals").json()["rollout"]["status"] == "paused"
+    readiness = client.app.state.v2_readiness_provider()
+    assert readiness["mutations_paused"] is True
+    assert readiness["accepting_mutations"] is False
+    assert readiness["mutation_gate"]["revision"] == "operator-1"
+
+
+def test_create_app_loads_live_mutation_gate_factory_from_environment(monkeypatch):
+    gate = MutableMutationGate(paused=True)
+    module = ModuleType("test_runtime_mutation_gate_plugin")
+    module.build_gate = lambda: gate
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    monkeypatch.setenv(
+        "TUTOR_V2_MUTATION_GATE_FACTORY",
+        f"{module.__name__}:build_gate",
+    )
+
+    client = TestClient(create_app(load_graph()))
+    paused_health = client.get("/healthz").json()["v2_readiness"]
+    assert paused_health["mutations_paused"] is True
+    assert paused_health["mutation_gate"]["source"] == "test_control_plane"
+    assert client.get("/api/v2/goals").json()["rollout"]["status"] == "paused"
+
+    gate.set(False, "operator-2-open")
+    open_health = client.get("/healthz").json()["v2_readiness"]
+    assert open_health["mutations_paused"] is False
+    assert open_health["content_ready"] is False
+    assert open_health["accepting_mutations"] is False
+    assert open_health["mutation_gate"]["revision"] == "operator-2-open"
+    assert (
+        client.get("/api/v2/goals").json()["rollout"]["status"]
+        == "content_unavailable"
+    )
+
+
+def test_create_app_plugin_load_failure_pauses_without_leaking_configuration(
+    monkeypatch,
+    caplog,
+):
+    private_spec = "private_vendor_control_plane:build_secret_gate"
+    monkeypatch.setenv("TUTOR_V2_MUTATION_GATE_FACTORY", private_spec)
+
+    client = TestClient(create_app(load_graph()))
+    readiness = client.get("/healthz").json()["v2_readiness"]
+    assert readiness["mutations_paused"] is True
+    assert readiness["accepting_mutations"] is False
+    assert readiness["mutation_gate"]["revision"] == "plugin-load-failed-v1"
+    assert readiness["mutation_gate"]["source"] == "fail_closed"
+    assert private_spec not in caplog.text
 
 
 def test_resume_rate_uses_cookie_attempts_and_separates_failure_classes():
@@ -429,4 +641,5 @@ def test_health_reports_operator_active_version_readiness():
     assert versions["policies"]["diagnosis"].startswith("diagnosis-v2")
     assert versions["learner_parameters"] == "bkt-v2"
     assert versions["capability_manifest"].startswith("web-widget-capabilities-v2")
-    assert readiness["accepting_mutations"] is True
+    assert readiness["content_ready"] is False
+    assert readiness["accepting_mutations"] is False

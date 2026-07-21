@@ -9,6 +9,7 @@ interactions, phase, pending-item metadata, and the session summary.
 
 import logging
 import os
+from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -22,8 +23,13 @@ from tutor.api.diagnosis_shadow import (
     DiagnosisV2ShadowObserver,
     diagnosis_shadow_enabled_from_environment,
 )
+from tutor.api.runtime_plugins import (
+    RuntimePluginError,
+    build_runtime_plugin_from_environment,
+)
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
+from tutor.api.v2_controls import MutationGate, StaticMutationGate
 from tutor.api.v2_features import V2FeatureFlags
 from tutor.api.v2_metrics import MetricsSink
 from tutor.api.v2_persistence import V2PersistenceService
@@ -40,6 +46,8 @@ logger = logging.getLogger("tutor.api")
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 _DIST_DIR = _STATIC_DIR / "dist"
+_V2_MUTATION_GATE_FACTORY_ENV = "TUTOR_V2_MUTATION_GATE_FACTORY"
+_DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE = timedelta(seconds=60)
 
 
 class CreateSessionRequest(BaseModel):
@@ -121,6 +129,8 @@ def create_app(
     allow_v1_session_creation: bool | None = None,
     enable_diagnosis_v2_shadow: bool | None = None,
     v2_metrics_sink: MetricsSink | None = None,
+    v2_mutation_gate: MutationGate | None = None,
+    v2_mutation_gate_max_age: timedelta | None = None,
 ) -> FastAPI:
     """Build the API app around one graph version and an in-memory store.
 
@@ -173,6 +183,37 @@ def create_app(
     app.state.persistence = persistence
     v2_flags = V2FeatureFlags.from_environment()
     app.state.v2_feature_flags = v2_flags
+    resolved_v2_mutation_gate = v2_mutation_gate
+    resolved_v2_mutation_gate_max_age = v2_mutation_gate_max_age
+    if v2_flags.api_session_v2 and resolved_v2_mutation_gate is None:
+        try:
+            resolved_v2_mutation_gate = build_runtime_plugin_from_environment(
+                _V2_MUTATION_GATE_FACTORY_ENV,
+                contract=MutationGate,
+                contract_name="MutationGate",
+            )
+        except RuntimePluginError as exc:
+            # The plugin specification and underlying exception may contain
+            # deployment details. Log only the bounded failure class and hold
+            # the serving path closed until startup configuration is repaired.
+            logger.error(
+                "v2 mutation gate plugin failed closed error_type=%s",
+                type(exc).__name__,
+            )
+            resolved_v2_mutation_gate = StaticMutationGate(
+                True,
+                revision="plugin-load-failed-v1",
+                source="fail_closed",
+            )
+            resolved_v2_mutation_gate_max_age = None
+        else:
+            if (
+                resolved_v2_mutation_gate is not None
+                and resolved_v2_mutation_gate_max_age is None
+            ):
+                resolved_v2_mutation_gate_max_age = (
+                    _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE
+                )
     diagnosis_shadow = DiagnosisV2ShadowObserver(
         resolved_graph,
         enabled=(
@@ -204,6 +245,32 @@ def create_app(
     @app.get("/healthz")
     def healthz() -> dict:
         """Liveness check."""
+        readiness_provider = getattr(app.state, "v2_readiness_provider", None)
+        v2_readiness = (
+            readiness_provider()
+            if callable(readiness_provider)
+            else getattr(
+                app.state,
+                "v2_readiness",
+                {
+                    "student_stack_enabled": False,
+                    "content_ready": False,
+                    "mutations_paused": True,
+                    "accepting_mutations": False,
+                    "durable_persistence": False,
+                    "reviewed_goal_count": 0,
+                    "active_versions": {
+                        "graph": resolved_graph.graph_version,
+                        "item_bank": None,
+                        "pedagogy_catalog": None,
+                        "policies": {},
+                        "learner_parameters": None,
+                        "capability_manifest": None,
+                    },
+                },
+            )
+        )
+        app.state.v2_readiness = v2_readiness
         return {
             "status": "ok",
             "sessions": len(store),
@@ -215,23 +282,7 @@ def create_app(
             "v1_session_creation": legacy_creation_enabled,
             "diagnosis_v2_shadow": diagnosis_shadow.metrics_snapshot(),
             "v2_features": v2_flags.as_dict(),
-            "v2_readiness": getattr(
-                app.state,
-                "v2_readiness",
-                {
-                    "student_stack_enabled": False,
-                    "accepting_mutations": False,
-                    "durable_persistence": False,
-                    "reviewed_goal_count": 0,
-                    "active_versions": {
-                        "graph": resolved_graph.graph_version,
-                        "item_bank": None,
-                        "policies": {},
-                        "learner_parameters": None,
-                        "capability_manifest": None,
-                    },
-                },
-            ),
+            "v2_readiness": v2_readiness,
             "v2_metrics": (
                 app.state.v2_store.metrics_snapshot()
                 if hasattr(app.state, "v2_store")
@@ -369,6 +420,8 @@ def create_app(
             ),
             feature_flags=v2_flags,
             metrics_sink=v2_metrics_sink,
+            mutation_gate=resolved_v2_mutation_gate,
+            mutation_gate_max_age=resolved_v2_mutation_gate_max_age,
         )
 
     # Keep the mount last so API routes retain precedence. ``check_dir=False``

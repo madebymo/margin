@@ -10,6 +10,7 @@ import re
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -45,6 +46,12 @@ from tutor.api.v2_store import (
     ResumeTokenExpired,
     V2SessionHandle,
     V2SessionStore,
+)
+from tutor.api.v2_controls import (
+    MutationGate,
+    MutationGateSnapshot,
+    StaticMutationGate,
+    safe_mutation_gate_snapshot,
 )
 from tutor.api.v2_versions import V2PolicyRegistry, V2VersionRegistry
 from tutor.learner.evidence_trust import EvidenceTrustPolicy
@@ -379,6 +386,8 @@ def install_v2_routes(
     policy_registry: V2PolicyRegistry | None = None,
     feature_flags: V2FeatureFlags | None = None,
     metrics_sink: MetricsSink | None = None,
+    mutation_gate: MutationGate | None = None,
+    mutation_gate_max_age: timedelta | None = None,
 ) -> V2SessionStore:
     """Install API v2 without changing any v1 route or response model."""
     token_secret = _resume_secret(resume_token_secret)
@@ -386,6 +395,37 @@ def install_v2_routes(
     active_widget_manifest = widget_capability_manifest(
         rich_widgets=flags.rich_widgets
     )
+    if mutation_gate_max_age is not None and mutation_gate_max_age <= timedelta(0):
+        raise ValueError("mutation_gate_max_age must be positive")
+    active_mutation_gate = (
+        mutation_gate
+        if mutation_gate is not None
+        else StaticMutationGate(
+            False,
+            revision="builtin-static-v1:open",
+            source="builtin_static",
+        )
+    )
+
+    def observe_mutation_gate() -> MutationGateSnapshot:
+        return safe_mutation_gate_snapshot(
+            active_mutation_gate,
+            max_age=mutation_gate_max_age,
+        )
+
+    def mutations_paused(snapshot: MutationGateSnapshot) -> bool:
+        # The startup feature flag is a one-way safety ceiling: a dynamic
+        # provider may pause an open deployment, but can never reopen a flag-
+        # paused one.
+        return flags.pause_v2_mutations or snapshot.paused
+
+    def mutation_gate_view(snapshot: MutationGateSnapshot) -> dict[str, str]:
+        return {
+            "revision": snapshot.revision,
+            "source": snapshot.source,
+            "observed_at": snapshot.observed_at.isoformat(),
+        }
+
     active_item_bank = item_bank
     active_pedagogy_catalog = pedagogy_catalog
     if active_item_bank is None or active_pedagogy_catalog is None:
@@ -498,7 +538,11 @@ def install_v2_routes(
 
     router = APIRouter(prefix="/api/v2")
 
-    def rollout_catalog(assignment: _RolloutAssignment) -> GoalCatalog:
+    def rollout_catalog(
+        assignment: _RolloutAssignment,
+        gate_snapshot: MutationGateSnapshot | None = None,
+    ) -> GoalCatalog:
+        observed_gate = gate_snapshot or observe_mutation_gate()
         percentage = flags.student_rollout_percent
         if not assignment.selected:
             reason = (
@@ -517,7 +561,7 @@ def install_v2_routes(
                     percentage=percentage,
                 ),
             )
-        if not flags.student_stack_enabled or flags.pause_v2_mutations:
+        if not flags.student_stack_enabled or mutations_paused(observed_gate):
             return GoalCatalog(
                 goals=[],
                 rollout=CatalogRolloutView(
@@ -560,18 +604,20 @@ def install_v2_routes(
     def admission_error(
         assignment: _RolloutAssignment,
         request: Request,
+        gate_snapshot: MutationGateSnapshot | None = None,
     ) -> JSONResponse | None:
+        observed_gate = gate_snapshot or observe_mutation_gate()
         if (
             assignment.selected
             and flags.student_stack_enabled
-            and not flags.pause_v2_mutations
+            and not mutations_paused(observed_gate)
         ):
             return None
-        if flags.pause_v2_mutations:
+        if mutations_paused(observed_gate):
             result = mutation_paused_error("create")
             _set_rollout_cookie(result, assignment.cookie_value, request)
             return result
-        catalog_view = rollout_catalog(assignment).rollout
+        catalog_view = rollout_catalog(assignment, observed_gate).rollout
         code = (
             "rollout_not_selected"
             if catalog_view.status == "not_selected"
@@ -1049,7 +1095,8 @@ def install_v2_routes(
                 "the creation receipt could not be checked; retry with the same request_id",
             )
 
-        if flags.pause_v2_mutations:
+        gate_snapshot = observe_mutation_gate()
+        if mutations_paused(gate_snapshot):
             paused = mutation_paused_error("create")
             _set_rollout_cookie(paused, assignment.cookie_value, request)
             return paused
@@ -1070,7 +1117,11 @@ def install_v2_routes(
                         "reset or finish the current session before starting another",
                         store.view(current),
                     )
-                blocked = admission_error(assignment, request)
+                blocked = admission_error(
+                    assignment,
+                    request,
+                    gate_snapshot,
+                )
                 if blocked is not None:
                     return blocked
                 prior_learner_id = getattr(
@@ -1091,7 +1142,7 @@ def install_v2_routes(
                 replace_handle = current
                 replace_token_hash = current_hash
 
-        blocked = admission_error(assignment, request)
+        blocked = admission_error(assignment, request, gate_snapshot)
         if blocked is not None:
             return blocked
         goal = goals_by_id.get(request_body.goal_id)
@@ -1253,7 +1304,8 @@ def install_v2_routes(
             return error
         assert handle is not None
         assert token_hash is not None
-        if flags.pause_v2_mutations:
+        gate_snapshot = observe_mutation_gate()
+        if mutations_paused(gate_snapshot):
             return mutation_paused_error("reset", store.view(handle))
         try:
             from datetime import datetime, timezone
@@ -1359,17 +1411,20 @@ def install_v2_routes(
         assert handle is not None
         assert token_hash is not None
         try:
-            if flags.pause_v2_mutations:
-                replayed = store.replay_action(
-                    handle,
-                    action,
-                    token_hash=token_hash,
-                )
-                if replayed is None:
-                    return mutation_paused_error("action", store.view(handle))
+            # Receipt lookup always precedes the live gate so a control-plane
+            # pause cannot turn a committed transport retry into a new error.
+            replayed = store.replay_action(
+                handle,
+                action,
+                token_hash=token_hash,
+            )
+            if replayed is not None:
                 raw_token = request.cookies[_COOKIE_NAME]
                 _set_resume_cookie(response, raw_token, request)
                 return replayed
+            gate_snapshot = observe_mutation_gate()
+            if mutations_paused(gate_snapshot):
+                return mutation_paused_error("action", store.view(handle))
             view = store.apply(session_id, action, token_hash=token_hash)
             raw_token = request.cookies[_COOKIE_NAME]
             _set_resume_cookie(response, raw_token, request)
@@ -1447,26 +1502,43 @@ def install_v2_routes(
     app.state.v2_evidence_trust_registry = evidence_trust_policy
     app.state.v2_policy_registry = policies
     app.state.v2_feature_flags = flags
-    app.state.v2_readiness = {
-        "student_stack_enabled": flags.student_stack_enabled,
-        "accepting_mutations": not flags.pause_v2_mutations,
-        "durable_persistence": persistence is not None,
-        "reviewed_goal_count": len(eligible_goals),
-        "active_versions": {
-            "graph": graph.graph_version,
-            "item_bank": (
-                active_item_bank.bank_version
-                if active_item_bank is not None
-                else None
+
+    def readiness_view() -> dict[str, Any]:
+        """Observe the live gate without exposing provider failures or config."""
+
+        gate_snapshot = observe_mutation_gate()
+        effective_pause = mutations_paused(gate_snapshot)
+        content_ready = bool(eligible_goals)
+        return {
+            "student_stack_enabled": flags.student_stack_enabled,
+            "content_ready": content_ready,
+            "mutations_paused": effective_pause,
+            "accepting_mutations": (
+                flags.student_stack_enabled
+                and content_ready
+                and not effective_pause
             ),
-            "pedagogy_catalog": (
-                active_pedagogy_catalog.catalog_version
-                if active_pedagogy_catalog is not None
-                else None
-            ),
-            "policies": dict(sorted(active_policy_versions.items())),
-            "learner_parameters": f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
-            "capability_manifest": active_widget_manifest["version"],
-        },
-    }
+            "mutation_gate": mutation_gate_view(gate_snapshot),
+            "durable_persistence": persistence is not None,
+            "reviewed_goal_count": len(eligible_goals),
+            "active_versions": {
+                "graph": graph.graph_version,
+                "item_bank": (
+                    active_item_bank.bank_version
+                    if active_item_bank is not None
+                    else None
+                ),
+                "pedagogy_catalog": (
+                    active_pedagogy_catalog.catalog_version
+                    if active_pedagogy_catalog is not None
+                    else None
+                ),
+                "policies": dict(sorted(active_policy_versions.items())),
+                "learner_parameters": f"bkt-v{DEFAULT_PARAMS_V2.params_version}",
+                "capability_manifest": active_widget_manifest["version"],
+            },
+        }
+
+    app.state.v2_readiness_provider = readiness_view
+    app.state.v2_readiness = readiness_view()
     return store

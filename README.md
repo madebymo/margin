@@ -365,6 +365,18 @@ before invoking the orchestrator or writing revision, transcript, evidence,
 exposure, widget-attempt, or receipt state. Clients must retry the identical
 payload and request ID after the operator clears the pause.
 
+Deployments that need a live control-plane switch may additionally configure
+`TUTOR_V2_MUTATION_GATE_FACTORY=package.module:factory`. The zero-argument
+factory must return the runtime-checkable `MutationGate` contract. Its bounded
+snapshot is read for each catalog view and new mutation; provider exceptions,
+invalid values, observations more than 60 seconds old, and materially
+future-dated observations fail closed. The static pause flag remains a
+one-way ceiling, so a dynamic provider can never reopen a statically paused
+deployment. Receipt lookup still precedes the live gate, preserving exact
+create/action/reset transport retries during an incident. Health readiness
+reports only the effective pause, content readiness, acceptance decision, and
+the bounded gate revision/source/time—not provider errors or configuration.
+
 New-session admission uses one explicit percentage:
 
 ```bash
