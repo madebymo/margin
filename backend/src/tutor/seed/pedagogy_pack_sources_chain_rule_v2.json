@@ -1,0 +1,315 @@
+{
+  "schema_version": 2,
+  "source_version": "chain-rule-wave-pedagogy-draft-v2.1",
+  "graph_version": 2,
+  "pack_sources": [
+    {
+      "source_id": "pedagogy.source.function_notation",
+      "revision": 1,
+      "kc_id": "kc.fun.function_notation",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.function_notation.treats_notation_as_product",
+          "description": "Reads f(x) as multiplication of a quantity f by x instead of the value of function f at input x.",
+          "error_signature": "For a supplied rule f(x), rewrites f(a) as f times a without substituting a into the rule.",
+          "remediation_hint": "Read the parentheses as an input slot: copy the rule and replace every occurrence of its input variable with the supplied input."
+        },
+        {
+          "id": "m.function_notation.substitutes_one_occurrence",
+          "description": "Replaces only one occurrence of the function variable in a polynomial rule.",
+          "error_signature": "For f(x)=a*x^2+b*x+c, substitutes the input into exactly one of the two x terms.",
+          "remediation_hint": "Mark every occurrence of the input variable before substitution, then place the same parenthesized input in every marked location."
+        },
+        {
+          "id": "m.function_notation.drops_input_grouping",
+          "description": "Drops parentheses around a negative or multi-term input and changes the value of a power or product.",
+          "error_signature": "For f(t)=a*t+b and input m*x+n, substitutes as a*m*x+n+b rather than a*(m*x+n)+b.",
+          "remediation_hint": "Treat the complete input as one unit by enclosing it in parentheses before applying any operation from the function rule."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.function_notation.labeled_input_slot",
+          "description": "A function rule is a labeled input slot: whatever appears inside the function parentheses is inserted into every matching slot in the rule before calculation begins.",
+          "widget_affinity": ["mapping", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "function_notation_as_product: f(a) is treated as f times a and the supplied rule is not used",
+        "function_partial_substitution: an input replaces only one occurrence of the function variable",
+        "function_grouping_loss: a multi-term input is inserted without parentheses before multiplication or exponentiation"
+      ],
+      "sources": [
+        "OpenStax College Algebra 2e, Section 3.1: Functions and Function Notation.",
+        "College Board AP Precalculus Course and Exam Description, Unit 1: Polynomial and Rational Functions."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Function notation identifies an input and asks for the output produced by one rule. The symbol inside the parentheses replaces every occurrence of the rule's input variable."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=a*x+b",
+          "spoken_text": "f of x equals a times x plus b."
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Replace x with the requested input p."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "f(p)=a*p+b",
+          "spoken_text": "f of p equals a times p plus b."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "When the input is an expression rather than one number, keep that whole expression grouped during substitution. Simplification happens only after every input slot has been filled."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(t)=4*t+1",
+          "spoken_text": "f of t equals four times t plus one."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "p(x)=3*x-2",
+          "spoken_text": "p of x equals three x minus two."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "f(p(x))=4*(3*x-2)+1",
+          "spoken_text": "f of p of x equals four times the quantity three x minus two, plus one."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Write the function rule on a fresh line and draw a box around every occurrence of its input variable. Copy the supplied input into every box."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(x)=2*x^2-3*x+4",
+          "spoken_text": "f of x equals two x squared minus three x plus four."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "f(p)=2*(p)^2-3*(p)+4",
+          "spoken_text": "f of p equals two times p squared minus three times p plus four, with each p grouped."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Before simplifying, count the original variable occurrences and the inserted inputs; the counts must match. Then evaluate powers before multiplication and preserve every sign."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.composition",
+      "revision": 1,
+      "kc_id": "kc.fun.composition",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.composition.reverses_order",
+          "description": "Evaluates f(g(x)) in the reverse order by applying f before g.",
+          "error_signature": "The response to f(g(x)) is algebraically equal to g(f(x)) for the supplied distinct functions.",
+          "remediation_hint": "Start at the innermost parentheses: compute or copy g(x) first, then use that complete output as the input to f."
+        },
+        {
+          "id": "m.composition.multiplies_functions",
+          "description": "Treats composition notation as a product of function expressions.",
+          "error_signature": "For f(g(x)), returns f(x)*g(x) or an algebraically equivalent product.",
+          "remediation_hint": "Composition means substitution, not multiplication: one function's complete output occupies the other function's input slot."
+        },
+        {
+          "id": "m.composition.drops_inner_grouping",
+          "description": "Substitutes only part of a multi-term inner expression into the outer function.",
+          "error_signature": "For a quadratic outer rule and affine g(x), squares only the variable term while leaving the inner constant outside the square.",
+          "remediation_hint": "Place parentheses around the entire inner output before applying the outer square, scale, or shift."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.composition.nested_workstations",
+          "description": "Composition is a pair of nested workstations: the inner station finishes first, and its whole output travels unchanged into the input slot of the outer station.",
+          "widget_affinity": ["mapping", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "composition_order_reversed: f(g(x)) is answered with the derived form of g(f(x))",
+        "composition_replaced_by_product: f(g(x)) is answered as f(x)*g(x)",
+        "composition_inner_ungrouped: an outer power applies to only one term of the affine inner expression"
+      ],
+      "sources": [
+        "OpenStax College Algebra 2e, Section 3.4: Composition of Functions.",
+        "College Board AP Precalculus Course and Exam Description, Unit 1: Function Concepts and Transformations."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A composition connects two function rules by making one output the next input. Parentheses reveal the order: the innermost function acts first."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(g(x))",
+          "spoken_text": "f of g of x."
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Apply g first, then use that complete output as the input to f."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(u)=u^2+3",
+          "spoken_text": "f of u equals u squared plus three."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(x)=2*x-1",
+          "spoken_text": "g of x equals two x minus one."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "f(g(x))=(2*x-1)^2+3",
+          "spoken_text": "f of g of x equals the quantity two x minus one squared, plus three."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Keep the inner output grouped until the outer rule has been applied. Only then expand or combine terms if the requested answer calls for simplification."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Underline the innermost function name and write its output on a separate line. Draw one box in the outer rule where its input belongs."
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Put the complete expression g(x) in the outer input box, then replace every outer variable with that grouped expression."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "f(g(x))",
+          "spoken_text": "f of g of x."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Check the order by saying it aloud: f of g means g then f. If the response instead multiplies the two original rules or reverses their order, restart from the inner parentheses."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.chain_rule",
+      "revision": 1,
+      "kc_id": "kc.der.chain_rule",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.chain_rule.missing_inner_derivative",
+          "description": "Differentiates the outer power but omits multiplication by the inner derivative.",
+          "error_signature": "For h(x)=(u(x))^n, returns n*(u(x))^(n-1) without a factor equivalent to u'(x).",
+          "remediation_hint": "After differentiating the outer power, append a separate factor for the derivative of the unchanged inner expression."
+        },
+        {
+          "id": "m.chain_rule.inner_derivative_only",
+          "description": "Returns only the derivative of the inner function and ignores the outer power.",
+          "error_signature": "For h(x)=(u(x))^n with n greater than one, returns only u'(x).",
+          "remediation_hint": "The derivative needs both layers: first write n times the unchanged inner expression to power n minus one, then multiply by u prime."
+        },
+        {
+          "id": "m.chain_rule.changes_inner_copy",
+          "description": "Applies the power rule directly to terms inside the grouped inner expression while also reducing the outer exponent.",
+          "error_signature": "The factor under the reduced outer power is not algebraically equal to the original inner function.",
+          "remediation_hint": "During the outer step, copy the inner expression unchanged; differentiate that inner expression only in the separate final factor."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.chain_rule.layered_route",
+          "description": "The derivative follows a layered route from outside to inside: transform the outer layer while preserving its input, then multiply by the rate of the inner layer.",
+          "widget_affinity": ["slider", "mapping"]
+        }
+      ],
+      "error_patterns": [
+        "chain_missing_inner_factor: n*(u(x))^(n-1) appears without a factor equivalent to u'(x)",
+        "chain_inner_only: the response is equivalent to u'(x) and omits the outer-power derivative",
+        "chain_inner_copy_changed: the expression beneath the reduced outer power is not equivalent to the original u(x)"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.6: The Chain Rule.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 3: Composite, Implicit, and Inverse Functions."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The chain rule differentiates a composition one layer at a time. For an integer power of an inner function, take the outer power derivative, keep the inner expression unchanged in that outer factor, and multiply by the inner derivative."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "d/dx((u(x))^n)=n*(u(x))^(n-1)*u'(x)",
+          "spoken_text": "The derivative with respect to x of u of x raised to n equals n times u of x raised to n minus one, times u prime of x."
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Multiply the outer derivative, the unchanged inner form under its reduced power, and the inner derivative."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For this pilot, the inner function is affine or polynomial and the outer exponent is an integer. That keeps every derivative inside the fixed prerequisite graph."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use three labeled spaces: outer factor, unchanged inner copy, and inner derivative. Do not simplify until all three spaces are filled."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=(a*x+b)^n",
+          "spoken_text": "h of x equals the quantity a x plus b raised to n."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "h'(x)=n*(a*x+b)^(n-1)*a",
+          "spoken_text": "h prime of x equals n times the unchanged quantity a x plus b raised to n minus one, times a."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Compare the grouped inner expression before and after the outer step; those copies must match. Then confirm a separate inner-derivative factor is present before combining constants."
+        }
+      ]
+    }
+  ]
+}

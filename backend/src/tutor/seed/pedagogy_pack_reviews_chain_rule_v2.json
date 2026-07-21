@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "manifest_version": "chain-rule-wave-pedagogy-review-v2.1",
+  "graph_version": 2,
+  "compiler_version": "pedagogy-review-compiler-v1",
+  "entries": [
+    {
+      "source_id": "pedagogy.source.function_notation",
+      "revision": 1,
+      "source_digest": "f7ae3e1d96b2fc46922188a0db5188aba056f9f48b6996ab51a007d9a05ab559",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics, pedagogy, accessibility, and instructional-clarity review."
+    },
+    {
+      "source_id": "pedagogy.source.composition",
+      "revision": 1,
+      "source_digest": "6de466095c44fa987b8985b4d20af40b259570e73c14f726a9590b37039738d7",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics, pedagogy, accessibility, and instructional-clarity review."
+    },
+    {
+      "source_id": "pedagogy.source.chain_rule",
+      "revision": 1,
+      "source_digest": "8917c3f32b48f14082b6c38c3a69ba7073d34e5b96910b3a0cd803d849a0089a",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics, pedagogy, accessibility, and instructional-clarity review."
+    }
+  ]
+}
