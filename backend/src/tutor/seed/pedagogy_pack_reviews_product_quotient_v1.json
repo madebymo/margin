@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "manifest_version": "product-quotient-closure-pedagogy-review-v1",
+  "graph_version": 1,
+  "compiler_version": "pedagogy-review-compiler-v1",
+  "entries": [
+    {
+      "source_id": "pedagogy.source.exponent_rules",
+      "revision": 1,
+      "source_digest": "6b44c498f7e265e40e9a0297ab6f4b0f50780c852f4442688ab4fd9dca7f6cd4",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics and pedagogy review."
+    },
+    {
+      "source_id": "pedagogy.source.power_rule",
+      "revision": 1,
+      "source_digest": "473fdc65bd0bed802b2781cbda5186c4ce770d88c0b399abe9d962a9406e6c52",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics and pedagogy review."
+    },
+    {
+      "source_id": "pedagogy.source.sum_constant_rules",
+      "revision": 1,
+      "source_digest": "62ac9eabd11706fb9f57b251b975cf468d0f2464c7b4b2ef3987d3bf301d7e22",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics and pedagogy review."
+    },
+    {
+      "source_id": "pedagogy.source.product_quotient",
+      "revision": 1,
+      "source_digest": "182f0157e38aaa840850ede4e2670042acb847d410ce1dbfdfc49fd17daa1d13",
+      "decision": "pending",
+      "notes": "Awaiting independent mathematics and pedagogy review."
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "source_version": "product-quotient-closure-pedagogy-draft-v1",
+  "graph_version": 1,
+  "pack_sources": [
+    {
+      "source_id": "pedagogy.source.exponent_rules",
+      "revision": 1,
+      "kc_id": "kc.alg.exponent_rules",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.exponent_rules.multiply_exponents_on_product",
+          "description": "Multiplies exponents when multiplying powers with the same base instead of adding them.",
+          "error_signature": "For x^a*x^b, produces x^(a*b).",
+          "remediation_hint": "Keep the common base and add exponents; multiplication of exponents belongs to a power raised to another power."
+        },
+        {
+          "id": "m.exponent_rules.subtract_exponents_on_product",
+          "description": "Subtracts exponents in a product as though the operation were division.",
+          "error_signature": "For x^a*x^b, produces x^(a-b) or x^(b-a).",
+          "remediation_hint": "Name the outer operation first: multiplication of equal bases calls for adding exponents."
+        },
+        {
+          "id": "m.exponent_rules.negative_exponent_is_negative_value",
+          "description": "Treats a negative exponent as a negative coefficient rather than a reciprocal power.",
+          "error_signature": "Rewrites x^-n as -x^n.",
+          "remediation_hint": "Move the powered factor across the fraction bar; the expression's sign does not change."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.exponent_rules.operation_sorter",
+          "description": "An operation sorter: first identify product, quotient, or nested power, then send the exponents to the matching add, subtract, or multiply lane while the base stays labeled.",
+          "widget_affinity": ["mapping", "live_input"]
+        }
+      ],
+      "error_patterns": [
+        "Uses exponent multiplication for a same-base product.",
+        "Uses exponent subtraction for a same-base product.",
+        "Changes the sign of a value when rewriting a negative exponent."
+      ],
+      "sources": [
+        "OpenStax Algebra and Trigonometry 2e, Section 1.2: Exponents and Scientific Notation.",
+        "Common Core State Standards for Mathematics, HSN-RN.A: Extend the properties of exponents to rational exponents."
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.power_rule",
+      "revision": 1,
+      "kc_id": "kc.der.power_rule",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.power_rule.missing_multiplier",
+          "description": "Reduces the exponent but omits the original exponent as a multiplier.",
+          "error_signature": "For d/dx x^n, produces x^(n-1).",
+          "remediation_hint": "Write the original exponent in front before reducing the remaining exponent by one."
+        },
+        {
+          "id": "m.power_rule.exponent_unchanged",
+          "description": "Uses the exponent as a multiplier but leaves the exponent on the variable unchanged.",
+          "error_signature": "For d/dx x^n, produces n*x^n.",
+          "remediation_hint": "After bringing the exponent down, move the remaining exponent down one step."
+        },
+        {
+          "id": "m.power_rule.negative_exponent_wrong_direction",
+          "description": "Increases a negative exponent toward zero instead of subtracting one.",
+          "error_signature": "For d/dx x^-n, produces -n*x^(-n+1).",
+          "remediation_hint": "Subtracting one makes a negative exponent one unit more negative."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.power_rule.down_one_step",
+          "description": "The exponent leaves one copy in front as the multiplier, while the exponent still attached to x moves down exactly one step.",
+          "widget_affinity": ["live_input", "slider"]
+        }
+      ],
+      "error_patterns": [
+        "Changes the exponent without creating a coefficient.",
+        "Creates the coefficient but does not reduce the exponent.",
+        "Moves a negative exponent toward zero after differentiation."
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.sum_constant_rules",
+      "revision": 1,
+      "kc_id": "kc.der.sum_constant_rules",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.sum_constant_rules.first_term_only",
+          "description": "Differentiates only the first term of a sum and copies the remaining terms unchanged.",
+          "error_signature": "The response contains the derivative of the first term followed by unchanged original terms.",
+          "remediation_hint": "Give every additive term its own derivative pass before recombining the results."
+        },
+        {
+          "id": "m.sum_constant_rules.lost_subtraction_sign",
+          "description": "Changes a subtraction sign into addition while differentiating term by term.",
+          "error_signature": "A derivative term that should retain a leading minus sign appears positive.",
+          "remediation_hint": "Carry each term's existing sign with it through differentiation."
+        },
+        {
+          "id": "m.sum_constant_rules.constant_copied",
+          "description": "Copies an additive constant into the derivative instead of replacing it with zero.",
+          "error_signature": "The original nonzero constant remains as an additive term in the derivative.",
+          "remediation_hint": "A fixed number has no change, so its derivative contributes zero."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.sum_constant_rules.term_assembly_line",
+          "description": "Each signed term travels independently through the differentiation station, then the transformed terms rejoin in their original order.",
+          "widget_affinity": ["mapping", "live_input"]
+        }
+      ],
+      "error_patterns": [
+        "Leaves one or more nonconstant terms undifferentiated.",
+        "Drops or reverses a subtraction sign between derivative terms.",
+        "Retains an additive constant in the derivative."
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.product_quotient",
+      "revision": 1,
+      "kc_id": "kc.der.product_quotient",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.product_quotient.product_of_derivatives",
+          "description": "Differentiates a product by multiplying the two derivatives and omits both hold-one-factor terms.",
+          "error_signature": "For u*v, produces u'*v' instead of u'*v+u*v'.",
+          "remediation_hint": "Differentiate one factor at a time while holding the other unchanged, then add the two terms."
+        },
+        {
+          "id": "m.product_quotient.reversed_quotient_numerator",
+          "description": "Reverses the two terms in the quotient-rule numerator, negating an otherwise correct derivative.",
+          "error_signature": "For u/v, uses u*v'-v*u' in the numerator.",
+          "remediation_hint": "Start with denominator times numerator derivative, then subtract numerator times denominator derivative."
+        },
+        {
+          "id": "m.product_quotient.denominator_not_squared",
+          "description": "Uses the original denominator rather than its square in the quotient-rule result.",
+          "error_signature": "The quotient-rule numerator is plausible, but the denominator is v rather than v^2.",
+          "remediation_hint": "After forming the numerator, square the entire original denominator."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.product_quotient.two_turns_and_balance",
+          "description": "For a product, each factor takes one turn changing while its partner waits; for a quotient, the denominator leads the ordered numerator and then supports the result twice.",
+          "widget_affinity": ["mapping", "live_input"]
+        }
+      ],
+      "error_patterns": [
+        "Multiplies factor derivatives instead of adding two product-rule terms.",
+        "Reverses the quotient-rule numerator and returns the negative result.",
+        "Fails to square the full denominator in a quotient derivative."
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 3.3: Differentiation Rules.",
+        "College Board AP Calculus AB and BC Course and Exam Description, Unit 2: Differentiation."
+      ]
+    }
+  ]
+}

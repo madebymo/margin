@@ -49,6 +49,21 @@ class PedagogyPackProvenance(_StrictFrozenModel):
     author: str = Field(min_length=1, max_length=256)
     reviewed_by: str = Field(min_length=1, max_length=256)
     reviewed_at: datetime
+    source_id: str | None = Field(
+        default=None,
+        max_length=128,
+        pattern=_CONTENT_ID_PATTERN,
+    )
+    source_revision: int | None = Field(default=None, ge=1)
+    source_digest: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    compiler_version: str | None = Field(
+        default=None,
+        max_length=128,
+        pattern=_CONTENT_ID_PATTERN,
+    )
 
     @field_validator("author", "reviewed_by", mode="before")
     @classmethod
@@ -66,6 +81,19 @@ class PedagogyPackProvenance(_StrictFrozenModel):
     def _independent_reviewer(self) -> "PedagogyPackProvenance":
         if self.author.casefold() == self.reviewed_by.casefold():
             raise ValueError("reviewed_by must identify someone other than the author")
+        source_binding = (
+            self.source_id,
+            self.source_revision,
+            self.source_digest,
+            self.compiler_version,
+        )
+        if any(value is not None for value in source_binding) and not all(
+            value is not None for value in source_binding
+        ):
+            raise ValueError(
+                "reviewed source_id, source_revision, source_digest, and "
+                "compiler_version must be supplied together"
+            )
         return self
 
 
