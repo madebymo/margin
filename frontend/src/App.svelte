@@ -16,6 +16,7 @@
     pendingAcceptsText,
     phaseLabel,
   } from "./session.js";
+  import PromptSegments from "./components/PromptSegments.svelte";
   import WidgetHost from "./widgets/WidgetHost.svelte";
   import {
     installMinimalWidgetCapabilities,
@@ -45,9 +46,7 @@
 
   let goalId = "";
   let courseBand = "calculus_1";
-  let ageBand = "adult";
-  let contentMode = "curated";
-  let context = "";
+  const contentMode = "curated";
 
   const coordinator = new MutationCoordinator(async (action) => {
     if (!view?.session_id || !view?.pending?.key) {
@@ -229,9 +228,9 @@
           await createCoordinator.execute({
             goal_id: goalId,
             course: courseBand,
-            age_band: ageBand,
+            age_band: "adult",
             content_mode: contentMode,
-            context: context.trim() || null,
+            context: null,
           }),
         );
         createCoordinator.clearRetry();
@@ -253,19 +252,19 @@
     }
   }
 
-  async function executeV2Action(action) {
+  async function executeV2Action(action, { preserveDraft = false } = {}) {
     busy = true;
     errorMessage = "";
     statusMessage = "";
     try {
       const payload = await coordinator.execute(action);
-      applySnapshot(payload);
+      applySnapshot(payload, { preserveAnswer: preserveDraft });
       return payload;
     } catch (error) {
       if (error?.view) {
         applySnapshot(error.view, {
           clearRetry: !error.retryable,
-          preserveAnswer: error.retryable,
+          preserveAnswer: error.retryable || preserveDraft,
         });
         statusMessage = "The session changed elsewhere. The latest state is shown.";
       }
@@ -303,7 +302,10 @@
     if (busy || !view?.pending) return;
     if (apiMode === "v2") {
       try {
-        await executeV2Action({ type: "request_hint" });
+        await executeV2Action(
+          { type: "request_hint" },
+          { preserveDraft: true },
+        );
       } catch {
         // The authoritative stale view, when supplied, has already been applied.
       }
@@ -584,65 +586,20 @@
             <p class="field-help">{activeGoal.description}</p>
           {/if}
 
-          <div class="form-row">
-            <label>
-              Current course
-              <select bind:value={courseBand} disabled={busy}>
-                <option value="calculus_1">Calculus I</option>
-                <option value="precalculus">Precalculus</option>
-                <option value="algebra_2">Algebra II</option>
-                <option value="other">Another course</option>
-              </select>
-            </label>
-            <label>
-              Learner
-              <select bind:value={ageBand} disabled={busy}>
-                <option value="adult">Adult</option>
-                <option value="secondary">High school</option>
-                <option value="middle_school">Middle school</option>
-              </select>
-            </label>
+          <label>
+            Current course
+            <select bind:value={courseBand} disabled={busy}>
+              <option value="calculus_1">Calculus I</option>
+              <option value="precalculus">Precalculus</option>
+              <option value="algebra_2">Algebra II</option>
+              <option value="other">Another course</option>
+            </select>
+          </label>
+
+          <div class="curated-notice">
+            <strong>Reviewed lessons</strong>
+            <span>This pilot uses only authored, reviewed teaching and questions.</span>
           </div>
-
-          <fieldset>
-            <legend>Lesson style</legend>
-            <label class:chosen={contentMode === "curated"} class="choice-card">
-              <input
-                type="radio"
-                value="curated"
-                bind:group={contentMode}
-                disabled={busy}
-              >
-              <span><strong>Reviewed lessons</strong><small>Predictable, authored explanations</small></span>
-            </label>
-            <label class:chosen={contentMode === "llm_coaching"} class="choice-card">
-              <input
-                type="radio"
-                value="llm_coaching"
-                bind:group={contentMode}
-                disabled={busy}
-              >
-              <span><strong>Adaptive coaching</strong><small>Reviewed math with personalized explanations</small></span>
-            </label>
-          </fieldset>
-
-          <details class="context-details">
-            <summary>Helpful context <span class="optional">(optional)</span></summary>
-            <label>
-              <span class="sr-only">Helpful context</span>
-              <textarea
-                bind:value={context}
-                maxlength="2000"
-                rows="3"
-                disabled={busy}
-                placeholder="For example: I understand derivatives but substitution feels confusing."
-              ></textarea>
-            </label>
-            <p class="field-help">
-              Context shapes the coaching only. Your final task will be a reviewed
-              goal problem, not a claim that we solved this exact note.
-            </p>
-          </details>
 
           <button
             type="button"
@@ -771,7 +728,6 @@
           bind:this={transcriptElement}
           role="region"
           aria-label="Tutor conversation history"
-          aria-live="polite"
           tabindex="0"
         >
           {#if view.transcript.length === 0}
@@ -802,18 +758,22 @@
                           : "Tutor"}
                 </span>
               {/if}
-              {#if entry.prompt_segments?.length}
-                <p class="structured-prompt">
-                  {#each entry.prompt_segments as segment}
-                    {#if segment.kind === "math" || segment.type === "math"}
-                      <span class="math-segment">{segment.expression ?? segment.latex ?? segment.math}</span>
-                    {:else if segment.kind === "blank" || segment.type === "blank"}
-                      <span class="blank-segment">{segment.label ?? "___"}</span>
-                    {:else}
-                      <span>{segment.text ?? ""}</span>
+              {#if entry.content_blocks?.length}
+                {#each entry.content_blocks as block}
+                  <div class={`content-block ${block.kind}`}>
+                    {#if block.kind === "worked_example"}
+                      <span class="kind-tag">Worked example</span>
+                    {:else if block.kind === "remediation"}
+                      <span class="kind-tag">Review</span>
                     {/if}
-                  {/each}
-                </p>
+                    {#if block.text}<p>{block.text}</p>{/if}
+                    {#if block.segments?.length}
+                      <PromptSegments segments={block.segments} />
+                    {/if}
+                  </div>
+                {/each}
+              {:else if entry.prompt_segments?.length}
+                <PromptSegments segments={entry.prompt_segments} />
               {:else if entry.text}
                 <p>{entry.text}</p>
               {/if}
@@ -835,17 +795,7 @@
                 {view.pending.kind === "capstone" ? "Goal problem" : "Your turn"}
               </span>
               {#if view.pending.prompt_segments?.length}
-                <p class="structured-prompt">
-                  {#each view.pending.prompt_segments as segment}
-                    {#if segment.kind === "math" || segment.type === "math"}
-                      <span class="math-segment">{segment.expression ?? segment.latex ?? segment.math}</span>
-                    {:else if segment.kind === "blank" || segment.type === "blank"}
-                      <span class="blank-segment">{segment.label ?? "___"}</span>
-                    {:else}
-                      <span>{segment.text ?? ""}</span>
-                    {/if}
-                  {/each}
-                </p>
+                <PromptSegments segments={view.pending.prompt_segments} />
               {:else}
                 <p>{view.pending.prompt}</p>
               {/if}
@@ -879,6 +829,10 @@
               </div>
             </section>
           {/if}
+        </div>
+
+        <div class="sr-only" aria-live="polite" aria-atomic="true">
+          {view.transcript.at(-1)?.text ?? ""}
         </div>
 
         <div class="session-feedback" aria-live="assertive">
@@ -915,9 +869,13 @@
                 placeholder={view.pending?.placeholder ?? "Type your answer"}
                 maxlength="256"
                 autocomplete="off"
+                aria-describedby="answer-format-help"
                 disabled={busy}
                 on:keydown={handleAnswerKeydown}
               >
+              <p id="answer-format-help" class="composer-help">
+                Use * for multiplication and ^ for powers when needed.
+              </p>
             {/if}
             <div class="composer-actions">
               {#if view.pending?.can_hint}
@@ -926,7 +884,9 @@
                   class="secondary"
                   disabled={busy}
                   on:click={requestHint}
-                >Get a hint</button>
+                >{view.pending.hint?.next_reveals_answer
+                    ? "Reveal the answer and move to a new problem"
+                    : "Get a hint"}</button>
               {/if}
               <button
                 type="submit"

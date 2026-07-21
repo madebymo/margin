@@ -884,6 +884,12 @@ def test_terminal_rollover_carries_revealed_family_retirement():
 def test_hint_action_advances_revision_but_not_pending_answer(client):
     created, _ = _create(client)
     before = created.json()
+    assert before["pending"]["hint"] == {
+        "available": True,
+        "next_index": 0,
+        "total": 3,
+        "next_reveals_answer": False,
+    }
     response = client.post(
         f"/api/v2/sessions/{before['session_id']}/actions",
         json=_hint(before),
@@ -892,6 +898,8 @@ def test_hint_action_advances_revision_but_not_pending_answer(client):
     after = response.json()
     assert after["revision"] == before["revision"] + 1
     assert after["pending"]["key"] == before["pending"]["key"]
+    assert after["pending"]["hint"]["next_index"] == 1
+    assert not after["pending"]["hint"]["next_reveals_answer"]
     assert after["transcript"][-1]["kind"] == "hint"
     assert after["transcript"][-1]["role"] == "tutor"
     assert all(
@@ -906,7 +914,9 @@ def test_revealing_hint_abandons_item_without_mastery_evidence(client):
     original_key = view["pending"]["key"]
     handle = client.app.state.v2_store.get(view["session_id"])
     original_family = handle.orchestrator.pending.family_id
-    for _ in range(3):
+    for index in range(3):
+        if index == 2:
+            assert view["pending"]["hint"]["next_reveals_answer"]
         response = client.post(
             f"/api/v2/sessions/{view['session_id']}/actions",
             json=_hint(view),

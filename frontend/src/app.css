@@ -417,6 +417,21 @@ legend {
   margin: 7px 0 0;
 }
 
+.curated-notice {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--green-50);
+}
+
+.curated-notice span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .primary-button,
 .widgetbox button {
   min-height: 44px;
@@ -704,6 +719,43 @@ legend {
   align-items: baseline;
 }
 
+.content-block + .content-block {
+  margin-top: 12px;
+}
+
+.content-block .structured-prompt {
+  margin-top: 4px;
+}
+
+.segment-table-wrap {
+  display: block;
+  overflow-x: auto;
+}
+
+.segment-table-wrap table {
+  border-collapse: collapse;
+}
+
+.segment-table-wrap th,
+.segment-table-wrap td {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.segment-caption {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.static-plot-description {
+  display: block;
+  padding: 9px 11px;
+  border-left: 3px solid var(--violet-800);
+  background: var(--violet-100);
+}
+
 .math-segment {
   padding: 0.12em 0.35em;
   font-family: "Times New Roman", serif;
@@ -870,6 +922,12 @@ legend {
 .answer-composer input {
   min-height: 48px;
   font-size: 14px;
+}
+
+.composer-help {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .choice-options {

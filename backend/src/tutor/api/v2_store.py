@@ -28,6 +28,7 @@ from tutor.api.v2_schemas import (
     GoalView,
     HintAction,
     LearnerSummaryView,
+    PendingHintView,
     PendingView,
     ProgressView,
     ResetResponse,
@@ -706,6 +707,9 @@ class V2SessionStore:
         replacement_orchestrator: Any,
         replacement_interactions: list[Interaction],
         replacement_token_hash: str,
+        accept_quarantine_recovery_key: bool = False,
+        replacement_goal: GoalView | None = None,
+        replacement_content_mode: ContentModeView | None = None,
     ) -> ResetResponse:
         """Atomically revoke one episode and install its fresh replacement."""
         payload = {"type": "reset", **request.model_dump(mode="json")}
@@ -725,7 +729,10 @@ class V2SessionStore:
                     current,
                 )
             pending_key = self._pending_key(handle.orchestrator)
-            if pending_key != request.pending_key:
+            if (
+                not accept_quarantine_recovery_key
+                and pending_key != request.pending_key
+            ):
                 raise SessionConflict(
                     "stale_interaction",
                     "the pending interaction changed; use the authoritative snapshot",
@@ -748,10 +755,10 @@ class V2SessionStore:
                 session_id=replacement_session_id,
                 learner_id=handle.learner_id,
                 orchestrator=replacement_orchestrator,
-                goal=handle.goal,
+                goal=replacement_goal or handle.goal,
                 profile=handle.profile,
                 context=handle.context,
-                content_mode=handle.content_mode,
+                content_mode=replacement_content_mode or handle.content_mode,
                 durability=handle.durability,
                 started_at=now,
                 updated_at=now,
@@ -776,7 +783,7 @@ class V2SessionStore:
                         request_payload=payload,
                         response_payload=response.model_dump(mode="json"),
                         expected_revision=request.expected_revision,
-                        pending_key=request.pending_key,
+                        pending_key=pending_key,
                         replacement=replacement,
                         replacement_token_hash=replacement_token_hash,
                     )
@@ -1314,6 +1321,16 @@ class V2SessionStore:
             for segment in getattr(pending, "prompt_segments", ())
             if hasattr(segment, "model_dump") or isinstance(segment, dict)
         ]
+        hints = list(getattr(pending, "hints", ()))
+        revealing_hints = list(getattr(pending, "revealing_hints", ()))
+        hints_given = max(0, int(getattr(pending, "hints_given", 0)))
+        can_hint = bool(getattr(pending, "can_hint", False))
+        hint_available = can_hint and hints_given < len(hints)
+        next_reveals_answer = bool(
+            hint_available
+            and hints_given < len(revealing_hints)
+            and revealing_hints[hints_given]
+        )
         return PendingView(
             key=key,
             kind=str(getattr(kind, "value", kind)),
@@ -1323,7 +1340,13 @@ class V2SessionStore:
             prompt=str(getattr(pending, "prompt", "")),
             prompt_segments=prompt_segments,
             choice_options=choice_options,
-            can_hint=bool(getattr(pending, "can_hint", True)),
+            hint=PendingHintView(
+                available=hint_available,
+                next_index=min(hints_given, len(hints)),
+                total=len(hints),
+                next_reveals_answer=next_reveals_answer,
+            ),
+            can_hint=hint_available,
         )
 
     @staticmethod
@@ -1540,6 +1563,7 @@ class V2SessionStore:
                     role="tutor",
                     kind=data.get("kind", "message"),
                     text=str(data.get("text", "")),
+                    content_blocks=data.get("content_blocks") or [],
                     interaction_key=data.get("key"),
                     kc_id=data.get("kc_id"),
                     prompt_segments=data.get("prompt_segments"),
@@ -1582,6 +1606,7 @@ class V2SessionStore:
                     role=addition.get("role", "tutor"),
                     kind=addition.get("kind", "message"),
                     text=addition.get("text", ""),
+                    content_blocks=addition.get("content_blocks") or [],
                     interaction_key=(
                         addition.get("interaction_key") or addition.get("key")
                     ),

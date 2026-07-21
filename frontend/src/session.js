@@ -177,12 +177,22 @@ function normalizeTranscriptEntry(entry, index) {
     : Array.isArray(entry.content)
       ? entry.content
       : [];
+  const contentBlocks = Array.isArray(entry.content_blocks)
+    ? entry.content_blocks
+        .filter((block) => block && typeof block === "object")
+        .map((block) => ({
+          kind: String(block.kind ?? "text"),
+          text: typeof block.text === "string" ? block.text : "",
+          segments: Array.isArray(block.segments) ? block.segments : [],
+        }))
+    : [];
   return {
     id: String(entry.id ?? entry.sequence ?? `${key}-${index}`),
     key: String(key),
     role,
     kind: String(kindValue),
     text,
+    content_blocks: contentBlocks,
     prompt_segments: promptSegments,
     widget: entry.widget ?? entry.interaction?.widget ?? null,
     widget_status: entry.widget_status ?? entry.status ?? null,
@@ -217,6 +227,12 @@ function normalizePending(raw, transcript) {
     value.widget ??
     value.interaction?.widget ??
     (finalInteraction?.key === key ? finalInteraction.widget : null);
+  const rawHint = value.hint ?? {};
+  const hintAvailable = rawHint.available ?? value.can_hint ?? raw.can_hint ?? true;
+  const hintTotal = Number(rawHint.total ?? value.hint_total ?? 0);
+  const hintNextIndex = Number(
+    rawHint.next_index ?? value.hint_index ?? value.hints_given ?? 0,
+  );
   return {
     key: key == null ? null : String(key),
     kind: String(kind),
@@ -229,8 +245,16 @@ function normalizePending(raw, transcript) {
     input_mode:
       value.input_mode ??
       (widget || String(kind).includes("widget") ? "widget" : "text"),
-    can_hint: value.can_hint ?? raw.can_hint ?? true,
-    hint_index: value.hint_index ?? 0,
+    can_hint: Boolean(hintAvailable),
+    hint: {
+      available: Boolean(hintAvailable),
+      next_index: Number.isFinite(hintNextIndex) ? hintNextIndex : 0,
+      total: Number.isFinite(hintTotal) ? hintTotal : 0,
+      next_reveals_answer: Boolean(
+        rawHint.next_reveals_answer ?? value.next_hint_reveals_answer ?? false,
+      ),
+    },
+    hint_index: Number.isFinite(hintNextIndex) ? hintNextIndex : 0,
     prompt: visibleText(value.prompt ?? value.content),
     prompt_segments: Array.isArray(value.prompt_segments)
       ? value.prompt_segments

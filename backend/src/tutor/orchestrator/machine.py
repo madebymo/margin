@@ -92,6 +92,9 @@ class Interaction(BaseModel):
     kc_id: str | None = None
     text: str
     prompt_segments: list[dict] | None = None
+    # Versioned clients prefer typed content blocks.  The legacy text and
+    # prompt_segments fields remain populated while existing sessions drain.
+    content_blocks: list[dict] | None = None
     widget: dict | None = None
 
 

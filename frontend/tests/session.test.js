@@ -43,6 +43,12 @@ describe("authoritative session normalization", () => {
           skill_name: "Using the power rule",
           input_mode: "text",
           can_hint: false,
+          hint: {
+            available: false,
+            next_index: 3,
+            total: 3,
+            next_reveals_answer: false,
+          },
         },
         progress: {
           phase: "diagnose",
@@ -94,10 +100,22 @@ describe("authoritative session normalization", () => {
         input_mode: "choice",
         prompt: "Choose the equivalent form.",
         choice_options: ["option-a", "option-b"],
+        hint: {
+          available: true,
+          next_index: 2,
+          total: 3,
+          next_reveals_answer: true,
+        },
       },
     });
 
     expect(view.pending.choice_options).toEqual(["option-a", "option-b"]);
+    expect(view.pending.hint).toEqual({
+      available: true,
+      next_index: 2,
+      total: 3,
+      next_reveals_answer: true,
+    });
     expect(view.pending).not.toHaveProperty("expected_choice_id");
   });
 

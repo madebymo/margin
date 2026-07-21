@@ -62,7 +62,7 @@ from tutor.schemas.pedagogy import PedagogyPackCatalog
 from tutor.packs.catalog import reviewed_misconception_ids
 from tutor.verify.checker import verify_answer
 
-LESSON_POLICY_VERSION = "lesson-flow-v2.2"
+LESSON_POLICY_VERSION = "lesson-flow-v2.3"
 CAPSTONE_POLICY_VERSION = "capstone-v2.0"
 ALLOCATOR_POLICY_VERSION = "allocator-v2.1"
 
@@ -120,6 +120,15 @@ class HintResultV2(BaseModel):
     interactions: list[Interaction] = Field(default_factory=list)
 
 
+class RemediationState(BaseModel):
+    """Bounded post-check remediation for the current lesson step."""
+
+    kc_id: str
+    round_number: int = Field(default=1, ge=1, le=1)
+    checks_issued: int = Field(default=0, ge=0, le=2)
+    implicated_prereq: str | None = None
+
+
 def render_assessment_prompt(item: AssessmentItem) -> str:
     """Render structured segments without rewriting their mathematical meaning."""
     chunks: list[str] = []
@@ -131,6 +140,22 @@ def render_assessment_prompt(item: AssessmentItem) -> str:
         else:
             chunks.append("____")
     return " ".join(chunk.strip() for chunk in chunks if chunk.strip())
+
+
+def assessment_prompt_segments(item: AssessmentItem) -> list[dict[str, Any]]:
+    """Return the exact public segments used by runtime and transcript views."""
+
+    return [segment.model_dump(mode="json") for segment in item.prompt]
+
+
+def worked_example_text(item: AssessmentItem) -> str:
+    """Render an authored worked example without inventing a second answer."""
+
+    # A reviewed worked example owns its complete visible solution.  In older
+    # banks that solution may live in prose; newer banks identify the answer
+    # with a WORKED_ANSWER segment.  Appending AnswerSpec.expected here used to
+    # duplicate either representation and erased the authored step structure.
+    return render_assessment_prompt(item)
 
 
 def _answer_text(item: AssessmentItem) -> str:
@@ -267,6 +292,7 @@ class SessionOrchestratorV2:
         self._checkin_attempts: dict[str, int] = {}
         self._checkin_success_families: dict[str, list[str]] = {}
         self._verification_mode_kc: str | None = None
+        self._remediation_state: RemediationState | None = None
         self._widget_attempts: dict[str, int] = {}
         self._learning_transition_keys: set[str] = set()
         self._capstone_attempts = 0
@@ -464,21 +490,25 @@ class SessionOrchestratorV2:
         key: str | None = None,
         kc_id: str | None = None,
         prompt_segments: list[dict] | None = None,
+        content_blocks: list[dict] | None = None,
         widget: dict | None = None,
     ) -> Interaction:
         self._interactions_used += 1
-        self.remember_visible_content(text, prompt_segments, widget)
+        self.remember_visible_content(text, prompt_segments, content_blocks, widget)
         return Interaction(
             key=key or self._next_key(),
             kind=kind,
             kc_id=kc_id,
             text=text,
             prompt_segments=prompt_segments,
+            content_blocks=content_blocks,
             widget=widget,
         )
 
-    def _message(self, text: str) -> Interaction:
-        return self._interaction("message", text)
+    def _message(
+        self, text: str, *, content_blocks: list[dict] | None = None
+    ) -> Interaction:
+        return self._interaction("message", text, content_blocks=content_blocks)
 
     def _item_for(self, reservation: ItemReservation) -> AssessmentItem:
         return self._allocator.item_for(reservation)
@@ -549,7 +579,7 @@ class SessionOrchestratorV2:
             )
         except AllocationError:
             return self._stop(
-                "No unseen reviewed diagnostic family remains for the next skill. "
+                "No unused reviewed question remains for the next skill. "
                 "The session stopped without guessing or reusing an answer."
             )
         self.exposure_state = allocation.state
@@ -683,13 +713,13 @@ class SessionOrchestratorV2:
             )
             status = self._diag.status(pending.kc_id)
             if status == "confirmed_mastered":
-                note = "Two independent item families now confirm this strength."
+                note = "Two different questions now confirm this strength."
             elif status == "confirmed_gap":
-                note = "Two independent item families now confirm this gap."
+                note = "Two different questions now confirm this gap."
             else:
                 note = (
                     "That response is one piece of evidence. "
-                    "The skill remains uncertain until an independent item confirms it."
+                    "The skill remains uncertain until a different question confirms it."
                 )
             return [self._message(note), *self._issue_next_probe()]
         if pending.kind == "checkin":
@@ -704,7 +734,6 @@ class SessionOrchestratorV2:
         """Apply the same bounded formative policy to keyboard text practice."""
         attempts = self._widget_attempts[pending.key]
         if correct:
-            self._record_learning_transition(pending)
             return [
                 self._message(
                     "Guided text practice complete. Now try an unseen check."
@@ -719,7 +748,6 @@ class SessionOrchestratorV2:
                 solution_exposed=True,
                 answer_revealed=True,
             )
-            self._record_learning_transition(pending)
             return [
                 self._message(
                     f"Here is the guided answer: {_answer_text(item)}. "
@@ -810,18 +838,33 @@ class SessionOrchestratorV2:
         )
 
     def _record_learning_transition(self, pending: PendingInteractionV2) -> None:
-        """Apply one lesson transition separately from widget/check evidence."""
-        key = f"{pending.item_id}@{pending.item_revision}"
+        """Apply learn once after independent practice confirms lesson uptake.
+
+        The transition is deliberately triggered by the first correct,
+        unassisted production check-in, but remains bound to the reviewed
+        guided-practice item.  This keeps the check-in as observation-only and
+        prevents widget completion (or three widget misses) from raising
+        mastery by itself.
+        """
+        if (
+            pending.kind != "checkin"
+            or pending.assisted
+            or self._current_bundle is None
+            or self._current_bundle.guided_widget.kc_id != pending.kc_id
+        ):
+            return
+        guided_reservation = self._current_bundle.guided_widget
+        key = f"{guided_reservation.item_id}@{guided_reservation.revision}"
         if key in self._learning_transition_keys:
             return
-        item = self._item_for(pending.reservation)
+        item = self._item_for(guided_reservation)
         self._learning_transition_keys.add(key)
         self.learner.apply_event(
             EvidenceEvent(
                 event_id=uuid4(),
                 learner_id=self.learner.learner_id,
                 t=datetime.now(timezone.utc),
-                item_id=f"lesson-transition.{pending.item_id}",
+                item_id=f"lesson-transition.{item.item_id}",
                 kc_ids=[pending.kc_id],
                 correct=True,
                 response_class=ResponseClass.WIDGET,
@@ -836,9 +879,9 @@ class SessionOrchestratorV2:
                 },
                 pedagogy_catalog_version=self.pedagogy_catalog_version,
                 episode_id=self._episode_id,
-                family_id=pending.family_id,
+                family_id=item.family_id,
                 surface="instructional_practice",
-                item_revision=pending.item_revision,
+                item_revision=item.revision,
                 attempt_number=1,
                 policy_version=LESSON_POLICY_VERSION,
                 learner_params_version=(
@@ -927,19 +970,27 @@ class SessionOrchestratorV2:
             )
         except AllocationError:
             return self._stop(
-                "No unseen reviewed practice passed the answer-separation gate "
-                "for this skill. The session stopped rather than reusing an answer."
+                "No unused reviewed practice is available for this skill. "
+                "The session stopped rather than showing an answer again."
             )
         self.exposure_state = allocation.state
         self._current_bundle = allocation.bundle
         self._checkin_queue = list(allocation.bundle.checkins)
+        self._remediation_state = None
         worked = self._item_for(allocation.bundle.worked_example)
         widget_item = self._item_for(allocation.bundle.guided_widget)
-        narrative = (
-            f"{self._nodes[kc_id].name}\n\n{self._nodes[kc_id].description}\n\n"
-            f"Worked example: {render_assessment_prompt(worked)} "
-            f"Answer: {_answer_text(worked)}"
+        lesson_narrative = (
+            f"{self._nodes[kc_id].name}\n\n{self._nodes[kc_id].description}"
         )
+        worked_text = worked_example_text(worked)
+        narrative = f"{lesson_narrative}\n\n{worked_text}"
+        content_blocks: list[dict[str, Any]] = [
+            {"kind": "narrative", "text": lesson_narrative},
+            {
+                "kind": "worked_example",
+                "segments": assessment_prompt_segments(worked),
+            },
+        ]
         upcoming = sorted(
             (
                 item
@@ -966,8 +1017,8 @@ class SessionOrchestratorV2:
         )
         if leakage:
             return self._stop(
-                "The reserved lesson failed its answer-separation gate. "
-                "The session stopped before displaying compromised content."
+                "The reviewed lesson could reveal an upcoming answer. "
+                "The session stopped before showing unsafe content."
             )
         self.exposure_state = self._allocator.record_exposure(
             self.exposure_state,
@@ -1000,16 +1051,19 @@ class SessionOrchestratorV2:
                 ),
             }
         else:
-            narrative += (
-                "\n\nGuided text practice is ready below. It follows the same "
-                "three-attempt formative policy as the visual interaction."
+            guided_intro = (
+                "Guided text practice is ready below. You can try it up to "
+                "three times before seeing a worked review."
             )
+            narrative += f"\n\n{guided_intro}"
+            content_blocks.append({"kind": "text", "text": guided_intro})
         return [
             self._interaction(
                 "lesson",
                 narrative,
                 key=pending.key,
                 kc_id=kc_id,
+                content_blocks=content_blocks,
                 widget=widget,
             )
         ]
@@ -1046,7 +1100,6 @@ class SessionOrchestratorV2:
         if correct:
             feedback = "Nice — the guided relationship is correct."
             self.remember_visible_content(feedback)
-            self._record_learning_transition(pending)
             self._pending = None
             interactions = [
                 self._message("Guided practice complete. Now try an unseen check."),
@@ -1068,7 +1121,6 @@ class SessionOrchestratorV2:
                 solution_exposed=True,
                 answer_revealed=True,
             )
-            self._record_learning_transition(pending)
             self._pending = None
             feedback = "Three guided attempts used; showing remediation."
             self.remember_visible_content(feedback)
@@ -1125,8 +1177,8 @@ class SessionOrchestratorV2:
                 # before anything from the replacement is displayed.
                 if self._current_bundle is None:
                     return self._stop(
-                        "The next independent check is no longer answer-separated. "
-                        "The session stopped before displaying it."
+                        "The next independent check could reveal an answer already "
+                        "shown. The session stopped before displaying it."
                     )
                 bundle_index = (
                     len(self._current_bundle.checkins)
@@ -1142,8 +1194,8 @@ class SessionOrchestratorV2:
                     )
                 except AllocationError:
                     return self._stop(
-                        "No unseen answer-separated check-in family remains. "
-                        "The skill stays unconfirmed rather than reusing an answer."
+                        "No unused independent check remains. The skill stays "
+                        "unconfirmed rather than reusing an answer."
                     )
                 self.exposure_state = replacement.state
                 reservation = replacement.reservation
@@ -1162,14 +1214,25 @@ class SessionOrchestratorV2:
                 )
             except AllocationError:
                 return self._stop(
-                    "No unseen reviewed check-in family remains. "
-                    "The skill stays unconfirmed rather than reusing an answer."
+                    "No unused reviewed check remains. The skill stays unconfirmed "
+                    "rather than reusing an answer."
                 )
             self.exposure_state = allocation.state
             reservation = allocation.reservation
         pending = self._set_pending(
             reservation, "checkin", attempt_number=attempt
         )
+        if (
+            self._remediation_state is not None
+            and self._remediation_state.kc_id == kc_id
+        ):
+            self._remediation_state = self._remediation_state.model_copy(
+                update={
+                    "checks_issued": min(
+                        2, self._remediation_state.checks_issued + 1
+                    )
+                }
+            )
         return [
             self._interaction(
                 "checkin",
@@ -1227,7 +1290,9 @@ class SessionOrchestratorV2:
             and pending.family_id not in successes
         ):
             successes.append(pending.family_id)
+            self._record_learning_transition(pending)
         if len(successes) >= 2 and self.learner.mastery_status(kc_id) == "confirmed_mastered":
+            self._remediation_state = None
             self._plan_index += 1
             return [
                 self._message(f"{self._nodes[kc_id].name}: independently confirmed."),
@@ -1237,35 +1302,75 @@ class SessionOrchestratorV2:
         attempts = self._checkin_attempts.get(kc_id, 0)
         if attempts < 3:
             note = (
-                "Correct. One more independent family will confirm it."
+                "Correct. One more different question will confirm it."
                 if correct and not pending.assisted
                 else "That attempt was assisted or incorrect, so it does not confirm mastery."
             )
             return [self._message(note), *self._issue_next_checkin(kc_id)]
 
-        worked = (
-            self._item_for(self._current_bundle.worked_example)
-            if self._current_bundle is not None
-            else None
-        )
-        remediation = (
-            f"Review: {render_assessment_prompt(worked)} Answer: {_answer_text(worked)}"
-            if worked is not None
-            else self._nodes[kc_id].description
-        )
-        if implicated_prereq and implicated_prereq in self._nodes:
-            remediation += (
-                f" This response also suggests verifying "
-                f"{self._nodes[implicated_prereq].name} directly."
+        if attempts == 3 and self._remediation_state is None:
+            self._remediation_state = RemediationState(
+                kc_id=kc_id,
+                implicated_prereq=(
+                    implicated_prereq if implicated_prereq in self._nodes else None
+                ),
             )
+            worked = (
+                self._item_for(self._current_bundle.worked_example)
+                if self._current_bundle is not None
+                else None
+            )
+            remediation = (
+                f"Review this worked example: {worked_example_text(worked)}"
+                if worked is not None
+                else f"Review this idea: {self._nodes[kc_id].description}"
+            )
+            if self._remediation_state.implicated_prereq:
+                name = self._nodes[self._remediation_state.implicated_prereq].name
+                remediation += (
+                    f" Your response may also involve {name}, but it will not be "
+                    "called a gap without a direct check."
+                )
+            blocks = (
+                [
+                    {
+                        "kind": "remediation",
+                        "text": "Mastery is still uncertain after three checks.",
+                        "segments": assessment_prompt_segments(worked),
+                    }
+                ]
+                if worked is not None
+                else [{"kind": "remediation", "text": remediation}]
+            )
+            return [
+                self._message(remediation, content_blocks=blocks),
+                *self._issue_next_checkin(kc_id),
+            ]
+
+        if (
+            self._remediation_state is not None
+            and self._remediation_state.kc_id == kc_id
+            and attempts < 5
+        ):
+            return [
+                self._message(
+                    "That check does not confirm mastery yet. Try one final "
+                    "different question."
+                ),
+                *self._issue_next_checkin(kc_id),
+            ]
+
+        self._remediation_state = None
         if kc_id == self._target:
             return self._stop(
-                f"Independent mastery is not confirmed yet. {remediation}"
+                "Independent mastery is not confirmed after review and fresh checks. "
+                "Your progress is saved without claiming completion."
             )
         self._plan_index += 1
         return [
             self._message(
-                f"Mastery remains uncertain after three independent checks. {remediation}"
+                "Mastery remains uncertain after review and fresh checks. "
+                "The learning path will continue without calling this skill mastered."
             ),
             *self._start_current_plan_step(),
         ]
@@ -1350,13 +1455,13 @@ class SessionOrchestratorV2:
             remediation = self._capstone_remediation(implicated_prereq)
             if remediation is None:
                 return self._stop(
-                    "The reviewed remediation failed its answer-separation gate. "
-                    "The session stopped before displaying compromised content."
+                    "The reviewed follow-up could reveal an upcoming answer. "
+                    "The session stopped before showing unsafe content."
                 )
             return [
                 self._message(
                     f"{reason}. {remediation} "
-                    "Next I will use a different, unseen goal-problem family."
+                    "Next I will use a different, unseen goal problem."
                 ),
                 *self._start_capstone(retry_after_remediation=True),
             ]
@@ -1394,10 +1499,7 @@ class SessionOrchestratorV2:
 
         if worked_reservation is not None:
             worked = self._item_for(worked_reservation)
-            remediation = (
-                f"Review this worked pattern: {render_assessment_prompt(worked)} "
-                f"Answer: {_answer_text(worked)}."
-            )
+            remediation = f"Review this worked pattern: {worked_example_text(worked)}"
         else:
             remediation = f"Review: {self._nodes[self._target].description}"
         if implicated_prereq and implicated_prereq in self._nodes:
@@ -1434,6 +1536,7 @@ class SessionOrchestratorV2:
     def _stop(self, text: str) -> list[Interaction]:
         self.phase = SessionPhase.STOPPED
         self._pending = None
+        self._remediation_state = None
         self._stop_reason = text
         return [self._message(text)]
 
@@ -1621,6 +1724,20 @@ class SessionOrchestratorV2:
                     "checkpoint check-in queue is not the remaining bundle suffix"
                 )
 
+        if self._remediation_state is not None:
+            if (
+                self.phase != SessionPhase.TEACH
+                or self._current_bundle is None
+                or self._current_bundle.guided_widget.kc_id
+                != self._remediation_state.kc_id
+                or not 3
+                <= self._checkin_attempts.get(self._remediation_state.kc_id, 0)
+                <= 5
+            ):
+                raise ValueError(
+                    "checkpoint remediation state does not match its lesson round"
+                )
+
         pending = self._pending
         if pending is None:
             if self._verification_mode_kc is not None:
@@ -1728,20 +1845,30 @@ class SessionOrchestratorV2:
                 raise ValueError(
                     "checkpoint lesson check-in has no current bundle"
                 )
-            answered_or_pending = (
-                len(self._current_bundle.checkins) - len(self._checkin_queue)
-            )
-            if answered_or_pending < 1:
-                raise ValueError(
-                    "checkpoint lesson check-in has not advanced its bundle queue"
+            if (
+                self._remediation_state is not None
+                and self._remediation_state.kc_id == pending.kc_id
+                and pending.reservation not in self._current_bundle.checkins
+            ):
+                if self._remediation_state.checks_issued not in {1, 2}:
+                    raise ValueError(
+                        "checkpoint remediation check count is inconsistent"
+                    )
+            else:
+                answered_or_pending = (
+                    len(self._current_bundle.checkins) - len(self._checkin_queue)
                 )
-            expected_pending = self._current_bundle.checkins[
-                answered_or_pending - 1
-            ]
-            if pending.reservation != expected_pending:
-                raise ValueError(
-                    "checkpoint lesson check-in does not match the current bundle"
-                )
+                if answered_or_pending < 1:
+                    raise ValueError(
+                        "checkpoint lesson check-in has not advanced its bundle queue"
+                    )
+                expected_pending = self._current_bundle.checkins[
+                    answered_or_pending - 1
+                ]
+                if pending.reservation != expected_pending:
+                    raise ValueError(
+                        "checkpoint lesson check-in does not match the current bundle"
+                    )
 
     def export_checkpoint(self) -> dict[str, Any]:
         """Serialize every control-plane field needed for exact process recovery."""
@@ -1784,6 +1911,11 @@ class SessionOrchestratorV2:
             "checkin_attempts": dict(self._checkin_attempts),
             "checkin_success_families": dict(self._checkin_success_families),
             "verification_mode_kc": self._verification_mode_kc,
+            "remediation_state": (
+                self._remediation_state.model_dump(mode="json")
+                if self._remediation_state is not None
+                else None
+            ),
             "widget_attempts": dict(self._widget_attempts),
             "learning_transition_keys": sorted(self._learning_transition_keys),
             "capstone_attempts": self._capstone_attempts,
@@ -1925,6 +2057,12 @@ class SessionOrchestratorV2:
         }
         orchestrator._verification_mode_kc = checkpoint.get(
             "verification_mode_kc"
+        )
+        remediation_state = checkpoint.get("remediation_state")
+        orchestrator._remediation_state = (
+            RemediationState.model_validate(remediation_state)
+            if remediation_state is not None
+            else None
         )
         orchestrator._widget_attempts = {
             str(key): int(value)

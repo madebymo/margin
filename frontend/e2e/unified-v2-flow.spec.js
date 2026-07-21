@@ -184,12 +184,6 @@ test("reload recovers a committed create whose response and cookie were lost", a
   page,
 }) => {
   await page.goto("/");
-  const privateContext = "Private context must never enter recovery storage.";
-  await page
-    .locator("summary")
-    .filter({ hasText: "Helpful context" })
-    .click();
-  await page.getByLabel("Helpful context").fill(privateContext);
   await page.route("**/api/v2/sessions", async (route) => {
     await route.fetch();
     await route.abort("failed");
@@ -204,7 +198,6 @@ test("reload recovers a committed create whose response and cookie were lost", a
     schema_version: 1,
     operation: "create",
   });
-  expect(stored).not.toContain(privateContext);
   await page.unroute("**/api/v2/sessions");
 
   await page.reload();

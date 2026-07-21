@@ -13,6 +13,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from tutor.schemas.assessment import PromptSegment
+
 
 class GoalView(BaseModel):
     """One curated goal available to start from the intake screen."""
@@ -73,6 +75,32 @@ class ContentModeView(BaseModel):
     fallback_reason: str | None = None
 
 
+class TranscriptContentBlock(BaseModel):
+    """One typed, student-safe block in a tutor transcript entry."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal[
+        "text",
+        "narrative",
+        "prompt",
+        "worked_example",
+        "remediation",
+    ]
+    text: str | None = None
+    segments: list[PromptSegment] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _content_matches_kind(self) -> "TranscriptContentBlock":
+        if self.kind in {"text", "narrative"} and not self.text:
+            raise ValueError(f"{self.kind} blocks require text")
+        if self.kind in {"prompt", "worked_example"} and not self.segments:
+            raise ValueError(f"{self.kind} blocks require prompt segments")
+        if self.kind == "remediation" and not (self.text or self.segments):
+            raise ValueError("remediation blocks require text or prompt segments")
+        return self
+
+
 class TranscriptEntry(BaseModel):
     """A safe transcript record rendered by the client."""
 
@@ -89,6 +117,7 @@ class TranscriptEntry(BaseModel):
         "widget_feedback",
     ]
     text: str
+    content_blocks: list[TranscriptContentBlock] = Field(default_factory=list)
     interaction_key: str | None = None
     kc_id: str | None = None
     prompt_segments: list[dict[str, Any]] | None = None
@@ -104,6 +133,23 @@ class TranscriptEntry(BaseModel):
     widget_attempt_number: int | None = Field(default=None, ge=1)
 
 
+class PendingHintView(BaseModel):
+    """What the next hint action will do, without exposing hint content."""
+
+    available: bool
+    next_index: int = Field(ge=0)
+    total: int = Field(ge=0)
+    next_reveals_answer: bool = False
+
+    @model_validator(mode="after")
+    def _consistent_position(self) -> "PendingHintView":
+        if self.next_index > self.total:
+            raise ValueError("next hint index cannot exceed the hint count")
+        if not self.available and self.next_reveals_answer:
+            raise ValueError("an unavailable hint cannot reveal an answer")
+        return self
+
+
 class PendingView(BaseModel):
     """The interaction awaiting an action, without its expected answer."""
 
@@ -115,6 +161,8 @@ class PendingView(BaseModel):
     prompt: str
     prompt_segments: list[dict[str, Any]] = Field(default_factory=list)
     choice_options: list[str] = Field(default_factory=list)
+    hint: PendingHintView
+    # Compatibility field for clients predating the structured hint contract.
     can_hint: bool = True
 
 
@@ -295,6 +343,13 @@ class RecoverSessionV2Response(BaseModel):
     session_id: str
 
 
+class QuarantineRecoveryView(BaseModel):
+    """Content-free capability for atomically restarting a quarantined episode."""
+
+    revision: int = Field(ge=0)
+    reset_key: str = Field(min_length=43, max_length=128)
+
+
 class APIError(BaseModel):
     """Typed error returned for v2 conflict and availability failures."""
 
@@ -302,3 +357,4 @@ class APIError(BaseModel):
     message: str
     session: SessionView | None = None
     retryable: bool | None = None
+    quarantine_recovery: QuarantineRecoveryView | None = None

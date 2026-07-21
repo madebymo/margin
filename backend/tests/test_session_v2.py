@@ -152,6 +152,73 @@ def test_guided_practice_is_followed_by_two_independent_unseen_checks():
     )
 
 
+def test_lesson_preserves_worked_segments_without_repeating_the_answer():
+    session = _session(budget=2)
+    session.begin()
+    session.submit("0")
+    interactions = session.submit("0")
+
+    lesson = next(interaction for interaction in interactions if interaction.kind == "lesson")
+    assert lesson.text.count("8*x^7") == 1
+    assert "Answer: 8*x^7" not in lesson.text
+    worked = next(
+        block for block in lesson.content_blocks if block["kind"] == "worked_example"
+    )
+    assert worked["segments"] == [
+        segment.model_dump(mode="json")
+        for segment in session._item_for(
+            session._current_bundle.worked_example
+        ).prompt
+    ]
+
+
+def test_three_guided_misses_create_no_learning_transition():
+    session = _session(budget=2)
+    session.begin()
+    session.submit("0")
+    session.submit("0")
+
+    for _ in range(3):
+        session.submit("0")
+
+    assert session.pending.kind == "checkin"
+    assert not any(
+        event.surface == "instructional_practice"
+        for event in session.learner.events
+    )
+
+
+def test_three_failed_checks_show_one_bounded_remediation_round():
+    session = _session(budget=2)
+    session.begin()
+    session.submit("0")
+    session.submit("0")
+    session.submit(session.pending_expected)
+
+    final_interactions = []
+    for _ in range(3):
+        final_interactions = session.submit("0")
+
+    assert session.phase.value == "teach"
+    assert session.pending.kind == "checkin"
+    assert session.pending.attempt_number == 4
+    assert session._remediation_state.round_number == 1
+    remediation = next(
+        interaction for interaction in final_interactions if interaction.content_blocks
+    )
+    assert remediation.content_blocks[0]["kind"] == "remediation"
+    assert "Answer:" not in remediation.text
+
+    restored = SessionOrchestratorV2.restore(
+        power_rule_only_graph(),
+        session.export_checkpoint(),
+        item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
+    )
+    assert restored.pending == session.pending
+    assert restored._remediation_state == session._remediation_state
+
+
 def test_dynamic_collision_replaces_only_the_unsafe_queued_checkin():
     session = _session(budget=2)
     session.begin()
@@ -253,6 +320,11 @@ def test_text_fallback_requires_genuine_practice_before_learning_transition():
     assert session.pending.kind == "checkin"
     assert [
         event.surface for event in session.learner.events
+    ].count("instructional_practice") == 0
+
+    session.submit(session.pending_expected)
+    assert [
+        event.surface for event in session.learner.events
     ].count("instructional_practice") == 1
 
 
@@ -291,7 +363,7 @@ def test_runtime_lesson_gate_catches_graph_text_leaking_guided_answer():
     interactions = session.submit("0")
 
     assert session.phase.value == "stopped"
-    assert any("answer-separation gate" in item.text for item in interactions)
+    assert any("could reveal an upcoming answer" in item.text for item in interactions)
     assert all("12*x^3" not in item.text for item in interactions)
 
 
@@ -323,7 +395,7 @@ def test_runtime_bundle_gate_stops_on_indeterminate_worker_result(
 
     assert session.phase.value == "stopped"
     assert any(
-        "answer-separation gate" in interaction.text
+        "No unused reviewed practice" in interaction.text
         for interaction in interactions
     )
 
@@ -667,7 +739,7 @@ def test_capstone_graph_remediation_is_gated_before_display():
     interactions = session.submit("0")
 
     assert session.phase.value == "stopped"
-    assert any("answer-separation gate" in item.text for item in interactions)
+    assert any("could reveal an upcoming answer" in item.text for item in interactions)
     assert all("-4*x^(-2) + 5*x^4" not in item.text for item in interactions)
 
 
