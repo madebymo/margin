@@ -88,17 +88,21 @@ describe("widget recipes", () => {
     expect(recipes.slider.responseFrom(state)).toEqual({ value: 1.25 });
   });
 
-  it("shuffles mapping options once during initialization and preserves left order", () => {
-    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+  it("preserves reviewed mapping order and restores a valid draft", () => {
     const config = {
       left: ["first", "second", "third"],
       right: ["one", "two", "three"],
     };
-    const state = recipes.mapping.init(config);
+    const state = recipes.mapping.init(config, {
+      rows: [
+        { left: "first", value: "three" },
+        { left: "second", value: "not-an-option" },
+      ],
+    });
 
-    expect(random).toHaveBeenCalledTimes(2);
-    expect(state.rightOptions).not.toEqual(config.right);
-    state.rows[0].value = "three";
+    expect(state.rightOptions.map((option) => option.label)).toEqual(config.right);
+    expect(state.rows[0].value).toBe("three");
+    expect(state.rows[1].value).toBe("");
     state.rows[2].value = "one";
     expect(recipes.mapping.responseFrom(state)).toEqual({
       pairs: [
@@ -106,6 +110,25 @@ describe("widget recipes", () => {
         ["third", "one"],
       ],
     });
-    expect(random).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses stable ids for a mapping-v1 presentation", () => {
+    const state = recipes.mapping.init({
+      presentation: {
+        rows: [
+          { entry_id: "row.square", label: "x^2", spoken_text: "x squared" },
+          { entry_id: "row.cube", label: "x^3", spoken_text: "x cubed" },
+        ],
+        options: [
+          { entry_id: "option.2x", label: "2*x", spoken_text: "two x" },
+          { entry_id: "option.3x2", label: "3*x^2", spoken_text: "three x squared" },
+        ],
+      },
+    });
+    state.rows[0].value = "option.2x";
+
+    expect(recipes.mapping.responseFrom(state)).toEqual({
+      pairs: [["row.square", "option.2x"]],
+    });
   });
 });

@@ -4,6 +4,14 @@
   export let disabled = false;
   export let onChange = () => {};
 
+  $: params = config.params ?? config.presentation ?? config;
+  $: minimum = params.min ?? params.minimum;
+  $: maximum = params.max ?? params.maximum;
+  $: label = params.value_label ?? config.prompt ?? "Slider value";
+  $: result = params.result_template
+    ? params.result_template.replace("{value}", String(state.value))
+    : `${label}: ${state.value}`;
+
   function handleInput(event) {
     onChange({
       ...state,
@@ -12,16 +20,19 @@
   }
 </script>
 
-<div class="widget-controls">
-  <input
-    type="range"
-    min={config.params.min}
-    max={config.params.max}
-    step={config.params.step}
-    value={state.value}
-    {disabled}
-    aria-label={config.prompt || "Slider value"}
-    on:input={handleInput}
-  >
-  <span class="slider-value">{state.value}</span>
+<div class="widget-controls slider-controls">
+  <label>
+    <span>{label}</span>
+    <input
+      type="range"
+      min={minimum}
+      max={maximum}
+      step={params.step}
+      value={state.value}
+      {disabled}
+      aria-valuetext={result}
+      on:input={handleInput}
+    >
+  </label>
+  <output class="slider-value" aria-live="polite">{result}</output>
 </div>

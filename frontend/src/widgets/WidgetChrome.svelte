@@ -23,7 +23,10 @@
   let state = null;
   if (recipe) {
     try {
-      state = recipe.init(config);
+      state = recipe.init(
+        config,
+        item.widget_state ?? item.widget_current_state ?? item.state ?? null,
+      );
     } catch {
       recipeFailure =
         "This guided visual could not be initialized. Use its text alternative.";

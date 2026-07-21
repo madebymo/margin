@@ -3,19 +3,57 @@ import SliderControl from "./controls/SliderControl.svelte";
 import { normalizeSlider } from "../scene/normalize.js";
 import { widgetCapability } from "./capabilities.js";
 
-function shuffled(values) {
-  const result = [...values];
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+function sliderParams(config) {
+  const value = config.params ?? config.presentation ?? config;
+  return {
+    min: Number(value.min ?? value.minimum),
+    max: Number(value.max ?? value.maximum),
+    step: Number(value.step),
+    initial: Number(value.initial_value ?? value.min ?? value.minimum),
+  };
+}
+
+function mappingParts(config) {
+  const presentation = config.presentation ?? config;
+  if (Array.isArray(presentation.rows) && Array.isArray(presentation.options)) {
+    return {
+      left: presentation.rows.map((row) => ({
+        id: String(row.entry_id),
+        label: String(row.label),
+        spokenText: String(row.spoken_text ?? row.label),
+      })),
+      right: presentation.options.map((option) => ({
+        id: String(option.entry_id),
+        label: String(option.label),
+        spokenText: String(option.spoken_text ?? option.label),
+      })),
+    };
   }
-  return result;
+  return {
+    left: (config.left ?? []).map((label) => ({
+      id: String(label),
+      label: String(label),
+      spokenText: String(label),
+    })),
+    right: (config.right ?? []).map((label) => ({
+      id: String(label),
+      label: String(label),
+      spokenText: String(label),
+    })),
+  };
 }
 
 export const recipes = Object.freeze({
   slider: Object.freeze({
-    init(config) {
-      return { value: Number(config.params.min) };
+    init(config, restored) {
+      const params = sliderParams(config);
+      const restoredValue = Number(restored?.value);
+      const value = Number.isFinite(restoredValue)
+        && restoredValue >= params.min
+        && restoredValue <= params.max
+        ? restoredValue
+        : params.initial;
+      return { value };
     },
     normalize(config, state) {
       if (!config.params.plot) {
@@ -29,10 +67,25 @@ export const recipes = Object.freeze({
     control: SliderControl,
   }),
   mapping: Object.freeze({
-    init(config) {
+    init(config, restored) {
+      const { left, right } = mappingParts(config);
+      const restoredById = new Map(
+        (restored?.rows ?? []).map((row) => [
+          String(row.id ?? row.left),
+          String(row.value ?? ""),
+        ]),
+      );
+      const validOptions = new Set(right.map((option) => option.id));
       return {
-        rows: config.left.map((left) => ({ left, value: "" })),
-        rightOptions: shuffled(config.right),
+        rows: left.map((row) => {
+          const restoredValue = restoredById.get(row.id) ?? "";
+          return {
+            ...row,
+            value: validOptions.has(restoredValue) ? restoredValue : "",
+          };
+        }),
+        // Review and replay bind this exact order. Never randomize it in-browser.
+        rightOptions: right,
       };
     },
     normalize() {
@@ -42,7 +95,7 @@ export const recipes = Object.freeze({
       return {
         pairs: state.rows
           .filter((row) => row.value)
-          .map((row) => [row.left, row.value]),
+          .map((row) => [row.id, row.value]),
       };
     },
     control: MappingControl,

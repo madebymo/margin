@@ -733,7 +733,14 @@ legend {
 }
 
 .segment-table-wrap table {
+  width: 100%;
   border-collapse: collapse;
+}
+
+.segment-table-wrap caption {
+  margin-bottom: 4px;
+  font-weight: 700;
+  text-align: left;
 }
 
 .segment-table-wrap th,
@@ -749,11 +756,58 @@ legend {
   font-weight: 700;
 }
 
-.static-plot-description {
+.static-plot {
+  width: min(100%, 430px);
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.static-plot figcaption {
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.static-plot svg {
   display: block;
-  padding: 9px 11px;
-  border-left: 3px solid var(--violet-800);
-  background: var(--violet-100);
+  width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.static-plot line {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.static-plot text {
+  fill: currentColor;
+  font: 12px system-ui, sans-serif;
+}
+
+.plot-series {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+polyline.plot-series {
+  fill: none;
+}
+
+.series-0 { color: var(--violet-800); }
+.series-1 { color: var(--green-800); }
+.series-2 { color: var(--red-800); }
+.series-3 { color: var(--gold-700); }
+
+.plot-description {
+  margin: 6px 0;
+}
+
+.plot-data {
+  margin-top: 8px;
 }
 
 .math-segment {

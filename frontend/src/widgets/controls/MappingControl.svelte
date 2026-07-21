@@ -19,16 +19,16 @@
 >
   {#each state.rows as row, index}
     <div class="maprow">
-      <span>{row.left}</span>
+      <span aria-label={row.spokenText}>{row.label}</span>
       <select
         value={row.value}
-        aria-label={`Match ${row.left}`}
+        aria-label={`Match ${row.spokenText}`}
         {disabled}
         on:change={(event) => selectRight(index, event.currentTarget.value)}
       >
         <option value="">choose…</option>
         {#each state.rightOptions as right}
-          <option value={right}>{right}</option>
+          <option value={right.id}>{right.label}</option>
         {/each}
       </select>
     </div>
