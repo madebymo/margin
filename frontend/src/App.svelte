@@ -33,6 +33,8 @@
     installMinimalWidgetCapabilities,
     installWidgetCapabilities,
   } from "./widgets/capabilities.js";
+  import MarginBrand from "./components/MarginBrand.svelte";
+  import MarginMark from "./components/MarginMark.svelte";
 
   let apiMode = "v2";
   let bootState = "loading";
@@ -599,37 +601,19 @@
 </script>
 
 <svelte:head>
-  <title>Adaptive Math Tutor</title>
+  <title>margin — where the real learning happens</title>
   <meta
     name="description"
-    content="A focused math tutor that checks prerequisites and teaches from your starting point."
+    content="Margin checks prerequisite understanding and teaches from the learner's actual starting point."
   >
 </svelte:head>
 
-<div class="app-shell">
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="Adaptive Math Tutor home">
-      <span class="brand-mark" aria-hidden="true">∫</span>
-      <span>
-        <strong>Adaptive Math Tutor</strong>
-        <small>Build understanding, one step at a time</small>
-      </span>
-    </a>
-    {#if view}
-      <div class="topbar-status">
-        <span class:memory-only={view.durability !== "durable"} class="durability">
-          {view.durability === "durable" ? "Saved" : "Not durably saved"}
-        </span>
-        <span class="phase-pill">{phaseLabel(view.phase)}</span>
-        <button
-          type="button"
-          class="quiet-button"
-          disabled={busy}
-          on:click={resetSession}
-        >Restart this goal</button>
-      </div>
-    {/if}
-  </header>
+<div class:session-active={Boolean(view)} class="app-shell">
+  {#if !view}
+    <header class="topbar intake-topbar">
+      <MarginBrand />
+    </header>
+  {/if}
 
   {#if bootState === "loading"}
     <main class="loading-screen" aria-live="polite">
@@ -721,6 +705,27 @@
         aria-label="Learning path status"
         tabindex="0"
       >
+        <div class="session-sidebar-brand">
+          <MarginBrand />
+        </div>
+        <button
+          type="button"
+          class="sidebar-reset"
+          aria-label="Restart this goal"
+          disabled={busy}
+          on:click={resetSession}
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+            <path
+              d="M7.5 2v11M2 7.5h11"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span>New problem</span>
+        </button>
+
         <div class="goal-card">
           <p class="eyebrow">Your goal</p>
           <h1>{view.goal.title || "Math learning path"}</h1>
@@ -815,10 +820,22 @@
       <section class="conversation-panel" aria-label="Tutor conversation">
         <div class="conversation-heading">
           <div>
-            <p class="eyebrow">Learning session</p>
+            <div class="crumb" aria-label="Current learning location">
+              <span class="crumb-unit">{view.goal.title || "Math learning path"}</span>
+              <span class="crumb-separator" aria-hidden="true">/</span>
+              <span class="crumb-topic">
+                {view.pending?.skill_label || phaseLabel(view.phase)}
+              </span>
+            </div>
             <h2>{phaseLabel(view.phase)}</h2>
           </div>
-          <span class="revision">Update {view.revision}</span>
+          <div class="topbar-status">
+            <span class:memory-only={view.durability !== "durable"} class="durability">
+              {view.durability === "durable" ? "Saved" : "Not durably saved"}
+            </span>
+            <span class="phase-pill">{phaseLabel(view.phase)}</span>
+            <span class="revision">Update {view.revision}</span>
+          </div>
         </div>
 
         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -844,6 +861,9 @@
               class:assessment-bubble={["probe", "checkin", "capstone"].includes(entry.kind)}
               class="message"
             >
+              {#if entry.role === "tutor"}
+                <span class="tutor-mark" aria-hidden="true"><MarginMark /></span>
+              {/if}
               {#if entry.role !== "student"}
                 <span class="message-label">
                   {entry.kind === "capstone"
@@ -891,6 +911,7 @@
 
           {#if view.pending?.prompt && !pendingPromptAppearsInTranscript()}
             <article class="message tutor-bubble assessment-bubble">
+              <span class="tutor-mark" aria-hidden="true"><MarginMark /></span>
               <span class="message-label">
                 {view.pending.kind === "capstone" ? "Goal problem" : "Your turn"}
               </span>
@@ -1021,7 +1042,7 @@
   {/if}
 
   <footer class="site-footer">
-    <span>Accessible guided practice with keyboard alternatives.</span>
+    <span>margin shows its work—it does not just hand over the answer.</span>
     <span>Expected answers never leave the server.</span>
   </footer>
 </div>

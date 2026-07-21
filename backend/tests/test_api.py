@@ -97,7 +97,7 @@ def test_index_serves_production_bundle_and_all_referenced_assets(client):
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
-    assert "Adaptive Math Tutor" in response.text
+    assert "margin" in response.text
     static_references = sorted(set(_STATIC_REFERENCE.findall(response.text)))
     assert static_references
 
