@@ -1,0 +1,3884 @@
+{
+  "schema_version": 3,
+  "bank_version": "draft-product-quotient-release-v2.0.0",
+  "graph_version": 2,
+  "released_kcs": [],
+  "items": [
+    {
+      "item_id": "item.pqv1.exponent_rules.capstone.01",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.capstone.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the compound expression to one power of z. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^0*z^-5)*(z^3)^3*z^15/z^3",
+          "spoken_text": "open parenthesis z to the power of 0 times z to the power of minus 5 close parenthesis times open parenthesis z to the power of 3 close parenthesis to the power of 3 times z to the power of 15 divided by z to the power of 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Account for the zero and negative exponents before combining every z power.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^16.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^16",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.capstone.01",
+        "source_revision": 2,
+        "source_digest": "3c7f9d80f593e199c11cecf04aac7e3a29b7f2c84617e91f96b93667a1b59a23",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.capstone.02",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.capstone.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the compound expression to one power of z. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^0*z^-7)*(z^2)^5*z^20/z^6",
+          "spoken_text": "open parenthesis z to the power of 0 times z to the power of minus 7 close parenthesis times open parenthesis z to the power of 2 close parenthesis to the power of 5 times z to the power of 20 divided by z to the power of 6"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Account for the zero and negative exponents before combining every z power.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^17.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^17",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.capstone.02",
+        "source_revision": 2,
+        "source_digest": "7577bac7c8f4fcad52e8f8a9f590c22ee09aaf5c554302d521a209e7cb16bf71",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.checkin.01",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.checkin.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the compound expression to one power of z. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^0*z^-2)*(z^2)^3*z^10/z^1",
+          "spoken_text": "open parenthesis z to the power of 0 times z to the power of minus 2 close parenthesis times open parenthesis z to the power of 2 close parenthesis to the power of 3 times z to the power of 10 divided by z to the power of 1"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Account for the zero and negative exponents before combining every z power.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^13.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^13",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.checkin.01",
+        "source_revision": 2,
+        "source_digest": "576cf1c95f6a0466d67b4546b0801b477492d21891ff77a88e62b88192c33115",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.checkin.02",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.checkin.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the expression using the quotient rule for equal bases. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^3/z^9",
+          "spoken_text": "z to the power of 3 divided by z to the power of 9"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the common base and combine the exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A quotient of equal bases calls for subtracting the denominator exponent.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^-6.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^-6",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.checkin.02",
+        "source_revision": 2,
+        "source_digest": "e7b813df9d6a00a56f460d52ce671c25e0b281d61305a192372b29fc31d5c728",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.checkin.03",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.checkin.03",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the power of a power."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^3)^4",
+          "spoken_text": "open parenthesis z to the power of 3 close parenthesis to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the base while combining the nested exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A power raised to a power calls for multiplying the exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^12.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^12",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.checkin.03",
+        "source_revision": 2,
+        "source_digest": "d70a2b415b01a4929e016df540903079aaec42b62af696fecf649c4380cacc4c",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.checkin.04",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.checkin.04",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Rewrite the expression using only positive exponents. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^-9",
+          "spoken_text": "z to the power of minus 9"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A negative exponent moves the powered factor across the fraction bar.",
+          "revealing": false
+        },
+        {
+          "text": "Write the powered base in the denominator and make its exponent positive.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 1/z^9.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "1/z^9",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.checkin.04",
+        "source_revision": 2,
+        "source_digest": "79a2aad9b754ffaa37cb8ce5f13260711ea203496a4a33845457f9d7b5c795f7",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.checkin.05",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.checkin.05",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify using the zero-exponent rule. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^0",
+          "spoken_text": "z to the power of 0"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Use the multiplicative-identity result of the zero-exponent rule.",
+          "revealing": false
+        },
+        {
+          "text": "The ratio interpretation of a zero exponent has equal numerator and denominator.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 1.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "1",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.checkin.05",
+        "source_revision": 2,
+        "source_digest": "1e6c48b2fee762155ba2b0f7a96371f06ff3541735837ae4180d73cc667aa6ea",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.diagnostic.01",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.diagnostic.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the expression using the product rule for equal bases."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^2*z^3",
+          "spoken_text": "z to the power of 2 times z to the power of 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the common base and combine the exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A product of equal bases calls for adding their exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^5.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^5",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.diagnostic.01",
+        "source_revision": 2,
+        "source_digest": "6468e030f11aa92ff15018eef48891030584e62501ba95cbdcd19360a471c7c9",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.diagnostic.02",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.diagnostic.02",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the expression using the quotient rule for equal bases. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^11/z^4",
+          "spoken_text": "z to the power of 11 divided by z to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the common base and combine the exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A quotient of equal bases calls for subtracting the denominator exponent.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^7.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^7",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.diagnostic.02",
+        "source_revision": 2,
+        "source_digest": "affeb469fa43fcbda1454ac03b86f0107fb460b1ebc7b35982ae80f514fbbbb9",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.diagnostic.03",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.diagnostic.03",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Simplify the power of a power."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^2)^4",
+          "spoken_text": "open parenthesis z to the power of 2 close parenthesis to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the base while combining the nested exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A power raised to a power calls for multiplying the exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^8.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^8",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.diagnostic.03",
+        "source_revision": 2,
+        "source_digest": "ee9a18a74f428b60280fe0c1979b8978cd49cd54c9441f38c4157e2f827265dd",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.diagnostic.04",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.diagnostic.04",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Rewrite the expression using only positive exponents. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "z^-3",
+          "spoken_text": "z to the power of minus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A negative exponent moves the powered factor across the fraction bar.",
+          "revealing": false
+        },
+        {
+          "text": "Write the powered base in the denominator and make its exponent positive.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 1/z^3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "1/z^3",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.diagnostic.04",
+        "source_revision": 2,
+        "source_digest": "cb48bf01604e73a27f80f0889f26c1c408e0e67def4cfdcc48d95b1156dbcc76",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.guided_widget.01",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.guided_widget.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided workspace. Simplify the compound expression to one power of z. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^0*z^-4)*(z^2)^5*z^10/z^2",
+          "spoken_text": "open parenthesis z to the power of 0 times z to the power of minus 4 close parenthesis times open parenthesis z to the power of 2 close parenthesis to the power of 5 times z to the power of 10 divided by z to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Account for the zero and negative exponents before combining every z power.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^14.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^14",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.guided_widget.01",
+        "source_revision": 2,
+        "source_digest": "028ec4a2419d2299dfd6cd31fff122393bef3e16e9aa05dd2fc04c595ee60a6d",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match each exponent pattern with the operation it requires.",
+          "rows": [
+            {
+              "entry_id": "row.zero",
+              "label": "zero exponent",
+              "spoken_text": "zero exponent"
+            },
+            {
+              "entry_id": "row.negative",
+              "label": "negative exponent",
+              "spoken_text": "negative exponent"
+            },
+            {
+              "entry_id": "row.power",
+              "label": "power of a power",
+              "spoken_text": "power of a power"
+            },
+            {
+              "entry_id": "row.quotient",
+              "label": "same-base quotient",
+              "spoken_text": "same minus base quotient"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "option.subtract",
+              "label": "subtract the denominator exponent",
+              "spoken_text": "subtract the denominator exponent"
+            },
+            {
+              "entry_id": "option.one",
+              "label": "replace the power with one",
+              "spoken_text": "replace the power with one"
+            },
+            {
+              "entry_id": "option.multiply",
+              "label": "multiply the nested exponents",
+              "spoken_text": "multiply the nested exponents"
+            },
+            {
+              "entry_id": "option.reciprocal",
+              "label": "move the factor across the fraction bar",
+              "spoken_text": "move the factor across the fraction bar"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "row.zero",
+              "option.one"
+            ],
+            [
+              "row.negative",
+              "option.reciprocal"
+            ],
+            [
+              "row.power",
+              "option.multiply"
+            ],
+            [
+              "row.quotient",
+              "option.subtract"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.pqv1.exponent_rules.worked_example.01",
+      "revision": 2,
+      "family_id": "family.pqv1.exponent_rules.worked_example.01",
+      "kc_id": "kc.alg.exponent_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example before trying a new problem. Simplify the compound expression to one power of z. Assume z is non-zero."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "(z^0*z^-8)*(z^2)^5*z^20/z^3",
+          "spoken_text": "open parenthesis z to the power of 0 times z to the power of minus 8 close parenthesis times open parenthesis z to the power of 2 close parenthesis to the power of 5 times z to the power of 20 divided by z to the power of 3"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents."
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "z^19",
+          "spoken_text": "z to the power of 19"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Account for the zero and negative exponents before combining every z power.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply nested exponents, then add numerator exponents and subtract denominator exponents.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is z^19.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "z^19",
+        "variables": [
+          "z"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.exponent_rules.worked_example.01",
+        "source_revision": 2,
+        "source_digest": "5bf000dddec08bc4f8d2b617f0969aba6416be2619d33813d97346dc2c700c3f",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.capstone.01",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.capstone.01",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-15*x^-3",
+          "spoken_text": "minus 15 times x to the power of minus 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 45*x^-4.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "45*x^-4",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.capstone.01",
+        "source_revision": 2,
+        "source_digest": "5785a2bf94744fe927abbd98ac11a5384cd2f0b2274d6f7cab1e62cf203c0bfd",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.capstone.02",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.capstone.02",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "16*x^13",
+          "spoken_text": "16 times x to the power of 13"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 208*x^12.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "208*x^12",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.capstone.02",
+        "source_revision": 2,
+        "source_digest": "7f8bc6507f2d13b2599c361cb3a26794e78ec5ee67fd9ec03e922090bcc61747",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.checkin.01",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.checkin.01",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-20*x^13",
+          "spoken_text": "minus 20 times x to the power of 13"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -260*x^12.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-260*x^12",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.checkin.01",
+        "source_revision": 2,
+        "source_digest": "afbf5780b55a79d0c18d66c1ca91b6116b6ca4dd8c01a3309b422c4342b736e4",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.checkin.02",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.checkin.02",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "18*x^-6",
+          "spoken_text": "18 times x to the power of minus 6"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -108*x^-7.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-108*x^-7",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.checkin.02",
+        "source_revision": 2,
+        "source_digest": "f38a05208be2d449d4b8dda8181dbc8e3e4c391816377cbe8fc9d01dd4da74cb",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.checkin.03",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.checkin.03",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "17*x^12",
+          "spoken_text": "17 times x to the power of 12"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 204*x^11.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "204*x^11",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.checkin.03",
+        "source_revision": 2,
+        "source_digest": "3ee1283e9cd5f6a19fa0cb4976b412f792fb75f5e4f21cae846f9f5271589e6f",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.checkin.04",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.checkin.04",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-17*x^-5",
+          "spoken_text": "minus 17 times x to the power of minus 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 85*x^-6.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "85*x^-6",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.checkin.04",
+        "source_revision": 2,
+        "source_digest": "7945dc5f16c84fc0146309a932b3e52d947eab7bfe0113f822f3cc6d6ed1bb88",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.checkin.05",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.checkin.05",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "16*x^-4",
+          "spoken_text": "16 times x to the power of minus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -64*x^-5.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-64*x^-5",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.checkin.05",
+        "source_revision": 2,
+        "source_digest": "bafefd7e7d99743f66f5529744ae800e5f64772766b20683e270edc0d017d5b7",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.diagnostic.01",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.diagnostic.01",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "20*x^15",
+          "spoken_text": "20 times x to the power of 15"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 300*x^14.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "300*x^14",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.diagnostic.01",
+        "source_revision": 2,
+        "source_digest": "30f1038543fabe98d9f9622d80d83ccbe82aab78fb53641659a3bd6e13d24311",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.diagnostic.02",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.diagnostic.02",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "20*x^-8",
+          "spoken_text": "20 times x to the power of minus 8"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -160*x^-9.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-160*x^-9",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.diagnostic.02",
+        "source_revision": 2,
+        "source_digest": "c6a4f1f3f57e449053c4fd53e7436611500401c2d8394c5fcf1619e974e42e1c",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.diagnostic.03",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.diagnostic.03",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-19*x^-7",
+          "spoken_text": "minus 19 times x to the power of minus 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 133*x^-8.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "133*x^-8",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.diagnostic.03",
+        "source_revision": 2,
+        "source_digest": "73fc070eece63a5dc48538b4c1be63a7cef888a0feb7ec903dd73da865fe8073",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.diagnostic.04",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.diagnostic.04",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "19*x^14",
+          "spoken_text": "19 times x to the power of 14"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 266*x^13.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "266*x^13",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.diagnostic.04",
+        "source_revision": 2,
+        "source_digest": "9017df8eb7a551abfca739fc043f93fa64fbb2f59f24971927e65135504f1da9",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.power_rule.guided_widget.01",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.guided_widget.01",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided workspace. Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "18*x^14",
+          "spoken_text": "18 times x to the power of 14"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 252*x^13.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "252*x^13",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.guided_widget.01",
+        "source_revision": 2,
+        "source_digest": "a50a9c85a12e67e86bf4bd2ebb02dc4510a51815014f571e2d2470545c32ee17",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "slider_v1",
+        "presentation": {
+          "prompt": "Use the power-rule exponent step. Choose the exponent on x after differentiation.",
+          "label": "Exponent after differentiating",
+          "help_text": "Use the arrow keys or the slider; the value changes by one.",
+          "minimum": -6.0,
+          "maximum": 17.0,
+          "step": 1.0,
+          "initial_value": 11.0,
+          "value_label": "Selected exponent",
+          "result_template": "The exponent on x becomes {value}.",
+          "visual_summary": null
+        },
+        "scoring": {
+          "target": 13.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "item_id": "item.pqv1.power_rule.worked_example.01",
+      "revision": 2,
+      "family_id": "family.pqv1.power_rule.worked_example.01",
+      "kc_id": "kc.der.power_rule",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example before trying a new problem. Differentiate with respect to x using the power rule."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-19*x^15",
+          "spoken_text": "minus 19 times x to the power of 15"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Multiply by the old exponent, then reduce that exponent by one."
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "-285*x^14",
+          "spoken_text": "minus 285 times x to the power of 14"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Keep the constant multiple and apply the power rule to the variable factor.",
+          "revealing": false
+        },
+        {
+          "text": "Multiply by the old exponent, then reduce that exponent by one.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -285*x^14.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-285*x^14",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.power_rule.worked_example.01",
+        "source_revision": 2,
+        "source_digest": "0ebd1c0ba9d5561f8512b91ee5ab003b8f93466a4f6031881a9a1ae9075a770d",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.capstone.01",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.capstone.01",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(6)=6",
+          "spoken_text": "f open parenthesis 6 close parenthesis equals 6"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(6)=7",
+          "spoken_text": "g open parenthesis 6 close parenthesis equals 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(6)=4",
+          "spoken_text": "f prime open parenthesis 6 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(6)=5",
+          "spoken_text": "g prime open parenthesis 6 close parenthesis equals 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -2/49.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-2/49",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.capstone.01",
+        "source_revision": 2,
+        "source_digest": "eca9b6f269d1e3949781cefb64d89f4fbb0fc2615ce53b38094f215f133a1a80",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.capstone.02",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.capstone.02",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(8)=2",
+          "spoken_text": "f open parenthesis 8 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(8)=7",
+          "spoken_text": "g open parenthesis 8 close parenthesis equals 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(8)=5",
+          "spoken_text": "f prime open parenthesis 8 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(8)=4",
+          "spoken_text": "g prime open parenthesis 8 close parenthesis equals 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 43.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "43",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.capstone.02",
+        "source_revision": 2,
+        "source_digest": "952e499174205ec3dc4a8a3783619518a1a26ea55f86135b7308f7c063616782",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.checkin.01",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.checkin.01",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(3)=2",
+          "spoken_text": "f open parenthesis 3 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(3)=3",
+          "spoken_text": "g open parenthesis 3 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(3)=5",
+          "spoken_text": "f prime open parenthesis 3 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(3)=8",
+          "spoken_text": "g prime open parenthesis 3 close parenthesis equals 8"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 31.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "31",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.checkin.01",
+        "source_revision": 2,
+        "source_digest": "c2a44eb748bdb8ffa3f37d75740a4b0eca39f2fbbf2d17b6369fd46d532d9832",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.checkin.02",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.checkin.02",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(-2)=4",
+          "spoken_text": "f open parenthesis minus 2 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(-2)=5",
+          "spoken_text": "g open parenthesis minus 2 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(-2)=6",
+          "spoken_text": "f prime open parenthesis minus 2 close parenthesis equals 6"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(-2)=3",
+          "spoken_text": "g prime open parenthesis minus 2 close parenthesis equals 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 18/25.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "18/25",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.checkin.02",
+        "source_revision": 2,
+        "source_digest": "3a62599fcd171880eaf76c9d84ce91ec9f6ee477bbd1b1095db7ceff25371494",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.checkin.03",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.checkin.03",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(4)=2",
+          "spoken_text": "f open parenthesis 4 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(4)=5",
+          "spoken_text": "g open parenthesis 4 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(4)=4",
+          "spoken_text": "f prime open parenthesis 4 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(4)=7",
+          "spoken_text": "g prime open parenthesis 4 close parenthesis equals 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 34.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "34",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.checkin.03",
+        "source_revision": 2,
+        "source_digest": "22ad8fc991137cd193e08f34d1960fac55bcf824d33ec45eb09e89d18fb0a922",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.checkin.04",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.checkin.04",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(5)=5",
+          "spoken_text": "f open parenthesis 5 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(5)=6",
+          "spoken_text": "g open parenthesis 5 close parenthesis equals 6"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(5)=3",
+          "spoken_text": "f prime open parenthesis 5 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(5)=4",
+          "spoken_text": "g prime open parenthesis 5 close parenthesis equals 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -1/18.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-1/18",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.checkin.04",
+        "source_revision": 2,
+        "source_digest": "cab9cbba6c9d06de367b0e83e1a7e4602d719c9bebb8493414b46c0fc994f169",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.checkin.05",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.checkin.05",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "stretch",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(-3)=3",
+          "spoken_text": "f open parenthesis minus 3 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(-3)=5",
+          "spoken_text": "g open parenthesis minus 3 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(-3)=5",
+          "spoken_text": "f prime open parenthesis minus 3 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(-3)=4",
+          "spoken_text": "g prime open parenthesis minus 3 close parenthesis equals 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 37.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "37",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.checkin.05",
+        "source_revision": 2,
+        "source_digest": "6229b58efd12a9f963c01ed8b87a22741f4189d77538ae3a1faddef4fec798cc",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.diagnostic.01",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.diagnostic.01",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(0)=2",
+          "spoken_text": "f open parenthesis 0 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(0)=3",
+          "spoken_text": "g open parenthesis 0 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(0)=4",
+          "spoken_text": "f prime open parenthesis 0 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(0)=5",
+          "spoken_text": "g prime open parenthesis 0 close parenthesis equals 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 22.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "22",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.diagnostic.01",
+        "source_revision": 2,
+        "source_digest": "7a0b5c4b0e0f9bc06bdd3ce435c2bac2748bafad9c9bd917c8609b152fc0be94",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.diagnostic.02",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.diagnostic.02",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(9)=2",
+          "spoken_text": "f open parenthesis 9 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(9)=3",
+          "spoken_text": "g open parenthesis 9 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(9)=5",
+          "spoken_text": "f prime open parenthesis 9 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(9)=4",
+          "spoken_text": "g prime open parenthesis 9 close parenthesis equals 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 7/9.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "7/9",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.diagnostic.02",
+        "source_revision": 2,
+        "source_digest": "f5a5c5d7fa8ff3675f6af3b3a374368ae1bd123f83063374d58c679af3d75374",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.diagnostic.03",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.diagnostic.03",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(-1)=3",
+          "spoken_text": "f open parenthesis minus 1 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(-1)=4",
+          "spoken_text": "g open parenthesis minus 1 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(-1)=3",
+          "spoken_text": "f prime open parenthesis minus 1 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(-1)=5",
+          "spoken_text": "g prime open parenthesis minus 1 close parenthesis equals 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 27.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "27",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.diagnostic.03",
+        "source_revision": 2,
+        "source_digest": "80d696dfb9e42cc6af3c01106116c399ac491f9cd439b4bebe9eb19342587d00",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.diagnostic.04",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.diagnostic.04",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(2)=3",
+          "spoken_text": "f open parenthesis 2 close parenthesis equals 3"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(2)=4",
+          "spoken_text": "g open parenthesis 2 close parenthesis equals 4"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(2)=2",
+          "spoken_text": "f prime open parenthesis 2 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(2)=5",
+          "spoken_text": "g prime open parenthesis 2 close parenthesis equals 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -7/16.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "-7/16",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.diagnostic.04",
+        "source_revision": 2,
+        "source_digest": "4c798f95c027fa60ddb85b51acd367414f6b00e868143c55ba222dc2ccf34c36",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.guided_widget.01",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.guided_widget.01",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "core",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided workspace. Let h be the product of the opaque functions f and g. Use only the supplied point data to find h' at that point."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)*g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis times g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(7)=2",
+          "spoken_text": "f open parenthesis 7 close parenthesis equals 2"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(7)=5",
+          "spoken_text": "g open parenthesis 7 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(7)=7",
+          "spoken_text": "f prime open parenthesis 7 close parenthesis equals 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(7)=3",
+          "spoken_text": "g prime open parenthesis 7 close parenthesis equals 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A product derivative uses both values and both derivatives.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute f' times g plus f times g'.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 41.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "41",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.guided_widget.01",
+        "source_revision": 2,
+        "source_digest": "c5aa040cdd0d85e88af7a5d9a1c15dcba8eba87c78a4c4687f43094b31a00257",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "slider_v1",
+        "presentation": {
+          "prompt": "Combine the supplied values to choose the derivative at the point.",
+          "label": "Derivative value",
+          "help_text": "Use the arrow keys or the slider, then check your value.",
+          "minimum": 19.0,
+          "maximum": 62.0,
+          "step": 1.0,
+          "initial_value": 19.0,
+          "value_label": "Selected derivative",
+          "result_template": "The selected derivative is {value}.",
+          "visual_summary": null
+        },
+        "scoring": {
+          "target": 41.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "item_id": "item.pqv1.product_quotient.worked_example.01",
+      "revision": 2,
+      "family_id": "family.pqv1.product_quotient.worked_example.01",
+      "kc_id": "kc.der.product_quotient",
+      "difficulty": "foundation",
+      "task_kind": "solve",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example before trying a new problem. Let h be the quotient of the opaque functions f and g. Use only the supplied point data to find h' at that point. This quotient example and the guided product practice that follows use the same supplied function values and derivative values."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "h(x)=f(x)/g(x)",
+          "spoken_text": "h open parenthesis x close parenthesis equals f open parenthesis x close parenthesis divided by g open parenthesis x close parenthesis"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f(-4)=7",
+          "spoken_text": "f open parenthesis minus 4 close parenthesis equals 7"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g(-4)=8",
+          "spoken_text": "g open parenthesis minus 4 close parenthesis equals 8"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "f'(-4)=5",
+          "spoken_text": "f prime open parenthesis minus 4 close parenthesis equals 5"
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "g'(-4)=3",
+          "spoken_text": "g prime open parenthesis minus 4 close parenthesis equals 3"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared."
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "19/64",
+          "spoken_text": "19 divided by 64"
+        }
+      ],
+      "hints": [
+        {
+          "text": "A quotient derivative uses both values and derivatives over g squared.",
+          "revealing": false
+        },
+        {
+          "text": "At the point, compute g times f' minus f times g', then divide by g squared.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 19/64.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "numeric",
+        "expected": "19/64",
+        "tolerance": 0.0
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.product_quotient.worked_example.01",
+        "source_revision": 2,
+        "source_digest": "7b7a9535282095995bc90ada3a506cff9886f1dda400b07f830449ecb289735b",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.capstone.01",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.capstone.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "3*x^12+4*x^9-6*x^5+2",
+          "spoken_text": "3 times x to the power of 12 plus 4 times x to the power of 9 minus 6 times x to the power of 5 plus 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 36*x^11+36*x^8-30*x^4.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "36*x^11+36*x^8-30*x^4",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.capstone.01",
+        "source_revision": 2,
+        "source_digest": "4d754a4b4441745f62c0b2a04f7ec76b5829747ebd596ff70dffe4617d2ef8a3",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.capstone.02",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.capstone.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "capstone"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-2*x^12+5*x^10+7*x^3",
+          "spoken_text": "minus 2 times x to the power of 12 plus 5 times x to the power of 10 plus 7 times x to the power of 3"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -24*x^11+50*x^9+21*x^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-24*x^11+50*x^9+21*x^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.capstone.02",
+        "source_revision": 2,
+        "source_digest": "ff91536efc4817f7a8ca004634f3ed71ae172c8d654209f583abf0a1fdf39e90",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.checkin.01",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.checkin.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "5*x^7+2*x^4-6*x",
+          "spoken_text": "5 times x to the power of 7 plus 2 times x to the power of 4 minus 6 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 35*x^6+8*x^3-6.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "35*x^6+8*x^3-6",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.checkin.01",
+        "source_revision": 2,
+        "source_digest": "c1e71e4413eb4ecd12eca9442ac7dbf214c0044200a18a667b6b0e7629c40f81",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.checkin.02",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.checkin.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-3*x^8+7*x^5+4",
+          "spoken_text": "minus 3 times x to the power of 8 plus 7 times x to the power of 5 plus 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -24*x^7+35*x^4.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-24*x^7+35*x^4",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.checkin.02",
+        "source_revision": 2,
+        "source_digest": "13a3314f763ff128b41a59b2c8df1777d7f3bc401c0c66209b028dbd27c62c2f",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.checkin.03",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.checkin.03",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "6*x^9-5*x^6+3*x^2",
+          "spoken_text": "6 times x to the power of 9 minus 5 times x to the power of 6 plus 3 times x to the power of 2"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 54*x^8-30*x^5+6*x.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "54*x^8-30*x^5+6*x",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.checkin.03",
+        "source_revision": 2,
+        "source_digest": "e95ead7138eee44edd3ca75cca44e3b20b52e3654286bc1813a5c9b2eb331e7d",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.checkin.04",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.checkin.04",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*x^10+9*x^3-11*x",
+          "spoken_text": "2 times x to the power of 10 plus 9 times x to the power of 3 minus 11 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 20*x^9+27*x^2-11.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "20*x^9+27*x^2-11",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.checkin.04",
+        "source_revision": 2,
+        "source_digest": "dfc9f7181d47eda38c6d85fa83888335af5b9a6965f0387f93f3c0a0f06c9a9b",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.checkin.05",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.checkin.05",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "stretch",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "checkin"
+      ],
+      "allocation_order": 50,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-4*x^11+3*x^7+8*x^2-5",
+          "spoken_text": "minus 4 times x to the power of 11 plus 3 times x to the power of 7 plus 8 times x to the power of 2 minus 5"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -44*x^10+21*x^6+16*x.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-44*x^10+21*x^6+16*x",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.checkin.05",
+        "source_revision": 2,
+        "source_digest": "f5fc8e66e695be4d6d735886b873db13428e2a211e42239946a9798603461439",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.01",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "2*x^3+5*x^2+7",
+          "spoken_text": "2 times x to the power of 3 plus 5 times x to the power of 2 plus 7"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 6*x^2+10*x.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "6*x^2+10*x",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.diagnostic.01",
+        "source_revision": 2,
+        "source_digest": "f8fbdb7eeee42c24627380d24396898bba1a24211263e3b16865e206d60421f1",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.02",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.02",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 20,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "4*x^4-3*x^2+8*x",
+          "spoken_text": "4 times x to the power of 4 minus 3 times x to the power of 2 plus 8 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 16*x^3-6*x+8.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "16*x^3-6*x+8",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.diagnostic.02",
+        "source_revision": 2,
+        "source_digest": "1f229051c820a896af3f32ddce9bda6ee7c627ed6e0bee477b4b59aa78f6dd8c",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.03",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.03",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 30,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "-2*x^5+6*x^3-9",
+          "spoken_text": "minus 2 times x to the power of 5 plus 6 times x to the power of 3 minus 9"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is -10*x^4+18*x^2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "-10*x^4+18*x^2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.diagnostic.03",
+        "source_revision": 2,
+        "source_digest": "4ff103eee5943ded8c851c20cb3a81743acf8fefe9879fb41a5e0705c4d94738",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.diagnostic.04",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.diagnostic.04",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "diagnostic"
+      ],
+      "allocation_order": 40,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "3*x^6-4*x^3+2*x",
+          "spoken_text": "3 times x to the power of 6 minus 4 times x to the power of 3 plus 2 times x"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 18*x^5-12*x^2+2.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "18*x^5-12*x^2+2",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.diagnostic.04",
+        "source_revision": 2,
+        "source_digest": "84b19ed925c4ce68d62f9cf6bf4f97adc1af684391ccfc7b33166a5190d1181f",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.guided_widget.01",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.guided_widget.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "core",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "guided_widget"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Use the guided workspace. Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "7*x^12-2*x^8+5*x^4",
+          "spoken_text": "7 times x to the power of 12 minus 2 times x to the power of 8 plus 5 times x to the power of 4"
+        },
+        {
+          "kind": "blank",
+          "role": "response",
+          "label": "Answer:"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 84*x^11-16*x^7+20*x^3.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "84*x^11-16*x^7+20*x^3",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.guided_widget.01",
+        "source_revision": 2,
+        "source_digest": "373582128f96bcf32a366ea3b31bb4743d67cd78c1398b6f9533b2031534f76c",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": {
+        "kind": "mapping_v1",
+        "presentation": {
+          "prompt": "Match each polynomial term with its derivative.",
+          "rows": [
+            {
+              "entry_id": "row.term1",
+              "label": "7*x^12",
+              "spoken_text": "7 times x to the power of 12"
+            },
+            {
+              "entry_id": "row.term2",
+              "label": "-2*x^8",
+              "spoken_text": "minus 2 times x to the power of 8"
+            },
+            {
+              "entry_id": "row.term3",
+              "label": "5*x^4",
+              "spoken_text": "5 times x to the power of 4"
+            }
+          ],
+          "options": [
+            {
+              "entry_id": "option.term3",
+              "label": "20*x^3",
+              "spoken_text": "20 times x to the power of 3"
+            },
+            {
+              "entry_id": "option.term2",
+              "label": "-16*x^7",
+              "spoken_text": "minus 16 times x to the power of 7"
+            },
+            {
+              "entry_id": "option.term1",
+              "label": "84*x^11",
+              "spoken_text": "84 times x to the power of 11"
+            }
+          ]
+        },
+        "scoring": {
+          "correct_pairs": [
+            [
+              "row.term1",
+              "option.term1"
+            ],
+            [
+              "row.term2",
+              "option.term2"
+            ],
+            [
+              "row.term3",
+              "option.term3"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "item_id": "item.pqv1.sum_constant_rules.worked_example.01",
+      "revision": 2,
+      "family_id": "family.pqv1.sum_constant_rules.worked_example.01",
+      "kc_id": "kc.der.sum_constant_rules",
+      "difficulty": "foundation",
+      "task_kind": "transform",
+      "eligible_surfaces": [
+        "worked_example"
+      ],
+      "allocation_order": 10,
+      "prompt": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Study this worked example before trying a new problem. Differentiate the polynomial with respect to x."
+        },
+        {
+          "kind": "math",
+          "role": "given",
+          "expression": "4*x^12-3*x^11+2*x^6-9*x",
+          "spoken_text": "4 times x to the power of 12 minus 3 times x to the power of 11 plus 2 times x to the power of 6 minus 9 times x"
+        },
+        {
+          "kind": "text",
+          "role": "worked_step",
+          "text": "Apply the constant-multiple and power rules to each nonconstant term."
+        },
+        {
+          "kind": "math",
+          "role": "worked_answer",
+          "expression": "48*x^11-33*x^10+12*x^5-9",
+          "spoken_text": "48 times x to the power of 11 minus 33 times x to the power of 10 plus 12 times x to the power of 5 minus 9"
+        }
+      ],
+      "hints": [
+        {
+          "text": "Differentiation distributes across sums and differences.",
+          "revealing": false
+        },
+        {
+          "text": "Apply the constant-multiple and power rules to each nonconstant term.",
+          "revealing": false
+        },
+        {
+          "text": "A correct completed form is 48*x^11-33*x^10+12*x^5-9.",
+          "revealing": true
+        }
+      ],
+      "answer": {
+        "kind": "symbolic",
+        "expected": "48*x^11-33*x^10+12*x^5-9",
+        "variables": [
+          "x"
+        ],
+        "functions": [],
+        "assignment_lhs": null
+      },
+      "review_status": "draft",
+      "provenance": {
+        "source": "assessment-draft/product-quotient-release-v2",
+        "author": "AI-assisted implementation draft (unreviewed)",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "source_id": "blueprint.pqv1.sum_constant_rules.worked_example.01",
+        "source_revision": 2,
+        "source_digest": "cd7221f489b4e9b61a735c123c3be80cca7df0f98f94bd4b8935f033745d718d",
+        "compiler_version": "product-quotient-item-compiler-v3"
+      },
+      "error_signatures": [],
+      "guided_interaction": null
+    }
+  ]
+}
