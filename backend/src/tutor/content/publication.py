@@ -324,6 +324,9 @@ def validate_release_reviews(
     manifest = PublishedReleaseManifest(
         release_id=release_review.release_id,
         bundle_sha256=candidate.bundle_sha256,
+        reviews_sha256=hashlib.sha256(
+            canonical_json_bytes(reviews, trailing_newline=True)
+        ).hexdigest(),
         graph_version=graph.graph_version,
         graph_digest=candidate.graph_digest,
         bank_version=item_bank.bank_version,
@@ -399,6 +402,10 @@ def publish_release(
     try:
         _write_fsynced(staging / "bundle.json", candidate.bundle_bytes)
         _write_fsynced(
+            staging / "release-reviews.json",
+            canonical_json_bytes(reviews, trailing_newline=True),
+        )
+        _write_fsynced(
             staging / "release-manifest.json",
             canonical_json_bytes(manifest, trailing_newline=True),
         )
@@ -410,6 +417,12 @@ def publish_release(
         staged_bundle = (staging / "bundle.json").read_bytes()
         if hashlib.sha256(staged_bundle).hexdigest() != candidate.bundle_sha256:
             raise ReleasePublicationError("staged bundle digest changed before publication")
+        staged_reviews = (staging / "release-reviews.json").read_bytes()
+        if hashlib.sha256(staged_reviews).hexdigest() != manifest.reviews_sha256:
+            raise ReleasePublicationError(
+                "staged review attestations changed before publication"
+            )
+        ReleaseReviewManifest.model_validate_json(staged_reviews)
         staged_payload = json.loads(staged_bundle)
         if staged_payload != candidate.bundle_payload:
             raise ReleasePublicationError("staged bundle content changed before publication")

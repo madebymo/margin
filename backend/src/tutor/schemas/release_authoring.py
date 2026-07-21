@@ -118,6 +118,17 @@ class ReleaseApprovalAttestation(_StrictFrozenModel):
     def _normalize_people(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
 
+    @field_validator("release_id")
+    @classmethod
+    def _nonproduction_namespace_is_reserved(cls, value: str) -> str:
+        if value == "nonproduction.legacy-unpinned" or value.startswith(
+            "nonproduction.fixture."
+        ):
+            raise ValueError(
+                "release_id uses a reserved non-production namespace"
+            )
+        return value
+
     @field_validator("reviewed_at")
     @classmethod
     def _aware_review(cls, value: datetime) -> datetime:
@@ -178,10 +189,12 @@ class ReleasePublicationMetadata(_StrictFrozenModel):
 class PublishedReleaseManifest(_StrictFrozenModel):
     """Machine-readable receipt emitted beside an immutable bundle."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     release_id: str = Field(max_length=128, pattern=_ID_PATTERN)
     bundle_file: Literal["bundle.json"] = "bundle.json"
     bundle_sha256: str = Field(pattern=_SHA256_PATTERN)
+    reviews_file: Literal["release-reviews.json"] = "release-reviews.json"
+    reviews_sha256: str = Field(pattern=_SHA256_PATTERN)
     graph_version: int = Field(ge=1)
     graph_digest: str = Field(pattern=_SHA256_PATTERN)
     bank_version: str = Field(max_length=128, pattern=_ID_PATTERN)
@@ -200,3 +213,14 @@ class PublishedReleaseManifest(_StrictFrozenModel):
     @classmethod
     def _aware_publication(cls, value: datetime) -> datetime:
         return _aware(value)
+
+    @field_validator("release_id")
+    @classmethod
+    def _nonproduction_namespace_is_reserved(cls, value: str) -> str:
+        if value == "nonproduction.legacy-unpinned" or value.startswith(
+            "nonproduction.fixture."
+        ):
+            raise ValueError(
+                "release_id uses a reserved non-production namespace"
+            )
+        return value
