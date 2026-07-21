@@ -1160,6 +1160,27 @@ def test_durable_widget_trajectory_distinguishes_invalid_from_incorrect():
         json=_widget_response(invalid_view, {"value": 2}),
     )
     assert incorrect.status_code == 200
+    attempt_entries = [
+        entry
+        for entry in incorrect.json()["transcript"]
+        if entry["kind"] == "widget_attempt"
+        and entry["interaction_key"] == view["pending"]["key"]
+    ]
+    assert [entry["widget_attempt_number"] for entry in attempt_entries] == [1, 2]
+    assert [entry["widget_status"] for entry in attempt_entries] == [
+        "invalid",
+        "attempted",
+    ]
+    assert [entry["text"] for entry in attempt_entries] == [
+        "Guided-practice attempt 1 submitted.",
+        "Guided-practice attempt 2 submitted.",
+    ]
+    assert attempt_entries[0]["widget_state"] is None
+    assert attempt_entries[0]["widget"] is None
+    assert attempt_entries[1]["widget_state"] == {"value": 2.0}
+    assert attempt_entries[1]["widget"]["widget_type"] == "slider_v1"
+    assert "scoring" not in str(attempt_entries[1]["widget"])
+    assert "target" not in str(attempt_entries[1]["widget"])
     with Session(app.state.persistence.engine) as session:
         attempts = session.scalars(
             select(m.WidgetAttemptRow).order_by(m.WidgetAttemptRow.created_at)

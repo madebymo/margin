@@ -1,6 +1,9 @@
 const DRAFT_STORAGE_KEY = "tutor.v2.answer-draft.v1";
 const DRAFT_SCHEMA_VERSION = 1;
 const MAX_DRAFT_LENGTH = 256;
+const WIDGET_DRAFT_STORAGE_KEY = "tutor.v2.widget-draft.v1";
+const WIDGET_DRAFT_SCHEMA_VERSION = 1;
+const MAX_WIDGET_ROWS = 12;
 
 function resolveStorage(storage) {
   if (storage !== undefined) return storage;
@@ -119,3 +122,120 @@ export function answerDraftScope(view) {
   if (!sessionId || !pendingKey) return null;
   return { sessionId: String(sessionId), pendingKey: String(pendingKey) };
 }
+
+function normalizeWidgetDraftState(state) {
+  if (!state || typeof state !== "object" || Array.isArray(state)) return null;
+  if (Object.hasOwn(state, "value")) {
+    const value = Number(state.value);
+    return Number.isFinite(value) ? { value } : null;
+  }
+  if (!Array.isArray(state.rows) || state.rows.length > MAX_WIDGET_ROWS) {
+    return null;
+  }
+  const rows = [];
+  const ids = new Set();
+  for (const row of state.rows) {
+    const id = typeof row?.id === "string" ? row.id : "";
+    const value = typeof row?.value === "string" ? row.value : "";
+    if (
+      !id ||
+      id.length > 64 ||
+      value.length > 64 ||
+      ids.has(id)
+    ) {
+      return null;
+    }
+    ids.add(id);
+    rows.push({ id, value });
+  }
+  return rows.length >= 2 ? { rows } : null;
+}
+
+function parseStoredWidgetDraft(storage) {
+  const target = resolveStorage(storage);
+  if (!target) return { target: null, draft: null };
+  try {
+    const draft = JSON.parse(target.getItem(WIDGET_DRAFT_STORAGE_KEY));
+    const state = normalizeWidgetDraftState(draft?.state);
+    const valid =
+      draft?.schema_version === WIDGET_DRAFT_SCHEMA_VERSION &&
+      typeof draft.session_id === "string" &&
+      draft.session_id.length > 0 &&
+      typeof draft.pending_key === "string" &&
+      draft.pending_key.length > 0 &&
+      state !== null;
+    if (!valid) {
+      target.removeItem(WIDGET_DRAFT_STORAGE_KEY);
+      return { target, draft: null };
+    }
+    return { target, draft: { ...draft, state } };
+  } catch {
+    try {
+      target.removeItem(WIDGET_DRAFT_STORAGE_KEY);
+    } catch {
+      // Storage may become unavailable between reads; recovery is optional.
+    }
+    return { target, draft: null };
+  }
+}
+
+export function readWidgetDraft(scope, storage) {
+  if (!validScope(scope)) return null;
+  const { target, draft } = parseStoredWidgetDraft(storage);
+  if (!draft) return null;
+  if (
+    draft.session_id !== scope.sessionId ||
+    draft.pending_key !== scope.pendingKey
+  ) {
+    try {
+      target?.removeItem(WIDGET_DRAFT_STORAGE_KEY);
+    } catch {
+      // A stale draft can be ignored even when cleanup is unavailable.
+    }
+    return null;
+  }
+  return draft.state;
+}
+
+export function writeWidgetDraft(scope, state, storage) {
+  const target = resolveStorage(storage);
+  const normalized = normalizeWidgetDraftState(state);
+  if (!target || !validScope(scope) || normalized === null) return false;
+  try {
+    target.setItem(
+      WIDGET_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        schema_version: WIDGET_DRAFT_SCHEMA_VERSION,
+        session_id: scope.sessionId,
+        pending_key: scope.pendingKey,
+        state: normalized,
+      }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearWidgetDraft(scope = null, storage) {
+  const target = resolveStorage(storage);
+  if (!target) return false;
+  try {
+    if (scope && validScope(scope)) {
+      const { draft } = parseStoredWidgetDraft(target);
+      if (
+        draft &&
+        (draft.session_id !== scope.sessionId ||
+          draft.pending_key !== scope.pendingKey)
+      ) {
+        return false;
+      }
+    }
+    target.removeItem(WIDGET_DRAFT_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const widgetDraftScope = answerDraftScope;

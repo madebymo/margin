@@ -3,8 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   answerDraftScope,
   clearAnswerDraft,
+  clearWidgetDraft,
   readAnswerDraft,
+  readWidgetDraft,
+  widgetDraftScope,
   writeAnswerDraft,
+  writeWidgetDraft,
 } from "../src/drafts.js";
 
 function memoryStorage() {
@@ -87,5 +91,63 @@ describe("pending answer draft recovery", () => {
       }),
     ).toEqual(scope);
     expect(answerDraftScope({ session_id: "session-1", pending: null })).toBeNull();
+  });
+});
+
+describe("pending guided-practice draft recovery", () => {
+  it("round-trips bounded slider and mapping state for the exact interaction", () => {
+    const storage = memoryStorage();
+    expect(writeWidgetDraft(scope, { value: 3 }, storage)).toBe(true);
+    expect(readWidgetDraft(scope, storage)).toEqual({ value: 3 });
+
+    const mapping = {
+      rows: [
+        { id: "row.a", value: "option.b" },
+        { id: "row.b", value: "" },
+      ],
+    };
+    expect(writeWidgetDraft(scope, mapping, storage)).toBe(true);
+    expect(readWidgetDraft(scope, storage)).toEqual(mapping);
+  });
+
+  it("drops stale, malformed, and oversized widget state without throwing", () => {
+    const storage = memoryStorage();
+    writeWidgetDraft(scope, { value: 2 }, storage);
+    expect(
+      readWidgetDraft(
+        { sessionId: "session-1", pendingKey: "guided-2" },
+        storage,
+      ),
+    ).toBeNull();
+    expect(readWidgetDraft(scope, storage)).toBeNull();
+
+    expect(writeWidgetDraft(scope, { value: Number.NaN }, storage)).toBe(false);
+    expect(
+      writeWidgetDraft(
+        scope,
+        {
+          rows: Array.from({ length: 13 }, (_, index) => ({
+            id: `row.${index}`,
+            value: "",
+          })),
+        },
+        storage,
+      ),
+    ).toBe(false);
+    storage.setItem("tutor.v2.widget-draft.v1", "not-json");
+    expect(readWidgetDraft(scope, storage)).toBeNull();
+  });
+
+  it("does not let an older interaction clear a newer widget draft", () => {
+    const storage = memoryStorage();
+    const newer = { sessionId: "session-1", pendingKey: "guided-2" };
+    writeWidgetDraft(newer, { value: 4 }, storage);
+
+    expect(clearWidgetDraft(scope, storage)).toBe(false);
+    expect(readWidgetDraft(newer, storage)).toEqual({ value: 4 });
+    expect(widgetDraftScope({
+      session_id: "session-1",
+      pending: { key: "guided-2" },
+    })).toEqual(newer);
   });
 });

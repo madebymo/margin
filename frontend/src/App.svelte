@@ -6,8 +6,12 @@
   import {
     answerDraftScope,
     clearAnswerDraft,
+    clearWidgetDraft,
     readAnswerDraft,
+    readWidgetDraft,
+    widgetDraftScope,
     writeAnswerDraft,
+    writeWidgetDraft,
   } from "./drafts.js";
   import {
     clearPendingRecovery,
@@ -43,6 +47,7 @@
   let statusMessage = "";
   let busy = false;
   let answerText = "";
+  let widgetDraftState = null;
   let answerElement;
   let choiceElement;
   let transcriptElement;
@@ -175,6 +180,7 @@
     const previousAnswer = answerText;
     const previousView = view;
     const previousScope = answerDraftScope(previousView);
+    const previousWidgetScope = widgetDraftScope(previousView);
     const next = normalizeSessionView(payload);
     if (!next.session_id) {
       throw new Error("The server returned a session without an id.");
@@ -188,6 +194,13 @@
       : restoreDraft && pendingAcceptsText(next.pending)
         ? readAnswerDraft(answerDraftScope(next))
         : "";
+    const nextWidgetScope = widgetDraftScope(next);
+    if (restoreDraft && isWidgetPending(next.pending)) {
+      widgetDraftState = readWidgetDraft(nextWidgetScope);
+    } else {
+      clearWidgetDraft(previousWidgetScope);
+      widgetDraftState = null;
+    }
     if (clearRetry) {
       coordinator.clearRetry();
     }
@@ -357,11 +370,14 @@
 
   async function submitWidget({ key, response, signal }) {
     if (apiMode === "v2") {
+      const submittedDraftScope = widgetDraftScope(view);
       const previousKey = view?.pending?.key;
       const payload = await executeV2Action({
         type: "widget_attempt",
         response,
       });
+      clearWidgetDraft(submittedDraftScope);
+      widgetDraftState = null;
       const snapshot = normalizeSessionView(payload);
       const feedback = [...snapshot.transcript]
         .reverse()
@@ -385,9 +401,13 @@
 
   async function useTextFallback({ key }) {
     if (apiMode === "v2") {
-      return executeV2Action({
+      const fallbackDraftScope = widgetDraftScope(view);
+      const result = await executeV2Action({
         type: "use_text_fallback",
       });
+      clearWidgetDraft(fallbackDraftScope);
+      widgetDraftState = null;
+      return result;
     }
     statusMessage =
       "This legacy session cannot switch this widget automatically. Start a curated v2 session for text alternatives.";
@@ -400,7 +420,9 @@
     statusMessage = "";
     if (apiMode === "v1") {
       clearAnswerDraft();
+      clearWidgetDraft();
       view = null;
+      widgetDraftState = null;
       legacyTranscript = [];
       legacySessionId = null;
       return;
@@ -416,8 +438,10 @@
         applySnapshot(reset.session);
       } else {
         clearAnswerDraft(answerDraftScope(view));
+        clearWidgetDraft(widgetDraftScope(view));
         view = null;
         answerText = "";
+        widgetDraftState = null;
         lastFocusedPendingKey = null;
       }
       coordinator.clearRetry();
@@ -475,12 +499,29 @@
       );
     const pendingState =
       view?.pending?.key === entry.key ? view.pending.widget_state : null;
+    const draftState =
+      view?.pending?.key === entry.key ? widgetDraftState : null;
+    if (entry.kind === "widget_attempt") {
+      return {
+        ...entry.raw,
+        key: entry.key,
+        kind: entry.kind,
+        widget: entry.widget,
+        widget_state: entry.widget_state,
+        widget_status: entry.widget_status,
+        widget_attempt_number: entry.widget_attempt_number,
+      };
+    }
     return {
       ...entry.raw,
       key: entry.key,
       widget: entry.widget,
       widget_state:
-        pendingState ?? latestStatus?.widget_state ?? entry.widget_state ?? null,
+        draftState ??
+        pendingState ??
+        latestStatus?.widget_state ??
+        entry.widget_state ??
+        null,
       widget_status: latestStatus?.widget_status ?? entry.widget_status,
       widget_attempt_number:
         latestStatus?.widget_attempt_number ?? entry.widget_attempt_number,
@@ -489,9 +530,16 @@
 
   function widgetIsActive(entry) {
     return Boolean(
+      entry.kind !== "widget_attempt" &&
       view?.pending?.key === entry.key &&
         (isWidgetPending(view.pending) || apiMode === "v1"),
     );
+  }
+
+  function rememberWidgetDraft({ key, state }) {
+    if (view?.pending?.key !== key || !isWidgetPending(view.pending)) return;
+    const scope = widgetDraftScope(view);
+    if (writeWidgetDraft(scope, state)) widgetDraftState = state;
   }
 
   function pendingWidgetAppearsInTranscript() {
@@ -817,6 +865,7 @@
                 disabled={!widgetIsActive(entry) || busy}
                 onAttempt={submitWidget}
                 onTextFallback={useTextFallback}
+                onDraftChange={rememberWidgetDraft}
                 onError={(error) => (errorMessage = error.message)}
               />
             {/if}
@@ -840,11 +889,12 @@
               item={{
                 key: view.pending.key,
                 widget: view.pending.widget,
-                widget_state: view.pending.widget_state,
+                widget_state: widgetDraftState ?? view.pending.widget_state,
               }}
               disabled={busy}
               onAttempt={submitWidget}
               onTextFallback={useTextFallback}
+              onDraftChange={rememberWidgetDraft}
               onError={(error) => (errorMessage = error.message)}
             />
           {/if}

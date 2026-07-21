@@ -1138,7 +1138,12 @@ class V2SessionStore:
             new_exposures = self._changed_exposures(
                 previous_exposures, self._exposure_records(working)
             )
-            new_entries = self._action_entries(handle.transcript, action, additions)
+            new_entries = self._action_entries(
+                handle.transcript,
+                action,
+                additions,
+                widget_attempt=widget_attempt,
+            )
             self._sync_visible_entries(working, new_entries)
             next_transcript = [*handle.transcript, *new_entries]
             self._replace_visible_snapshot(
@@ -1980,6 +1985,8 @@ class V2SessionStore:
         transcript: list[TranscriptEntry],
         action: SessionAction,
         additions: list[dict[str, Any]],
+        *,
+        widget_attempt: dict[str, Any] | None = None,
     ) -> list[TranscriptEntry]:
         entries: list[TranscriptEntry] = []
         if isinstance(action, AnswerAction):
@@ -1993,13 +2000,40 @@ class V2SessionStore:
                 )
             )
         elif isinstance(action, WidgetAttemptAction):
+            attempt_number = 1 + sum(
+                entry.kind == "widget_attempt"
+                and entry.interaction_key == action.pending_key
+                for entry in transcript
+            )
+            original_widget = next(
+                (
+                    entry.widget
+                    for entry in reversed(transcript)
+                    if entry.interaction_key == action.pending_key
+                    and entry.widget is not None
+                ),
+                None,
+            )
+            safe_attempt_state = self._safe_widget_state(
+                (widget_attempt or {}).get("widget_state")
+            )
             entries.append(
                 TranscriptEntry(
                     sequence=len(transcript),
                     role="student",
                     kind="widget_attempt",
-                    text="Submitted guided-practice response.",
+                    text=f"Guided-practice attempt {attempt_number} submitted.",
                     interaction_key=action.pending_key,
+                    widget=(
+                        copy.deepcopy(original_widget)
+                        if safe_attempt_state is not None
+                        else None
+                    ),
+                    widget_state=safe_attempt_state,
+                    widget_status=(widget_attempt or {}).get(
+                        "verification_status"
+                    ),
+                    widget_attempt_number=attempt_number,
                 )
             )
         for addition in additions:
@@ -2084,6 +2118,7 @@ class V2SessionStore:
                 "correct": bool(correct),
                 "verification_status": verification_status,
                 "counted": counted,
+                "widget_state": widget_state,
             }
             return [
                 {

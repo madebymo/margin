@@ -145,6 +145,60 @@ describe("authoritative session normalization", () => {
     });
   });
 
+  it("retains every safe guided-practice snapshot in transcript order", () => {
+    const widget = {
+      widget_type: "slider_v1",
+      interaction_version: "slider_v1",
+      presentation: {
+        prompt: "Choose a value.",
+        label: "Value",
+        help_text: "Use the arrow keys.",
+        minimum: -2,
+        maximum: 2,
+        step: 1,
+        initial_value: 0,
+        value_label: "Selected value",
+      },
+    };
+    const view = normalizeSessionView({
+      session_id: "widget-history",
+      transcript: [
+        {
+          sequence: 4,
+          role: "student",
+          kind: "widget_attempt",
+          interaction_key: "guided-1",
+          text: "Guided-practice attempt 1 submitted.",
+          widget,
+          widget_state: { value: -1 },
+          widget_status: "attempted",
+          widget_attempt_number: 1,
+        },
+        {
+          sequence: 6,
+          role: "student",
+          kind: "widget_attempt",
+          interaction_key: "guided-1",
+          text: "Guided-practice attempt 2 submitted.",
+          widget,
+          widget_state: { value: 1 },
+          widget_status: "solved",
+          widget_attempt_number: 2,
+        },
+      ],
+    });
+
+    expect(view.transcript.map((entry) => entry.widget_attempt_number)).toEqual([
+      1,
+      2,
+    ]);
+    expect(view.transcript.map((entry) => entry.widget_state)).toEqual([
+      { value: -1 },
+      { value: 1 },
+    ]);
+    expect(view.transcript.every((entry) => entry.widget === widget)).toBe(true);
+  });
+
   it("normalizes the typed text contract and pinned release identity", () => {
     const view = normalizeSessionView({
       session_id: "typed-text",

@@ -9,6 +9,7 @@
   export let disabled = false;
   export let onAttempt = async () => {};
   export let onTextFallback = async () => {};
+  export let onDraftChange = () => {};
   export let onError = () => {};
 
   const config = item.widget;
@@ -20,13 +21,13 @@
     "text_fallback",
   ]);
   let recipeFailure = "";
+  const initialExternalState =
+    item.widget_state ?? item.widget_current_state ?? item.state ?? null;
+  let appliedExternalState = JSON.stringify(initialExternalState);
   let state = null;
   if (recipe) {
     try {
-      state = recipe.init(
-        config,
-        item.widget_state ?? item.widget_current_state ?? item.state ?? null,
-      );
+      state = recipe.init(config, initialExternalState);
     } catch {
       recipeFailure =
         "This guided visual could not be initialized. Use its text alternative.";
@@ -49,6 +50,15 @@
 
   const fallbackStatus = (message) =>
     message || "Graph preview unavailable. Use the slider below.";
+
+  const attemptOutcome = (status) =>
+    status === "solved"
+      ? "correct"
+      : status === "invalid"
+        ? "not counted"
+        : status === "remediated"
+          ? "review shown"
+          : "needs another try";
 
   function normalizeScene(activeRecipe, widget, widgetState) {
     if (!activeRecipe) {
@@ -77,6 +87,7 @@
 
   function updateState(nextState) {
     state = nextState;
+    onDraftChange({ key: item.key, state: nextState });
   }
 
   async function check() {
@@ -130,11 +141,25 @@
   }
 
   $: sceneState = normalizeScene(activeRecipe, config, state);
+  $: externalState =
+    item.widget_state ?? item.widget_current_state ?? item.state ?? null;
+  $: externalStateKey = JSON.stringify(externalState);
+  $: if (recipe && externalStateKey !== appliedExternalState) {
+    try {
+      state = recipe.init(config, externalState);
+      appliedExternalState = externalStateKey;
+      recipeFailure = "";
+    } catch {
+      recipeFailure =
+        "This guided visual could not restore its saved state. Use its text alternative.";
+    }
+  }
   $: if (terminalStatuses.has(item.widget_status)) {
     completed = true;
   }
-  $: archiveLabel =
-    item.widget_status === "remediated"
+  $: archiveLabel = item.kind === "widget_attempt" && item.widget_attempt_number
+    ? `attempt ${item.widget_attempt_number}: ${attemptOutcome(item.widget_status)}`
+    : item.widget_status === "remediated"
       ? "remediated practice"
       : item.widget_status === "text_fallback"
         ? "text alternative selected"

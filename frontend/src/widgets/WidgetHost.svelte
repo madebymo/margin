@@ -6,6 +6,7 @@
   export let disabled = false;
   export let onAttempt = async () => {};
   export let onTextFallback = async () => {};
+  export let onDraftChange = () => {};
   export let onError = () => {};
 
   const recipe = recipeFor(item.widget?.widget_type);
@@ -17,5 +18,6 @@
   {disabled}
   {onAttempt}
   {onTextFallback}
+  {onDraftChange}
   {onError}
 />
