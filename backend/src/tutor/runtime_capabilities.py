@@ -5,14 +5,16 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-WIDGET_CAPABILITY_VERSION = "web-widget-capabilities-v2.1"
-_KNOWN_WIDGET_TYPES = frozenset({"mapping", "slider", "live_input", "click_region"})
+WIDGET_CAPABILITY_VERSION = "web-widget-capabilities-v2.2"
+_KNOWN_WIDGET_TYPES = frozenset(
+    {"mapping_v1", "slider_v1", "live_input", "click_region"}
+)
 
 
 def widget_capability_manifest(*, rich_widgets: bool = True) -> dict[str, Any]:
     """Return a fresh learner-safe manifest for generation and rendering."""
     supported = {
-        "mapping": {
+        "mapping_v1": {
             "keyboard_equivalent": True,
             "live_visual": False,
         },
@@ -28,12 +30,12 @@ def widget_capability_manifest(*, rich_widgets: bool = True) -> dict[str, Any]:
         ),
     }
     if rich_widgets:
-        supported["slider"] = {
+        supported["slider_v1"] = {
             "keyboard_equivalent": True,
-            "live_visual": True,
+            "live_visual": False,
         }
     else:
-        disabled["slider"] = "Rich widget rollout is disabled."
+        disabled["slider_v1"] = "Rich widget rollout is disabled."
     return {
         "version": WIDGET_CAPABILITY_VERSION,
         "supported": supported,

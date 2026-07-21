@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 import logging
+import math
 import threading
 from collections import Counter, OrderedDict
 from contextlib import nullcontext
@@ -40,6 +41,7 @@ from tutor.api.v2_schemas import (
     TranscriptEntry,
     WidgetAttemptAction,
 )
+from tutor.schemas.assessment import PlotPromptSegment
 from tutor.orchestrator.machine import Interaction
 
 logger = logging.getLogger("tutor.api.v2.operations")
@@ -1431,6 +1433,13 @@ class V2SessionStore:
             and hints_given < len(revealing_hints)
             and revealing_hints[hints_given]
         )
+        public_widget = getattr(orchestrator, "pending_widget", None)
+        if callable(public_widget):
+            public_widget = public_widget()
+        widget = self._safe_widget(public_widget)
+        raw_widget_state = getattr(pending, "widget_state", None)
+        if hasattr(raw_widget_state, "model_dump"):
+            raw_widget_state = raw_widget_state.model_dump(mode="json")
         return PendingView(
             key=key,
             kind=str(getattr(kind, "value", kind)),
@@ -1440,6 +1449,8 @@ class V2SessionStore:
             prompt=str(getattr(pending, "prompt", "")),
             prompt_segments=prompt_segments,
             choice_options=choice_options,
+            widget=widget,
+            widget_state=self._safe_widget_state(raw_widget_state),
             hint=PendingHintView(
                 available=hint_available,
                 next_index=min(hints_given, len(hints)),
@@ -1598,13 +1609,67 @@ class V2SessionStore:
         if not isinstance(widget, dict):
             return None
         widget_type = widget.get("widget_type")
+        if not isinstance(widget_type, str):
+            return None
         common = {
             "widget_type": widget_type,
             "learning_objective": str(widget.get("learning_objective", "")),
             "prompt": str(widget.get("prompt", "")),
             "text_fallback": str(widget.get("text_fallback", "")),
         }
-        if widget_type == "slider":
+        interaction_version = widget.get("interaction_version")
+        if interaction_version in {"mapping_v1", "slider_v1"}:
+            common["interaction_version"] = interaction_version
+        if widget_type in {"slider_v1", "slider"}:
+            presentation = widget.get("presentation")
+            if isinstance(presentation, dict):
+                required_strings = (
+                    "prompt",
+                    "label",
+                    "help_text",
+                    "value_label",
+                )
+                required_numbers = (
+                    "minimum",
+                    "maximum",
+                    "step",
+                    "initial_value",
+                )
+                if not all(
+                    isinstance(presentation.get(key), str)
+                    for key in required_strings
+                ):
+                    return None
+                if not all(
+                    not isinstance(presentation.get(key), bool)
+                    and isinstance(presentation.get(key), (int, float))
+                    and math.isfinite(float(presentation[key]))
+                    for key in required_numbers
+                ):
+                    return None
+                safe_presentation = {
+                    key: presentation[key]
+                    for key in (*required_strings, *required_numbers)
+                }
+                result_template = presentation.get("result_template")
+                if result_template is not None:
+                    if not isinstance(result_template, str):
+                        return None
+                    safe_presentation["result_template"] = result_template
+                visual_summary = presentation.get("visual_summary")
+                if visual_summary is not None:
+                    try:
+                        safe_presentation["visual_summary"] = (
+                            PlotPromptSegment.model_validate(
+                                visual_summary
+                            ).model_dump(mode="json")
+                        )
+                    except (TypeError, ValueError):
+                        return None
+                common["presentation"] = safe_presentation
+                return common
+            if widget_type == "slider_v1":
+                return None
             params = widget.get("params")
             if not isinstance(params, dict):
                 return None
@@ -1627,7 +1692,26 @@ class V2SessionStore:
                 for region in regions
                 if isinstance(region, dict)
             ]
-        elif widget_type == "mapping":
+        elif widget_type in {"mapping_v1", "mapping"}:
+            presentation = widget.get("presentation")
+            if isinstance(presentation, dict):
+                rows = V2SessionStore._safe_mapping_entries(
+                    presentation.get("rows")
+                )
+                options = V2SessionStore._safe_mapping_entries(
+                    presentation.get("options")
+                )
+                prompt = presentation.get("prompt")
+                if rows is None or options is None or not isinstance(prompt, str):
+                    return None
+                common["presentation"] = {
+                    "prompt": prompt,
+                    "rows": rows,
+                    "options": options,
+                }
+                return common
+            if widget_type == "mapping_v1":
+                return None
             left, right = widget.get("left"), widget.get("right")
             if not isinstance(left, list) or not isinstance(right, list):
                 return None
@@ -1643,6 +1727,66 @@ class V2SessionStore:
         else:
             return None
         return common
+
+    @staticmethod
+    def _safe_mapping_entries(value: Any) -> list[dict[str, str]] | None:
+        if not isinstance(value, list) or not 2 <= len(value) <= 12:
+            return None
+        result: list[dict[str, str]] = []
+        for entry in value:
+            if not isinstance(entry, dict):
+                return None
+            entry_id = entry.get("entry_id")
+            label = entry.get("label")
+            spoken_text = entry.get("spoken_text")
+            if not all(
+                isinstance(field, str) and field
+                for field in (entry_id, label, spoken_text)
+            ):
+                return None
+            result.append(
+                {
+                    "entry_id": entry_id,
+                    "label": label,
+                    "spoken_text": spoken_text,
+                }
+            )
+        return result
+
+    @staticmethod
+    def _safe_widget_state(value: Any) -> dict[str, Any] | None:
+        """Keep only resumable learner selections, never private widget truth."""
+
+        if not isinstance(value, dict):
+            return None
+        if "value" in value:
+            current = value.get("value")
+            if (
+                isinstance(current, bool)
+                or not isinstance(current, (int, float))
+                or not math.isfinite(float(current))
+            ):
+                return None
+            return {"value": current}
+        rows = value.get("rows")
+        if not isinstance(rows, list) or not 2 <= len(rows) <= 12:
+            return None
+        safe_rows: list[dict[str, str]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                return None
+            row_id = row.get("id")
+            selected = row.get("value", "")
+            if (
+                not isinstance(row_id, str)
+                or not row_id
+                or len(row_id) > 64
+                or not isinstance(selected, str)
+                or len(selected) > 64
+            ):
+                return None
+            safe_rows.append({"id": row_id, "value": selected})
+        return {"rows": safe_rows}
 
     @staticmethod
     def _interaction_entries(
@@ -1668,6 +1812,9 @@ class V2SessionStore:
                     kc_id=data.get("kc_id"),
                     prompt_segments=data.get("prompt_segments"),
                     widget=V2SessionStore._safe_widget(data.get("widget")),
+                    widget_state=V2SessionStore._safe_widget_state(
+                        data.get("widget_state")
+                    ),
                 )
             )
         return entries
@@ -1713,6 +1860,9 @@ class V2SessionStore:
                     kc_id=addition.get("kc_id"),
                     prompt_segments=addition.get("prompt_segments"),
                     widget=self._safe_widget(addition.get("widget")),
+                    widget_state=self._safe_widget_state(
+                        addition.get("widget_state")
+                    ),
                     widget_status=addition.get("widget_status"),
                     widget_attempt_number=addition.get("widget_attempt_number"),
                 )
@@ -1771,6 +1921,7 @@ class V2SessionStore:
                 )
                 counted = bool(getattr(result, "counted", True))
                 attempt_number = getattr(result, "attempt_number", None)
+            widget_state = getattr(result, "widget_state", None)
             attempt = {
                 "interaction_key": action.pending_key,
                 "response": action.response,
@@ -1786,6 +1937,7 @@ class V2SessionStore:
                     "interaction_key": action.pending_key,
                     "widget_status": verification_status,
                     "widget_attempt_number": attempt_number,
+                    "widget_state": widget_state,
                 },
                 *transitions,
             ], attempt

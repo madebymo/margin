@@ -27,9 +27,10 @@ describe("widget recipes", () => {
       ]);
     }
     expect(Object.keys(widgetCapabilities.supported).sort()).toEqual([
-      "mapping",
-      "slider",
+      "mapping_v1",
+      "slider_v1",
     ]);
+    expect(widgetCapabilities.supported.slider_v1.live_visual).toBe(false);
     expect(recipeFor("click_region")).toBeNull();
     expect(recipeFor("live_input")).toBeNull();
     expect(recipeFor("unknown")).toBeNull();
@@ -45,14 +46,19 @@ describe("widget recipes", () => {
   it("fails closed to mapping-only capabilities until the server confirms rich UI", () => {
     installWidgetCapabilities(widgetCapabilities);
     expect(recipeFor("live_input")).toBeNull();
+    expect(recipeFor("slider_v1")).toBe(recipes.slider);
     expect(recipeFor("slider")).toBe(recipes.slider);
 
     // This is the bootstrap error path after a prior successful manifest.
     installMinimalWidgetCapabilities();
 
-    expect(Object.keys(minimalWidgetCapabilities.supported)).toEqual(["mapping"]);
+    expect(Object.keys(minimalWidgetCapabilities.supported)).toEqual([
+      "mapping_v1",
+    ]);
+    expect(recipeFor("mapping_v1")).toBe(recipes.mapping);
     expect(recipeFor("mapping")).toBe(recipes.mapping);
     expect(recipeFor("live_input")).toBeNull();
+    expect(recipeFor("slider_v1")).toBeNull();
     expect(recipeFor("slider")).toBeNull();
     expect(widgetCapability("live_input")).toMatchObject({
       supported: false,
@@ -86,6 +92,26 @@ describe("widget recipes", () => {
     state.value = 1.25;
 
     expect(recipes.slider.responseFrom(state)).toEqual({ value: 1.25 });
+  });
+
+  it("restores slider-v1 state without requiring a legacy plot recipe", () => {
+    const config = {
+      presentation: {
+        prompt: "Choose the new exponent.",
+        label: "Exponent",
+        help_text: "Use arrow keys or the slider.",
+        minimum: -2,
+        maximum: 7,
+        step: 1,
+        initial_value: 0,
+        value_label: "Selected exponent",
+        result_template: "The exponent becomes {value}.",
+      },
+    };
+
+    expect(recipes.slider.init(config, { value: 3 })).toEqual({ value: 3 });
+    expect(recipes.slider.normalize(config, { value: 3 })).toBeNull();
+    expect(recipes.slider.responseFrom({ value: 3 })).toEqual({ value: 3 });
   });
 
   it("preserves reviewed mapping order and restores a valid draft", () => {

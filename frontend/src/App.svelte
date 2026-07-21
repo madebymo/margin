@@ -450,11 +450,19 @@
   function widgetItem(entry) {
     const latestStatus = [...(view?.transcript ?? [])]
       .reverse()
-      .find((candidate) => candidate.key === entry.key && candidate.widget_status);
+      .find(
+        (candidate) =>
+          candidate.key === entry.key &&
+          (candidate.widget_status || candidate.widget_state),
+      );
+    const pendingState =
+      view?.pending?.key === entry.key ? view.pending.widget_state : null;
     return {
       ...entry.raw,
       key: entry.key,
       widget: entry.widget,
+      widget_state:
+        pendingState ?? latestStatus?.widget_state ?? entry.widget_state ?? null,
       widget_status: latestStatus?.widget_status ?? entry.widget_status,
       widget_attempt_number:
         latestStatus?.widget_attempt_number ?? entry.widget_attempt_number,
@@ -807,6 +815,7 @@
               item={{
                 key: view.pending.key,
                 widget: view.pending.widget,
+                widget_state: view.pending.widget_state,
               }}
               disabled={busy}
               onAttempt={submitWidget}

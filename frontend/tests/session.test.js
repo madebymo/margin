@@ -128,15 +128,21 @@ describe("authoritative session normalization", () => {
         kind: "widget",
         input_mode: "widget",
         widget: {
-          widget_type: "mapping",
+          widget_type: "mapping_v1",
           left: ["x"],
           right: ["1"],
+        },
+        widget_state: {
+          rows: [{ id: "x", value: "1" }],
         },
       },
     });
 
     expect(isWidgetPending(view.pending)).toBe(true);
     expect(pendingAcceptsText(view.pending)).toBe(false);
+    expect(view.pending.widget_state).toEqual({
+      rows: [{ id: "x", value: "1" }],
+    });
   });
 
   it("treats an explicit text delivery as text even for guided-widget evidence", () => {
@@ -221,7 +227,7 @@ describe("authoritative session normalization", () => {
         key: "check-1",
         kind: "widget",
         input_mode: "widget",
-        widget: { widget_type: "mapping" },
+        widget: { widget_type: "mapping_v1" },
       },
     });
 

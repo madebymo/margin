@@ -195,6 +195,7 @@ function normalizeTranscriptEntry(entry, index) {
     content_blocks: contentBlocks,
     prompt_segments: promptSegments,
     widget: entry.widget ?? entry.interaction?.widget ?? null,
+    widget_state: entry.widget_state ?? null,
     widget_status: entry.widget_status ?? entry.status ?? null,
     widget_attempt_number: entry.widget_attempt_number ?? null,
     raw: entry,
@@ -264,6 +265,7 @@ function normalizePending(raw, transcript) {
       : [],
     placeholder: value.placeholder ?? "Type your answer",
     widget,
+    widget_state: value.widget_state ?? value.widget_current_state ?? null,
   };
 }
 

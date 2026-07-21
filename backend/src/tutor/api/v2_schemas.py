@@ -122,6 +122,7 @@ class TranscriptEntry(BaseModel):
     kc_id: str | None = None
     prompt_segments: list[dict[str, Any]] | None = None
     widget: dict[str, Any] | None = None
+    widget_state: dict[str, Any] | None = None
     widget_status: Literal[
         "active",
         "invalid",
@@ -161,6 +162,8 @@ class PendingView(BaseModel):
     prompt: str
     prompt_segments: list[dict[str, Any]] = Field(default_factory=list)
     choice_options: list[str] = Field(default_factory=list)
+    widget: dict[str, Any] | None = None
+    widget_state: dict[str, Any] | None = None
     hint: PendingHintView
     # Compatibility field for clients predating the structured hint contract.
     can_hint: bool = True

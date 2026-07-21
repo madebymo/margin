@@ -104,12 +104,16 @@ def _answer(view: dict, answer: str, request_id=None) -> dict:
 
 
 def _widget(view: dict, text: str, request_id=None) -> dict:
+    return _widget_response(view, {"text": text}, request_id=request_id)
+
+
+def _widget_response(view: dict, response: dict, request_id=None) -> dict:
     return {
         "type": "widget_attempt",
         "request_id": str(request_id or uuid4()),
         "expected_revision": view["revision"],
         "pending_key": view["pending"]["key"],
-        "response": {"text": text},
+        "response": response,
     }
 
 
@@ -377,7 +381,7 @@ def test_rich_widget_flag_keeps_core_flow_and_uses_text_guided_practice():
     assert practiced_view["pending"]["kind"] == "checkin"
 
 
-def test_live_input_stays_disabled_with_rich_flag_and_after_durable_restore():
+def test_reviewed_slider_restores_then_falls_back_when_runtime_disables_it():
     secret = b"capability-restore-secret-material-32-bytes"
     persistence = V2PersistenceService(
         PersistenceService(
@@ -406,8 +410,17 @@ def test_live_input_stays_disabled_with_rich_flag_and_after_durable_restore():
         )
         assert response.status_code == 200
         view = response.json()
-    assert view["pending"]["input_mode"] == "math"
-    assert not any(entry["widget"] for entry in view["transcript"])
+    assert view["pending"]["input_mode"] == "widget"
+    assert view["pending"]["widget"]["widget_type"] == "slider_v1"
+    assert view["pending"]["widget_state"] == {"value": 0.0}
+    assert "scoring" not in str(view["pending"]["widget"])
+    attempted = first.post(
+        f"/api/v2/sessions/{view['session_id']}/actions",
+        json=_widget_response(view, {"value": 2}),
+    )
+    assert attempted.status_code == 200
+    view = attempted.json()
+    assert view["pending"]["widget_state"] == {"value": 2.0}
     raw_token = first.cookies.get("tutor_resume_v2")
 
     restarted = TestClient(
@@ -424,6 +437,8 @@ def test_live_input_stays_disabled_with_rich_flag_and_after_durable_restore():
     restored_view = restored.json()
     assert restored_view["pending"]["key"] == view["pending"]["key"]
     assert restored_view["pending"]["input_mode"] == "math"
+    assert restored_view["pending"]["widget"] is None
+    assert restored_view["pending"]["widget_state"] == {"value": 2.0}
     manifest = restarted.get("/api/v2/capabilities").json()
     assert "live_input" not in manifest["supported"]
     restored_handle = restarted.app.state.v2_store.get(view["session_id"])
@@ -1058,7 +1073,7 @@ def test_revealing_hint_abandons_item_without_mastery_evidence(client):
     )
 
 
-def test_post_diagnosis_unreleased_live_input_uses_text_without_widget_state(client):
+def test_post_diagnosis_uses_reviewed_slider_without_exposing_scoring_state(client):
     created, _ = _create(client)
     view = created.json()
     orchestrator = client.app.state.v2_store.get(view["session_id"]).orchestrator
@@ -1075,15 +1090,20 @@ def test_post_diagnosis_unreleased_live_input_uses_text_without_widget_state(cli
 
     assert view["phase"] == "teach"
     assert view["pending"]["kind"] == "guided_widget"
-    assert view["pending"]["input_mode"] == "math"
-    assert not any(entry["widget"] for entry in view["transcript"])
+    assert view["pending"]["input_mode"] == "widget"
+    assert view["pending"]["widget"]["widget_type"] == "slider_v1"
+    assert view["pending"]["widget_state"] == {"value": 0.0}
+    assert "scoring" not in str(view["pending"]["widget"])
+    assert "target" not in str(view["pending"]["widget"])
 
     rejected_widget = client.post(
         f"/api/v2/sessions/{view['session_id']}/actions",
         json=_widget(view, "factorial(5)"),
     )
-    assert rejected_widget.status_code == 404
-    assert client.get("/api/v2/sessions/current").json() == view
+    assert rejected_widget.status_code == 200
+    rejected_view = rejected_widget.json()
+    assert rejected_view["pending"]["key"] == view["pending"]["key"]
+    assert rejected_view["revision"] == view["revision"] + 1
 
     handle = client.app.state.v2_store.get(view["session_id"])
     assert not any(
@@ -1093,39 +1113,22 @@ def test_post_diagnosis_unreleased_live_input_uses_text_without_widget_state(cli
 
     practiced = client.post(
         f"/api/v2/sessions/{view['session_id']}/actions",
-        json=_answer(view, handle.orchestrator.pending_expected),
+        json=_widget_response(rejected_view, {"value": 3}),
     )
     assert practiced.status_code == 200
-    assert practiced.json()["pending"]["kind"] == "checkin"
-
-
-def test_durable_widget_trajectory_distinguishes_invalid_from_incorrect(monkeypatch):
-    # Exercise the dormant widget-attempt ledger with an explicit test-only
-    # capability. The production manifest intentionally cannot release this
-    # widget until its render semantics have been reviewed end to end.
-    import tutor.api.v2 as v2_module
-
-    monkeypatch.setattr(
-        v2_module,
-        "widget_capability_manifest",
-        lambda *, rich_widgets=True: {
-            "version": "web-widget-capabilities-v2.1",
-            "supported": {
-                "mapping": {
-                    "keyboard_equivalent": True,
-                    "live_visual": False,
-                },
-                "live_input": {
-                    "keyboard_equivalent": True,
-                    "live_visual": True,
-                },
-            },
-            "disabled": {
-                "slider": "Test-only manifest.",
-                "click_region": "Test-only manifest.",
-            },
-        },
+    practiced_view = practiced.json()
+    assert practiced_view["pending"]["kind"] == "checkin"
+    archived_feedback = next(
+        entry
+        for entry in reversed(practiced_view["transcript"])
+        if entry["interaction_key"] == view["pending"]["key"]
+        and entry["kind"] == "widget_feedback"
     )
+    assert archived_feedback["widget_status"] == "solved"
+    assert archived_feedback["widget_state"] == {"value": 3.0}
+
+
+def test_durable_widget_trajectory_distinguishes_invalid_from_incorrect():
     app = _v2_app(durable=True)
     client = TestClient(app)
     created, _ = _create(client)
@@ -1143,7 +1146,7 @@ def test_durable_widget_trajectory_distinguishes_invalid_from_incorrect(monkeypa
 
     invalid = client.post(
         f"/api/v2/sessions/{view['session_id']}/actions",
-        json=_widget(view, "factorial(5)"),
+        json=_widget_response(view, {"value": 2.5}),
     )
     assert invalid.status_code == 200
     with Session(app.state.persistence.engine) as session:
@@ -1152,6 +1155,22 @@ def test_durable_widget_trajectory_distinguishes_invalid_from_incorrect(monkeypa
         assert attempt.verification_status == "invalid"
         assert attempt.counted is False
         assert attempt.correct is False
+
+    invalid_view = invalid.json()
+    incorrect = client.post(
+        f"/api/v2/sessions/{view['session_id']}/actions",
+        json=_widget_response(invalid_view, {"value": 2}),
+    )
+    assert incorrect.status_code == 200
+    with Session(app.state.persistence.engine) as session:
+        attempts = session.scalars(
+            select(m.WidgetAttemptRow).order_by(m.WidgetAttemptRow.created_at)
+        ).all()
+        assert [attempt.verification_status for attempt in attempts] == [
+            "invalid",
+            "attempted",
+        ]
+        assert [attempt.counted for attempt in attempts] == [False, True]
 
 
 def test_widget_payload_limits_reject_oversized_nested_state_without_mutation(client):

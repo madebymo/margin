@@ -56,7 +56,10 @@ export const recipes = Object.freeze({
       return { value };
     },
     normalize(config, state) {
-      if (!config.params.plot) {
+      // Reviewed slider-v1 interactions deliberately expose bounded state and
+      // an optional static summary, not the legacy live-input plot recipe.
+      // The native range control and live text remain the complete interaction.
+      if (!config.params?.plot) {
         return null;
       }
       return normalizeSlider(config, state);
@@ -102,12 +105,21 @@ export const recipes = Object.freeze({
   }),
 });
 
+const recipeNameByWidgetType = Object.freeze({
+  mapping_v1: "mapping",
+  slider_v1: "slider",
+  // Read-only compatibility for legacy sessions while their resume window drains.
+  mapping: "mapping",
+  slider: "slider",
+});
+
 export function recipeFor(widgetType) {
   if (!widgetCapability(widgetType).supported) {
     return null;
   }
-  if (!Object.prototype.hasOwnProperty.call(recipes, widgetType)) {
+  const recipeName = recipeNameByWidgetType[widgetType];
+  if (!recipeName || !Object.prototype.hasOwnProperty.call(recipes, recipeName)) {
     return null;
   }
-  return recipes[widgetType];
+  return recipes[recipeName];
 }

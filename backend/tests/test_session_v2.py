@@ -453,24 +453,7 @@ def test_episode_capability_pin_cannot_be_widened_by_runtime_enable():
     assert not any(interaction.widget for interaction in interactions)
 
 
-def test_text_fallback_requires_genuine_practice_before_learning_transition():
-    legacy_live_input_manifest = {
-        "version": "web-widget-capabilities-v2.1",
-        "supported": {
-            "mapping": {
-                "keyboard_equivalent": True,
-                "live_visual": False,
-            },
-            "live_input": {
-                "keyboard_equivalent": True,
-                "live_visual": True,
-            },
-        },
-        "disabled": {
-            "slider": "Not pinned for this test episode.",
-            "click_region": "Not pinned for this test episode.",
-        },
-    }
+def test_reviewed_slider_widget_scores_private_truth_and_restores_current_state():
     session = SessionOrchestratorV2(
         power_rule_only_graph(),
         TARGET,
@@ -478,7 +461,140 @@ def test_text_fallback_requires_genuine_practice_before_learning_transition():
         item_bank=approved_power_rule_bank(),
         probe_budget=2,
         pedagogy_catalog=approved_power_rule_catalog(),
-        widget_capabilities=legacy_live_input_manifest,
+        widget_capabilities=widget_capability_manifest(rich_widgets=True),
+    )
+    session.begin()
+    session.submit("0")
+    lesson = session.submit("0")
+
+    assert session.pending.kind == "guided_widget"
+    assert session.pending.delivery_mode == "widget"
+    widget = next(interaction.widget for interaction in lesson if interaction.widget)
+    assert widget["widget_type"] == "slider_v1"
+    assert widget["presentation"]["initial_value"] == 0
+    assert "scoring" not in str(widget)
+    assert "target" not in str(widget)
+
+    attempted = session.answer_widget(session.pending.key, {"value": 2})
+    assert attempted.status == "attempted"
+    assert attempted.counted
+    assert attempted.widget_state == {"kind": "slider_v1", "value": 2.0}
+    assert session.pending.widget_state.value == 2
+    assert session.learner.events[-1].response_class == "widget"
+    assert not session.learner.events[-1].learning_opportunity
+
+    checkpoint = session.export_checkpoint()
+    restored = SessionOrchestratorV2.restore(
+        power_rule_only_graph(),
+        checkpoint,
+        item_bank=approved_power_rule_bank(),
+        pedagogy_catalog=approved_power_rule_catalog(),
+    )
+    assert restored.pending.widget_state.value == 2
+    assert restored.pending_widget == session.pending_widget
+
+    invalid = restored.answer_widget(restored.pending.key, {"value": 2.5})
+    assert invalid.status == "invalid"
+    assert not invalid.counted
+    assert restored._widget_attempts[restored.pending.key] == 1
+    assert restored.pending.widget_state.value == 2
+
+    solved = restored.answer_widget(restored.pending.key, {"value": 3})
+    assert solved.status == "solved"
+    assert restored.pending.kind == "checkin"
+
+
+def test_reviewed_mapping_widget_rejects_partial_state_without_counting():
+    payload = approved_power_rule_bank().model_dump(mode="json")
+    guided = next(
+        item
+        for item in payload["items"]
+        if AssessmentSurface.GUIDED_WIDGET.value in item["eligible_surfaces"]
+    )
+    guided["guided_interaction"] = {
+        "kind": "mapping_v1",
+        "presentation": {
+            "prompt": "Match each power with its derivative.",
+            "rows": [
+                {
+                    "entry_id": "row.square",
+                    "label": "x^2",
+                    "spoken_text": "x squared",
+                },
+                {
+                    "entry_id": "row.cube",
+                    "label": "x^3",
+                    "spoken_text": "x cubed",
+                },
+            ],
+            "options": [
+                {
+                    "entry_id": "option.2x",
+                    "label": "2*x",
+                    "spoken_text": "two x",
+                },
+                {
+                    "entry_id": "option.3x2",
+                    "label": "3*x^2",
+                    "spoken_text": "three x squared",
+                },
+            ],
+        },
+        "scoring": {
+            "correct_pairs": [
+                ["row.square", "option.2x"],
+                ["row.cube", "option.3x2"],
+            ]
+        },
+    }
+    bank = ItemBankDocument.model_validate(payload)
+    session = SessionOrchestratorV2(
+        power_rule_only_graph(),
+        TARGET,
+        PROFILE,
+        item_bank=bank,
+        probe_budget=2,
+        pedagogy_catalog=approved_power_rule_catalog(),
+        widget_capabilities=widget_capability_manifest(rich_widgets=False),
+    )
+    session.begin()
+    session.submit("0")
+    session.submit("0")
+
+    assert session.pending_widget["widget_type"] == "mapping_v1"
+    assert "correct_pairs" not in str(session.pending_widget)
+    partial = session.answer_widget(
+        session.pending.key,
+        {"pairs": [["row.square", "option.2x"]]},
+    )
+    assert partial.status == "invalid"
+    assert not partial.counted
+    assert session._widget_attempts == {}
+    assert session.pending.widget_state.rows[0].value == "option.2x"
+    assert session.pending.widget_state.rows[1].value == ""
+
+    solved = session.answer_widget(
+        session.pending.key,
+        {
+            "pairs": [
+                ["row.square", "option.2x"],
+                ["row.cube", "option.3x2"],
+            ]
+        },
+    )
+    assert solved.status == "solved"
+    assert session.pending.kind == "checkin"
+
+
+def test_text_fallback_requires_genuine_practice_before_learning_transition():
+    session = SessionOrchestratorV2(
+        power_rule_only_graph(),
+        TARGET,
+        PROFILE,
+        item_bank=approved_power_rule_bank(),
+        probe_budget=2,
+        pedagogy_catalog=approved_power_rule_catalog(),
+        widget_capabilities=widget_capability_manifest(rich_widgets=True),
     )
     session.begin()
     session.submit("0")

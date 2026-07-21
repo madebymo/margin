@@ -7,11 +7,12 @@ and expected answers remain inside the pending server state.
 
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from tutor.content.exposure import AllocationError, ItemAllocator
 from tutor.content.item_bank import (
@@ -51,6 +52,8 @@ from tutor.schemas.assessment import (
     AssessmentItem,
     AssessmentSurface,
     ContentExposureState,
+    GuidedMappingSpec,
+    GuidedSliderSpec,
     ItemBankDocument,
     ItemReservation,
     LessonBundleReservation,
@@ -66,6 +69,39 @@ from tutor.verify.checker import verify_answer
 LESSON_POLICY_VERSION = "lesson-flow-v2.4"
 CAPSTONE_POLICY_VERSION = "capstone-v2.1"
 ALLOCATOR_POLICY_VERSION = "allocator-v2.2"
+
+
+class GuidedMappingStateRow(BaseModel):
+    """One public, resumable mapping selection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1, max_length=64)
+    value: str = Field(default="", max_length=64)
+
+
+class GuidedMappingState(BaseModel):
+    """Deterministically ordered public state for a mapping activity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["mapping_v1"] = "mapping_v1"
+    rows: list[GuidedMappingStateRow] = Field(min_length=2, max_length=12)
+
+
+class GuidedSliderState(BaseModel):
+    """Public current value for a bounded slider activity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["slider_v1"] = "slider_v1"
+    value: float = Field(allow_inf_nan=False)
+
+
+GuidedWidgetState = Annotated[
+    GuidedMappingState | GuidedSliderState,
+    Field(discriminator="kind"),
+]
 
 
 class PendingInteractionV2(BaseModel):
@@ -86,6 +122,7 @@ class PendingInteractionV2(BaseModel):
     hints_given: int = 0
     attempt_number: int = 1
     delivery_mode: Literal["widget", "text"] = "widget"
+    widget_state: GuidedWidgetState | None = None
 
     @property
     def input_mode(self) -> Literal["math", "choice", "widget"]:
@@ -111,6 +148,7 @@ class WidgetResultV2(BaseModel):
     status: Literal["invalid", "attempted", "solved", "remediated"]
     counted: bool
     attempt_number: int | None = Field(default=None, ge=1)
+    widget_state: dict[str, Any] | None = None
     interactions: list[Interaction] = Field(default_factory=list)
 
 
@@ -223,7 +261,7 @@ class SessionOrchestratorV2:
         self._profile = profile
         self._episode_id = episode_id or uuid4().hex
         self._pinned_widget_capabilities = normalize_widget_capability_manifest(
-            widget_capabilities or widget_capability_manifest()
+            widget_capabilities or widget_capability_manifest(rich_widgets=False)
         )
         self._runtime_widget_capabilities = normalize_widget_capability_manifest(
             self._pinned_widget_capabilities
@@ -348,15 +386,23 @@ class SessionOrchestratorV2:
         self._runtime_widget_capabilities = normalize_widget_capability_manifest(
             manifest
         )
+        pending = self._pending
+        pending_widget_type = None
+        if pending is not None and pending.kind == "guided_widget":
+            pending_item = self._item_for(pending.reservation)
+            pending_widget_type = self._guided_widget_type(pending_item)
         if (
-            self._pending is not None
-            and self._pending.kind == "guided_widget"
-            and self._pending.delivery_mode == "widget"
-            and not self._widget_supported("live_input")
+            pending is not None
+            and pending.kind == "guided_widget"
+            and pending.delivery_mode == "widget"
+            and (
+                pending_widget_type is None
+                or not self._widget_supported(pending_widget_type)
+            )
         ):
             # A widget already present in the transcript becomes read-only; the
             # same pending practice remains answerable through the text composer.
-            self._pending.delivery_mode = "text"
+            pending.delivery_mode = "text"
 
     def _effective_widget_capabilities(self) -> dict[str, Any]:
         return effective_widget_capability_manifest(
@@ -546,6 +592,175 @@ class SessionOrchestratorV2:
     def _item_for(self, reservation: ItemReservation) -> AssessmentItem:
         return self._allocator.item_for(reservation)
 
+    @staticmethod
+    def _guided_widget_type(item: AssessmentItem) -> str | None:
+        spec = item.guided_interaction
+        if isinstance(spec, GuidedMappingSpec):
+            return "mapping_v1"
+        if isinstance(spec, GuidedSliderSpec):
+            return "slider_v1"
+        return None
+
+    @staticmethod
+    def _initial_guided_widget_state(
+        item: AssessmentItem,
+    ) -> GuidedWidgetState | None:
+        spec = item.guided_interaction
+        if isinstance(spec, GuidedMappingSpec):
+            return GuidedMappingState(
+                rows=[
+                    GuidedMappingStateRow(id=row.entry_id)
+                    for row in spec.presentation.rows
+                ]
+            )
+        if isinstance(spec, GuidedSliderSpec):
+            return GuidedSliderState(value=spec.presentation.initial_value)
+        return None
+
+    def _public_guided_widget(self, item: AssessmentItem) -> dict[str, Any] | None:
+        """Project reviewed presentation fields without private scoring truth."""
+
+        widget_type = self._guided_widget_type(item)
+        spec = item.guided_interaction
+        if widget_type is None or spec is None:
+            return None
+        return {
+            "widget_type": widget_type,
+            "interaction_version": spec.kind,
+            "learning_objective": (
+                f"Guided practice for {self._nodes[item.kc_id].name}"
+            ),
+            "prompt": spec.presentation.prompt,
+            "presentation": spec.presentation.model_dump(mode="json"),
+            "text_fallback": (
+                "Use the same reviewed exercise as keyboard text practice, then "
+                "continue to an independent check."
+            ),
+        }
+
+    @property
+    def pending_widget(self) -> dict[str, Any] | None:
+        """Return only the safe widget presentation for the active interaction."""
+
+        pending = self._pending
+        if (
+            pending is None
+            or pending.kind != "guided_widget"
+            or pending.delivery_mode != "widget"
+        ):
+            return None
+        return self._public_guided_widget(self._item_for(pending.reservation))
+
+    @staticmethod
+    def _score_guided_widget_response(
+        item: AssessmentItem,
+        response: dict[str, Any],
+    ) -> tuple[Literal["correct", "incorrect", "invalid"], GuidedWidgetState | None]:
+        """Validate public widget state and apply only reviewed private truth."""
+
+        spec = item.guided_interaction
+        if isinstance(spec, GuidedMappingSpec):
+            if set(response) != {"pairs"} or not isinstance(response["pairs"], list):
+                return "invalid", None
+            row_ids = [entry.entry_id for entry in spec.presentation.rows]
+            option_ids = {entry.entry_id for entry in spec.presentation.options}
+            selected: dict[str, str] = {}
+            for pair in response["pairs"]:
+                if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                    return "invalid", None
+                row_id, option_id = pair
+                if not isinstance(row_id, str) or not isinstance(option_id, str):
+                    return "invalid", None
+                if (
+                    row_id not in row_ids
+                    or option_id not in option_ids
+                    or row_id in selected
+                ):
+                    return "invalid", None
+                selected[row_id] = option_id
+            state = GuidedMappingState(
+                rows=[
+                    GuidedMappingStateRow(
+                        id=row_id,
+                        value=selected.get(row_id, ""),
+                    )
+                    for row_id in row_ids
+                ]
+            )
+            if set(selected) != set(row_ids):
+                return "invalid", state
+            expected = dict(spec.scoring.correct_pairs)
+            return (
+                "correct" if selected == expected else "incorrect",
+                state,
+            )
+
+        if isinstance(spec, GuidedSliderSpec):
+            if set(response) != {"value"}:
+                return "invalid", None
+            raw_value = response["value"]
+            if isinstance(raw_value, bool) or not isinstance(raw_value, (int, float)):
+                return "invalid", None
+            value = float(raw_value)
+            presentation = spec.presentation
+            if (
+                not math.isfinite(value)
+                or value < presentation.minimum
+                or value > presentation.maximum
+            ):
+                return "invalid", None
+            step_position = (value - presentation.minimum) / presentation.step
+            if not math.isclose(
+                step_position,
+                round(step_position),
+                rel_tol=0,
+                abs_tol=1e-9,
+            ):
+                return "invalid", None
+            state = GuidedSliderState(value=value)
+            correct = math.isclose(
+                value,
+                spec.scoring.target,
+                rel_tol=0,
+                abs_tol=max(spec.scoring.tolerance, 1e-9),
+            )
+            return ("correct" if correct else "incorrect"), state
+
+        return "invalid", None
+
+    @staticmethod
+    def _guided_widget_state_matches_item(
+        item: AssessmentItem,
+        state: GuidedWidgetState | None,
+    ) -> bool:
+        """Whether restored public state is valid for the pinned reviewed spec."""
+
+        spec = item.guided_interaction
+        if isinstance(spec, GuidedMappingSpec):
+            if not isinstance(state, GuidedMappingState):
+                return False
+            row_ids = [entry.entry_id for entry in spec.presentation.rows]
+            option_ids = {entry.entry_id for entry in spec.presentation.options}
+            return [row.id for row in state.rows] == row_ids and all(
+                not row.value or row.value in option_ids for row in state.rows
+            )
+        if isinstance(spec, GuidedSliderSpec):
+            if not isinstance(state, GuidedSliderState):
+                return False
+            presentation = spec.presentation
+            if not presentation.minimum <= state.value <= presentation.maximum:
+                return False
+            step_position = (
+                state.value - presentation.minimum
+            ) / presentation.step
+            return math.isclose(
+                step_position,
+                round(step_position),
+                rel_tol=0,
+                abs_tol=1e-9,
+            )
+        return state is None
+
     def _set_pending(
         self,
         reservation: ItemReservation,
@@ -570,6 +785,11 @@ class SessionOrchestratorV2:
             revealing_hints=[hint.revealing for hint in item.hints],
             attempt_number=attempt_number,
             delivery_mode=delivery_mode,
+            widget_state=(
+                self._initial_guided_widget_state(item)
+                if kind == "guided_widget"
+                else None
+            ),
         )
         self._pending = pending
         self.remember_visible_content(
@@ -885,7 +1105,9 @@ class SessionOrchestratorV2:
                 kc_ids=[pending.kc_id],
                 correct=correct,
                 response_class=(
-                    ResponseClass.MULTIPLE_CHOICE
+                    ResponseClass.WIDGET
+                    if pending.kind == "guided_widget"
+                    else ResponseClass.MULTIPLE_CHOICE
                     if pending.answer_spec.kind == "choice"
                     else ResponseClass.SYMBOLIC_ENTRY
                 ),
@@ -1062,6 +1284,13 @@ class SessionOrchestratorV2:
         self._remediation_state = None
         worked = self._item_for(allocation.bundle.worked_example)
         widget_item = self._item_for(allocation.bundle.guided_widget)
+        widget_type = self._guided_widget_type(widget_item)
+        widget_enabled = bool(
+            widget_type is not None and self._widget_supported(widget_type)
+        )
+        public_widget = (
+            self._public_guided_widget(widget_item) if widget_enabled else None
+        )
         pack = self._pedagogy_catalog.pack_by_kc[kc_id]
         if self._pedagogy_catalog.schema_version >= 2:
             lesson_segments = list(pack.lesson_narrative)
@@ -1109,6 +1338,7 @@ class SessionOrchestratorV2:
                 *visible_fragments(lesson_segments),
                 render_assessment_prompt(widget_item),
                 *(hint.text for hint in widget_item.hints[:2]),
+                *visible_fragments(public_widget),
             ],
             upcoming,
         )
@@ -1123,31 +1353,13 @@ class SessionOrchestratorV2:
             solution_exposed=True,
             answer_revealed=True,
         )
-        live_input_enabled = self._widget_supported("live_input")
         pending = self._set_pending(
             allocation.bundle.guided_widget,
             "guided_widget",
-            delivery_mode="widget" if live_input_enabled else "text",
+            delivery_mode="widget" if widget_enabled else "text",
         )
-        widget = None
-        if live_input_enabled:
-            widget = {
-                "widget_type": "live_input",
-                "learning_objective": (
-                    f"Guided practice for {self._nodes[kc_id].name}"
-                ),
-                "prompt": render_assessment_prompt(widget_item),
-                "input_kind": (
-                    "number"
-                    if widget_item.answer.kind == "numeric"
-                    else "expression"
-                ),
-                "text_fallback": (
-                    "Use the same prompt as a text exercise, then continue to an "
-                    "independent check."
-                ),
-            }
-        else:
+        widget = public_widget
+        if not widget_enabled:
             guided_intro = (
                 "Guided text practice is ready below. You can try it up to "
                 "three times before seeing a worked review."
@@ -1175,16 +1387,19 @@ class SessionOrchestratorV2:
         if key != self._pending.key:
             raise KeyError("unknown or stale widget")
         pending = self._pending
-        raw = response.get("text", response.get("value", ""))
-        result = verify_answer(pending.answer_spec, str(raw))
-        if result.retryable_overload:
-            raise VerificationCapacityUnavailable(
-                "answer verification capacity is temporarily unavailable"
-            )
+        item = self._item_for(pending.reservation)
+        status, widget_state = self._score_guided_widget_response(item, response)
         # The archived control can retain its populated value even though the
         # transcript uses a generic student bubble.
         self.remember_private_visible_input(response)
-        if result.status in {"invalid", "timeout"}:
+        if widget_state is not None:
+            pending.widget_state = widget_state
+        public_state = (
+            widget_state.model_dump(mode="json")
+            if widget_state is not None
+            else None
+        )
+        if status == "invalid":
             feedback = "That input was not gradable. Nothing was counted; try again."
             self.remember_visible_content(feedback)
             return WidgetResultV2(
@@ -1192,8 +1407,9 @@ class SessionOrchestratorV2:
                 message=feedback,
                 status="invalid",
                 counted=False,
+                widget_state=public_state,
             )
-        correct = result.status == "correct"
+        correct = status == "correct"
         attempts = self._widget_attempts.get(key, 0) + 1
         self._widget_attempts[key] = attempts
         pending.attempt_number = attempts
@@ -1212,10 +1428,10 @@ class SessionOrchestratorV2:
                 status="solved",
                 counted=True,
                 attempt_number=attempts,
+                widget_state=public_state,
                 interactions=interactions,
             )
         if attempts >= 3:
-            item = self._item_for(pending.reservation)
             self.exposure_state = self._allocator.update_exposure(
                 self.exposure_state,
                 pending.reservation,
@@ -1238,6 +1454,7 @@ class SessionOrchestratorV2:
                 status="remediated",
                 counted=True,
                 attempt_number=attempts,
+                widget_state=public_state,
                 interactions=interactions,
             )
         feedback = "Not yet — adjust the guided response and try again."
@@ -1248,6 +1465,7 @@ class SessionOrchestratorV2:
             status="attempted",
             counted=True,
             attempt_number=attempts,
+            widget_state=public_state,
         )
 
     def use_text_fallback(self) -> list[Interaction]:
@@ -2166,6 +2384,24 @@ class SessionOrchestratorV2:
             raise ValueError("checkpoint pending hint position is invalid")
         if pending.kind != "guided_widget" and pending.delivery_mode != "widget":
             raise ValueError("checkpoint pending delivery mode is invalid")
+        if pending.kind == "guided_widget":
+            if not self._guided_widget_state_matches_item(
+                item,
+                pending.widget_state,
+            ):
+                raise ValueError(
+                    "checkpoint guided widget state does not match its reviewed item"
+                )
+            widget_type = self._guided_widget_type(item)
+            if pending.delivery_mode == "widget" and (
+                widget_type is None
+                or not self._widget_supported(widget_type)
+            ):
+                raise ValueError(
+                    "checkpoint guided widget is not supported by its episode pin"
+                )
+        elif pending.widget_state is not None:
+            raise ValueError("checkpoint non-widget item carries widget state")
 
         expected_phase = {
             "probe": (

@@ -1,11 +1,11 @@
 export const widgetCapabilities = Object.freeze({
-  version: "web-widget-capabilities-v2.1",
+  version: "web-widget-capabilities-v2.2",
   supported: Object.freeze({
-    slider: Object.freeze({
+    slider_v1: Object.freeze({
       keyboard_equivalent: true,
-      live_visual: true,
+      live_visual: false,
     }),
-    mapping: Object.freeze({
+    mapping_v1: Object.freeze({
       keyboard_equivalent: true,
       live_visual: false,
     }),
@@ -18,15 +18,15 @@ export const widgetCapabilities = Object.freeze({
 });
 
 export const minimalWidgetCapabilities = Object.freeze({
-  version: "web-widget-capabilities-v2.1",
+  version: "web-widget-capabilities-v2.2",
   supported: Object.freeze({
-    mapping: Object.freeze({
+    mapping_v1: Object.freeze({
       keyboard_equivalent: true,
       live_visual: false,
     }),
   }),
   disabled: Object.freeze({
-    slider: "Rich widget capabilities have not been confirmed by the server.",
+    slider_v1: "Rich widget capabilities have not been confirmed by the server.",
     live_input: "Rich widget capabilities have not been confirmed by the server.",
     click_region: "Diagram hit targets are not implemented.",
   }),
@@ -34,11 +34,15 @@ export const minimalWidgetCapabilities = Object.freeze({
 
 let activeCapabilities = minimalWidgetCapabilities;
 const knownWidgetTypes = new Set([
-  "mapping",
-  "slider",
+  "mapping_v1",
+  "slider_v1",
   "live_input",
   "click_region",
 ]);
+const legacyWidgetAliases = Object.freeze({
+  mapping: "mapping_v1",
+  slider: "slider_v1",
+});
 
 export function installWidgetCapabilities(candidate) {
   if (
@@ -89,16 +93,20 @@ export function installMinimalWidgetCapabilities() {
 }
 
 export function widgetCapability(widgetType) {
-  if (activeCapabilities.supported[widgetType]) {
+  // Legacy v1 transcripts used unversioned widget names. They may finish via
+  // the same reviewed frontend implementation, but API v2 never advertises
+  // those aliases in its capability manifest.
+  const canonicalType = legacyWidgetAliases[widgetType] ?? widgetType;
+  if (activeCapabilities.supported[canonicalType]) {
     return {
       supported: true,
-      ...activeCapabilities.supported[widgetType],
+      ...activeCapabilities.supported[canonicalType],
     };
   }
   return {
     supported: false,
     reason:
-      activeCapabilities.disabled[widgetType] ??
+      activeCapabilities.disabled[canonicalType] ??
       "This interaction type is not supported by this tutor.",
   };
 }
