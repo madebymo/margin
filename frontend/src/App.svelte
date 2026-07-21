@@ -2,6 +2,7 @@
   import { onMount, tick } from "svelte";
 
   import { api, ApiError, apiV2 } from "./api.js";
+  import { transcriptEntryAnnouncement } from "./accessibility.js";
   import {
     answerDraftScope,
     clearAnswerDraft,
@@ -521,6 +522,9 @@
     focusPending(pendingKey);
   }
   $: transcriptMarker = view?.transcript?.at(-1)?.id ?? "";
+  $: latestTranscriptAnnouncement = transcriptEntryAnnouncement(
+    view?.transcript?.at(-1),
+  );
   $: if (transcriptMarker && transcriptMarker !== lastTranscriptMarker) {
     scrollTranscript(transcriptMarker);
   }
@@ -862,7 +866,7 @@
         </div>
 
         <div class="sr-only" aria-live="polite" aria-atomic="true">
-          {view.transcript.at(-1)?.text ?? ""}
+          {latestTranscriptAnnouncement}
         </div>
 
         <div class="session-feedback" aria-live="assertive">
