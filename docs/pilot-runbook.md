@@ -127,10 +127,24 @@ bodies.
 
 ## Retention, backup, and restore
 
-Run bounded retention as a scheduled job with a configured batch size and
-cursor. Retain learner identity and longitudinal evidence; remove only expired
-anonymous tokens and eligible expired episode/session ledgers. Alert if the
-cursor stops advancing.
+Run retention from the platform scheduler, never from worker startup or a
+request path:
+
+```bash
+DATABASE_URL="$DATABASE_URL" python -m tutor.db.retention_job \
+  --batch-size 100 \
+  --max-batches 10
+```
+
+Each page selects only sessions whose every bound token has expired, advances
+an internal ordered cursor, then rechecks expiry under the normal checkpoint-
+then-token lock order. The job retains learner identity and append-only
+evidence while deleting only expired anonymous resume and episode ledgers. It
+exits `0` when the current scan is complete, `3` when the hard batch limit
+leaves more work for the next scheduled run, and nonzero on configuration or
+database failure. Logs contain aggregate counts only, never the cursor or a
+session/learner identifier. Alert on repeated `batch_limit_reached` results or
+job failure.
 
 Use encrypted PostgreSQL backups with point-in-time recovery. At least once per
 release wave, restore into an isolated environment, run migrations, register

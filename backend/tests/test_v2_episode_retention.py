@@ -295,3 +295,54 @@ def test_expiry_purge_waits_for_every_token_and_never_deletes_evidence() -> None
         assert len(evidence) == 1
         assert evidence[0].episode_id == initial["session_id"]
         assert session.get(m.LearnerRow, handle.learner_id) is not None
+
+
+def test_expiry_retention_cursor_progresses_without_deleting_learning_history() -> None:
+    legacy = PersistenceService(
+        engine=get_engine("sqlite+pysqlite:///:memory:")
+    )
+    persistence = V2PersistenceService(legacy.engine)
+    app = _app(persistence)
+    clients = [TestClient(app) for _ in range(3)]
+    views = [_create(client) for client in clients]
+
+    first_handle = app.state.v2_store.get(views[0]["session_id"])
+    answered = clients[0].post(
+        f"/api/v2/sessions/{views[0]['session_id']}/actions",
+        json={
+            "type": "answer",
+            "request_id": str(uuid4()),
+            "expected_revision": views[0]["revision"],
+            "pending_key": views[0]["pending"]["key"],
+            "answer": first_handle.orchestrator.pending_expected,
+        },
+    )
+    assert answered.status_code == 200
+
+    with Session(legacy.engine) as session:
+        for token in session.scalars(select(m.ResumeTokenRow)).all():
+            token.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        session.commit()
+
+    cursor = None
+    batches = []
+    for _ in range(4):
+        result = persistence.purge_expired_anonymous_sessions_batch(
+            limit=1,
+            after_session_id=cursor,
+        )
+        batches.append(result)
+        cursor = result.next_cursor
+        if result.complete:
+            break
+
+    assert [batch.purged for batch in batches] == [1, 1, 1, 0]
+    assert [batch.scanned for batch in batches] == [1, 1, 1, 0]
+    assert batches[-1].complete is True
+    assert sum(batch.purged for batch in batches) == 3
+    with Session(legacy.engine) as session:
+        assert session.scalars(select(m.SessionCheckpointRow)).all() == []
+        assert len(session.scalars(select(m.LearnerRow)).all()) == 3
+        evidence = session.scalars(select(m.EvidenceEventRow)).all()
+        assert len(evidence) == 1
+        assert evidence[0].episode_id == views[0]["session_id"]

@@ -7,6 +7,7 @@ evidence delta, widget trajectory, and idempotency receipt together.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 from uuid import UUID
@@ -74,6 +75,31 @@ class DurableLedgerMismatch(RuntimeError):
     def __init__(self, metric: str, message: str) -> None:
         super().__init__(message)
         self.metric = metric
+
+
+@dataclass(frozen=True)
+class RetentionBatch:
+    """One bounded cursor page from anonymous-session retention.
+
+    ``next_cursor`` is deliberately excluded from representations so routine
+    job logging cannot disclose a session identifier. It is an internal
+    database-order cursor, not a browser or operator-facing resume token.
+    """
+
+    purged: int
+    scanned: int
+    complete: bool
+    next_cursor: str | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if type(self.purged) is not int or self.purged < 0:
+            raise ValueError("purged must be a nonnegative integer")
+        if type(self.scanned) is not int or self.scanned < self.purged:
+            raise ValueError("scanned must be an integer at least as large as purged")
+        if type(self.complete) is not bool:
+            raise TypeError("complete must be a boolean")
+        if self.complete and self.next_cursor is not None:
+            raise ValueError("a complete retention page cannot carry a cursor")
 
 
 class V2PersistenceService:
@@ -902,31 +928,57 @@ class V2PersistenceService:
             )
 
     def purge_expired_anonymous_sessions(self, *, limit: int = 100) -> int:
-        """Remove one bounded batch after every bound token expires.
+        """Compatibility wrapper that removes one bounded cursor page."""
+
+        return self.purge_expired_anonymous_sessions_batch(limit=limit).purged
+
+    def purge_expired_anonymous_sessions_batch(
+        self,
+        *,
+        limit: int = 100,
+        after_session_id: str | None = None,
+    ) -> RetentionBatch:
+        """Remove one cursor page after every token for a session expires.
 
         Learner identity and append-only evidence remain intact for longitudinal
         replay; only anonymous resume/checkpoint/transcript/receipt/widget data
         outside the promised 30-day window is removed.  This maintenance method
         is intentionally never called by the constructor or a request path.
+
+        Candidate eligibility is calculated with ``MAX(expires_at)`` before
+        locking, then rechecked under the normal checkpoint-then-token lock
+        order. The cursor advances across a raced refresh without repeatedly
+        selecting it and starving later eligible sessions.
         """
         if type(limit) is not int or not 1 <= limit <= 1000:
             raise ValueError("limit must be an integer between 1 and 1000")
+        if after_session_id is not None and (
+            not isinstance(after_session_id, str)
+            or not after_session_id
+            or len(after_session_id) > 128
+            or not after_session_id.isprintable()
+        ):
+            raise ValueError("after_session_id is invalid")
         now = _utcnow()
         with Session(self._engine) as session:
-            candidate_ids = list(
-                session.scalars(
-                    select(ResumeTokenRow.session_id)
-                    .where(
-                        ResumeTokenRow.session_id.is_not(None),
-                        ResumeTokenRow.expires_at <= now,
-                    )
-                    .distinct()
-                    .order_by(ResumeTokenRow.session_id)
-                    .limit(limit)
+            candidates = (
+                select(ResumeTokenRow.session_id)
+                .where(ResumeTokenRow.session_id.is_not(None))
+                .group_by(ResumeTokenRow.session_id)
+                .having(func.max(ResumeTokenRow.expires_at) <= now)
+            )
+            if after_session_id is not None:
+                candidates = candidates.where(
+                    ResumeTokenRow.session_id > after_session_id
                 )
+            candidates = candidates.order_by(ResumeTokenRow.session_id).limit(limit)
+            candidate_ids = list(
+                session.scalars(candidates)
             )
             if not candidate_ids:
-                return 0
+                return RetentionBatch(purged=0, scanned=0, complete=True)
+            complete = len(candidate_ids) < limit
+            next_cursor = None if complete else candidate_ids[-1]
 
             # Use the same checkpoint-then-token lock order as action/reset
             # commits.  Re-reading token expiry after both locks prevents a
@@ -940,7 +992,12 @@ class V2PersistenceService:
             ).all()
             locked_session_ids = [row.session_id for row in locked_checkpoints]
             if not locked_session_ids:
-                return 0
+                return RetentionBatch(
+                    purged=0,
+                    scanned=len(candidate_ids),
+                    complete=complete,
+                    next_cursor=next_cursor,
+                )
             token_rows = session.scalars(
                 select(ResumeTokenRow)
                 .where(ResumeTokenRow.session_id.in_(locked_session_ids))
@@ -957,7 +1014,12 @@ class V2PersistenceService:
                 if tokens and all(_aware(token.expires_at) <= now for token in tokens)
             ]
             if not expired_session_ids:
-                return 0
+                return RetentionBatch(
+                    purged=0,
+                    scanned=len(candidate_ids),
+                    complete=complete,
+                    next_cursor=next_cursor,
+                )
             for row_type in (
                 WidgetAttemptRow,
                 ItemExposureRow,
@@ -976,7 +1038,12 @@ class V2PersistenceService:
                 )
             )
             session.commit()
-            return len(expired_session_ids)
+            return RetentionBatch(
+                purged=len(expired_session_ids),
+                scanned=len(candidate_ids),
+                complete=complete,
+                next_cursor=next_cursor,
+            )
 
     @classmethod
     def _validate_resume_ledgers(
