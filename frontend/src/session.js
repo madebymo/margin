@@ -224,10 +224,12 @@ function normalizePending(raw, transcript) {
     finalInteraction?.key ??
     null;
   const kind = value.kind ?? value.type ?? raw.pending_kind ?? "answer";
-  const widget =
+  const legacyWidget =
     value.widget ??
     value.interaction?.widget ??
     (finalInteraction?.key === key ? finalInteraction.widget : null);
+  const typedInput = normalizePendingInput(value.input);
+  const widget = typedInput?.widget ?? legacyWidget;
   const rawHint = value.hint ?? {};
   const hintAvailable = rawHint.available ?? value.can_hint ?? raw.can_hint ?? true;
   const hintTotal = Number(rawHint.total ?? value.hint_total ?? 0);
@@ -244,8 +246,11 @@ function normalizePending(raw, transcript) {
       value.kc_label ??
       humanizeIdentifier(value.kc_id ?? value.kc ?? raw.pending_kc),
     input_mode:
+      typedInput?.input_mode ??
       value.input_mode ??
       (widget || String(kind).includes("widget") ? "widget" : "text"),
+    input: typedInput?.input ?? null,
+    answer_kind: typedInput?.answer_kind ?? null,
     can_hint: Boolean(hintAvailable),
     hint: {
       available: Boolean(hintAvailable),
@@ -260,13 +265,154 @@ function normalizePending(raw, transcript) {
     prompt_segments: Array.isArray(value.prompt_segments)
       ? value.prompt_segments
       : [],
-    choice_options: Array.isArray(value.choice_options)
-      ? value.choice_options.map(String)
-      : [],
-    placeholder: value.placeholder ?? "Type your answer",
+    choice_options:
+      typedInput?.choice_options ??
+      (Array.isArray(value.choice_options)
+        ? value.choice_options.map(String)
+        : []),
+    label: typedInput?.label ?? value.label ?? "Your answer",
+    placeholder:
+      typedInput?.placeholder ?? value.placeholder ?? "Type your answer",
+    help_text: typedInput?.help_text ?? value.help_text ?? "",
+    max_length: typedInput?.max_length ?? value.max_length ?? 256,
     widget,
-    widget_state: value.widget_state ?? value.widget_current_state ?? null,
+    widget_state:
+      typedInput?.widget_state ??
+      value.widget_state ??
+      value.widget_current_state ??
+      null,
   };
+}
+
+function normalizePendingInput(input) {
+  if (!input || typeof input !== "object") return null;
+  if (input.type === "text" || input.type === "legacy_text") {
+    const maxLength = normalizeMaxLength(input.max_length);
+    return {
+      input_mode: "text",
+      input: {
+        type: String(input.type),
+        ...(input.type === "text" ? { answer_kind: String(input.answer_kind) } : {}),
+        label: String(input.label ?? "Your answer"),
+        placeholder: String(input.placeholder ?? "Type your answer"),
+        help_text: String(input.help_text ?? ""),
+        max_length: maxLength,
+      },
+      answer_kind: input.answer_kind == null ? null : String(input.answer_kind),
+      label: String(input.label ?? "Your answer"),
+      placeholder: String(input.placeholder ?? "Type your answer"),
+      help_text: String(input.help_text ?? ""),
+      max_length: maxLength,
+      choice_options: [],
+      widget: null,
+      widget_state: null,
+    };
+  }
+  if (input.type === "legacy_choice") {
+    const options = Array.isArray(input.options) ? input.options.map(String) : [];
+    return {
+      input_mode: "choice",
+      input: {
+        type: "legacy_choice",
+        label: String(input.label ?? "Choose an answer"),
+        options,
+      },
+      label: String(input.label ?? "Choose an answer"),
+      placeholder: "",
+      help_text: "",
+      max_length: 256,
+      choice_options: options,
+      widget: null,
+      widget_state: null,
+    };
+  }
+  if (input.type === "mapping_v1") {
+    const rows = Array.isArray(input.rows)
+      ? input.rows.map((row) => ({
+          entry_id: String(row.entry_id),
+          label: String(row.label),
+          spoken_text: String(row.spoken_text),
+          selected_option_id:
+            row.selected_option_id == null ? null : String(row.selected_option_id),
+        }))
+      : [];
+    const options = Array.isArray(input.options)
+      ? input.options.map((option) => ({
+          entry_id: String(option.entry_id),
+          label: String(option.label),
+          spoken_text: String(option.spoken_text),
+        }))
+      : [];
+    const prompt = String(input.prompt ?? "");
+    return {
+      input_mode: "widget",
+      input: { type: "mapping_v1", prompt, rows, options },
+      label: "Guided matching practice",
+      placeholder: "",
+      help_text: "Match every row to one option.",
+      max_length: 256,
+      choice_options: [],
+      widget: {
+        widget_type: "mapping_v1",
+        interaction_version: "mapping_v1",
+        prompt,
+        presentation: {
+          prompt,
+          rows: rows.map(({ selected_option_id: _selected, ...row }) => row),
+          options,
+        },
+      },
+      widget_state: {
+        rows: rows.map((row) => ({
+          id: row.entry_id,
+          value: row.selected_option_id ?? "",
+        })),
+      },
+    };
+  }
+  if (input.type === "slider_v1") {
+    const presentation = {
+      prompt: String(input.prompt ?? ""),
+      label: String(input.label ?? "Value"),
+      help_text: String(input.help_text ?? ""),
+      minimum: Number(input.minimum),
+      maximum: Number(input.maximum),
+      step: Number(input.step),
+      initial_value: Number(input.initial_value),
+      value_label: String(input.value_label ?? "Selected value"),
+      ...(input.result_template == null
+        ? {}
+        : { result_template: String(input.result_template) }),
+    };
+    const currentValue = Number(input.current_value);
+    return {
+      input_mode: "widget",
+      input: {
+        type: "slider_v1",
+        ...presentation,
+        current_value: currentValue,
+      },
+      label: presentation.label,
+      placeholder: "",
+      help_text: presentation.help_text,
+      max_length: 256,
+      choice_options: [],
+      widget: {
+        widget_type: "slider_v1",
+        interaction_version: "slider_v1",
+        prompt: presentation.prompt,
+        presentation,
+      },
+      widget_state: { value: currentValue },
+    };
+  }
+  return null;
+}
+
+function normalizeMaxLength(value) {
+  const parsed = Number(value ?? 256);
+  if (!Number.isFinite(parsed)) return 256;
+  return Math.min(256, Math.max(1, Math.trunc(parsed)));
 }
 
 function stringList(...candidates) {
@@ -395,6 +541,8 @@ export function normalizeSessionView(payload) {
     (raw.llm_enabled ? "llm_coaching" : "curated");
   return {
     session_id: raw.session_id ?? raw.id ?? null,
+    release_id: raw.release_id ?? null,
+    release_digest: raw.release_digest ?? null,
     revision: Number(raw.revision ?? raw.version ?? 0),
     phase,
     terminal: raw.terminal ?? (phase === "done" || phase === "stopped"),

@@ -145,6 +145,140 @@ describe("authoritative session normalization", () => {
     });
   });
 
+  it("normalizes the typed text contract and pinned release identity", () => {
+    const view = normalizeSessionView({
+      session_id: "typed-text",
+      release_id: "release.product-rule.v1",
+      release_digest: "a".repeat(64),
+      pending: {
+        key: "probe-typed",
+        kind: "probe",
+        kc_id: "kc.der.power_rule",
+        input: {
+          type: "text",
+          answer_kind: "finite_set",
+          label: "Your set",
+          placeholder: "For example: {-2, 2}",
+          help_text: "Put distinct values inside braces.",
+          max_length: 128,
+        },
+      },
+    });
+
+    expect(view.release_id).toBe("release.product-rule.v1");
+    expect(view.release_digest).toBe("a".repeat(64));
+    expect(view.pending).toMatchObject({
+      input_mode: "text",
+      answer_kind: "finite_set",
+      label: "Your set",
+      placeholder: "For example: {-2, 2}",
+      help_text: "Put distinct values inside braces.",
+      max_length: 128,
+    });
+  });
+
+  it("bounds a malformed legacy maximum length before rendering", () => {
+    const oversized = normalizeSessionView({
+      session_id: "legacy-max",
+      pending: {
+        key: "legacy-max-pending",
+        input: {
+          type: "legacy_text",
+          label: "Your answer",
+          placeholder: "Type it",
+          help_text: "Keep it short.",
+          max_length: 10000,
+        },
+      },
+    });
+    const nonnumeric = normalizeSessionView({
+      session_id: "legacy-invalid-max",
+      pending: {
+        key: "legacy-invalid-max-pending",
+        input: {
+          type: "legacy_text",
+          max_length: "not-a-number",
+        },
+      },
+    });
+
+    expect(oversized.pending.max_length).toBe(256);
+    expect(nonnumeric.pending.max_length).toBe(256);
+  });
+
+  it("derives resumable mapping and slider controls from only typed public fields", () => {
+    const mapping = normalizeSessionView({
+      session_id: "typed-mapping",
+      pending: {
+        key: "mapping-1",
+        kind: "guided_widget",
+        input: {
+          type: "mapping_v1",
+          prompt: "Match each expression.",
+          rows: [
+            {
+              entry_id: "row.a",
+              label: "x^2",
+              spoken_text: "x squared",
+              selected_option_id: "option.a",
+            },
+            {
+              entry_id: "row.b",
+              label: "x^3",
+              spoken_text: "x cubed",
+              selected_option_id: null,
+            },
+          ],
+          options: [
+            {
+              entry_id: "option.a",
+              label: "2*x",
+              spoken_text: "two x",
+            },
+            {
+              entry_id: "option.b",
+              label: "3*x^2",
+              spoken_text: "three x squared",
+            },
+          ],
+        },
+      },
+    });
+    const slider = normalizeSessionView({
+      session_id: "typed-slider",
+      pending: {
+        key: "slider-1",
+        kind: "guided_widget",
+        input: {
+          type: "slider_v1",
+          prompt: "Choose the exponent.",
+          label: "Exponent",
+          help_text: "Use the arrow keys.",
+          minimum: 0,
+          maximum: 5,
+          step: 1,
+          initial_value: 0,
+          current_value: 2,
+          value_label: "Selected exponent",
+          result_template: "Exponent: {value}",
+        },
+      },
+    });
+
+    expect(mapping.pending.input_mode).toBe("widget");
+    expect(mapping.pending.widget_state).toEqual({
+      rows: [
+        { id: "row.a", value: "option.a" },
+        { id: "row.b", value: "" },
+      ],
+    });
+    expect(mapping.pending.widget).not.toHaveProperty("scoring");
+    expect(mapping.pending.widget).not.toHaveProperty("correct_pairs");
+    expect(slider.pending.widget_state).toEqual({ value: 2 });
+    expect(slider.pending.widget.presentation).not.toHaveProperty("target");
+    expect(pendingAcceptsText(slider.pending)).toBe(false);
+  });
+
   it("treats an explicit text delivery as text even for guided-widget evidence", () => {
     const view = normalizeSessionView({
       session_id: "session-text-guided",

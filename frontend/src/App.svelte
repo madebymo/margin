@@ -895,20 +895,23 @@
                 {/each}
               </fieldset>
             {:else}
-              <label class="sr-only" for="answer">Your answer</label>
+              <label class="sr-only" for="answer">
+                {view.pending?.label ?? "Your answer"}
+              </label>
               <input
                 id="answer"
                 bind:this={answerElement}
                 bind:value={answerText}
                 placeholder={view.pending?.placeholder ?? "Type your answer"}
-                maxlength="256"
+                maxlength={view.pending?.max_length ?? 256}
                 autocomplete="off"
                 aria-describedby="answer-format-help"
                 disabled={busy}
                 on:keydown={handleAnswerKeydown}
               >
               <p id="answer-format-help" class="composer-help">
-                Use * for multiplication and ^ for powers when needed.
+                {view.pending?.help_text ||
+                  "Use * for multiplication and ^ for powers when needed."}
               </p>
             {/if}
             <div class="composer-actions">
