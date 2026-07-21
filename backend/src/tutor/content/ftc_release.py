@@ -12,11 +12,13 @@ import argparse
 import hashlib
 import itertools
 import json
+import multiprocessing
 import os
 import re
 import sys
 from collections import Counter
 from dataclasses import dataclass
+from multiprocessing.connection import Connection
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import cast
@@ -137,7 +139,12 @@ from tutor.schemas.pedagogy_authoring import (
     PedagogyReviewManifest,
     PedagogySourceDocument,
 )
-from tutor.verify.checker import VerificationStatus, verify_answer
+from tutor.verify.checker import (
+    VerificationStatus,
+    _split_container,
+    parse_restricted,
+    verify_answer,
+)
 
 COMPILER_VERSION = "ftc-item-compiler-v1"
 AUTHOR = "AI-assisted implementation draft (unreviewed)"
@@ -838,9 +845,12 @@ def _derive_area(task: FTCMathTask) -> DerivedTask | None:
             f"The {task.shape} has width or base {task.width_or_base} and area {total}.",
         )
         return DerivedTask(
-            instruction="Find the missing perpendicular height.",
+            instruction=(
+                "Find the missing perpendicular height. Report "
+                "(width or base, given area, missing height)."
+            ),
             givens=(table,),
-            answer=NumericAnswerSpec(expected=str(task.height), tolerance=0),
+            answer=_tuple_answer((task.width_or_base, total, task.height)),
             conceptual_hint="Undo the area formula for the listed shape.",
             operation_hint=(
                 "Divide area by width."
@@ -856,11 +866,15 @@ def _derive_area(task: FTCMathTask) -> DerivedTask | None:
                 ),
                 _math(f"height={task.height}", role=PromptSemanticRole.WORKED_STEP),
             ),
-            error_signatures=_numeric_signatures(
-                task.height,
-                (
-                    (total // task.width_or_base, "m.area_under_curve.triangle_factor", None),
-                    (total - task.width_or_base, "m.area_under_curve.uses_endpoint_height", prereq),
+            error_signatures=(
+                _signature(
+                    f"({task.width_or_base}, {total}, {total // task.width_or_base})",
+                    "m.area_under_curve.triangle_factor",
+                ),
+                _signature(
+                    f"({task.width_or_base}, {total}, {total - task.width_or_base})",
+                    "m.area_under_curve.uses_endpoint_height",
+                    prereq,
                 ),
             ),
         )
@@ -1002,6 +1016,8 @@ def _derive_riemann(task: FTCMathTask) -> DerivedTask | None:
         )
     if isinstance(task, RiemannMissingHeightTask):
         total = task.width * (sum(task.known_heights) + task.missing_height)
+        height_sum = total // task.width
+        known_sum = sum(task.known_heights)
         table = _table(
             "Equal-width rectangle data with one missing height",
             ("width", "known heights", "total sum"),
@@ -1009,20 +1025,27 @@ def _derive_riemann(task: FTCMathTask) -> DerivedTask | None:
             "The equal rectangle width, all known heights, and the full rectangle sum are listed.",
         )
         return DerivedTask(
-            instruction="Find the one missing rectangle height.",
+            instruction=(
+                "Find the one missing rectangle height. Report "
+                "(all-heights sum, known-heights sum, missing height)."
+            ),
             givens=(table,),
-            answer=NumericAnswerSpec(expected=str(task.missing_height), tolerance=0),
+            answer=_tuple_answer((height_sum, known_sum, task.missing_height)),
             conceptual_hint="First convert the total area back into the sum of all heights.",
             operation_hint="Divide by the common width, then subtract the known heights.",
             worked_steps=(
                 _math(f"height sum={total}/{task.width}={total // task.width}", role=PromptSemanticRole.WORKED_STEP),
                 _math(f"missing={total // task.width}-{sum(task.known_heights)}={task.missing_height}", role=PromptSemanticRole.WORKED_STEP),
             ),
-            error_signatures=_numeric_signatures(
-                task.missing_height,
-                (
-                    (total - sum(task.known_heights), "m.riemann_sums.omits_width", None),
-                    (total // task.width, "m.riemann_sums.endpoint_choice", prereq),
+            error_signatures=(
+                _signature(
+                    f"({total}, {known_sum}, {total - known_sum})",
+                    "m.riemann_sums.omits_width",
+                ),
+                _signature(
+                    f"({height_sum}, {known_sum}, {height_sum})",
+                    "m.riemann_sums.endpoint_choice",
+                    prereq,
                 ),
             ),
         )
@@ -2135,6 +2158,19 @@ def _candidate_texts_for(target: AssessmentItem, fragments: list[str]) -> list[s
     )
 
 
+def _candidate_contract_key(item: AssessmentItem) -> tuple[object, ...]:
+    """Return the fields that affect candidate shape, excluding expected truth."""
+
+    answer = item.answer
+    return (
+        answer.kind,
+        tuple(getattr(answer, "variables", ())),
+        tuple(getattr(answer, "functions", ())),
+        getattr(answer, "variable", None),
+        getattr(answer, "assignment_lhs", None),
+    )
+
+
 def _answer_spec_with_shared_vocabulary(
     left: AnswerSpec,
     right: AnswerSpec,
@@ -2167,8 +2203,6 @@ def _answers_are_equivalent(left: AssessmentItem, right: AssessmentItem) -> bool
         variables = set(getattr(left.answer, "variables", ())) | set(
             getattr(right.answer, "variables", ())
         )
-        from tutor.verify.checker import parse_restricted
-
         left_value = parse_restricted(
             left.answer.expected,
             allowed_variables=variables,
@@ -2210,6 +2244,238 @@ def _answers_are_equivalent(left: AssessmentItem, right: AssessmentItem) -> bool
     }
 
 
+def _canonical_visible_candidate(
+    answer: AnswerSpec,
+    candidate: str,
+) -> tuple[object, ...] | None:
+    """Canonicalize polynomial-era contracts once per visible fragment.
+
+    This is only a fast inequality gate.  A canonical match is still confirmed
+    through the verifier before it is reported as leakage.
+    """
+
+    try:
+        if isinstance(answer, (NumericAnswerSpec, SymbolicAnswerSpec)):
+            variables = set(getattr(answer, "variables", ()))
+            functions = set(getattr(answer, "functions", ()))
+            expression = parse_restricted(
+                candidate,
+                allowed_variables=variables,
+                allowed_functions=functions,
+                allowed_assignment_lhs=getattr(answer, "assignment_lhs", None),
+            )
+            if isinstance(answer, NumericAnswerSpec) and expression.free_symbols:
+                return None
+            normalized = sympy.expand(sympy.cancel(expression))
+            return (answer.kind, sympy.srepr(normalized))
+        if isinstance(answer, AntiderivativeAnswerSpec):
+            variables = set(answer.variables) | {answer.variable, "C"}
+            expression = parse_restricted(
+                candidate,
+                allowed_variables=variables,
+                allowed_functions=set(answer.functions),
+                allowed_assignment_lhs=None,
+            )
+            derivative = sympy.diff(expression, sympy.Symbol(answer.variable))
+            normalized = sympy.expand(sympy.cancel(derivative))
+            return (answer.kind, sympy.srepr(normalized))
+        if isinstance(answer, OrderedTupleAnswerSpec):
+            values = _split_container(candidate, "(", ")")
+            normalized = tuple(
+                sympy.srepr(
+                    sympy.expand(
+                        sympy.cancel(
+                            parse_restricted(
+                                value,
+                                allowed_variables=set(answer.variables),
+                                allowed_functions=set(answer.functions),
+                                allowed_assignment_lhs=None,
+                            )
+                        )
+                    )
+                )
+                for value in values
+            )
+            return (answer.kind, *normalized)
+        if isinstance(answer, FiniteSetAnswerSpec):
+            values = _split_container(candidate, "{", "}")
+            normalized = sorted(
+                {
+                    sympy.srepr(
+                        sympy.expand(
+                            sympy.cancel(
+                                parse_restricted(
+                                    value,
+                                    allowed_variables=set(answer.variables),
+                                    allowed_functions=set(answer.functions),
+                                    allowed_assignment_lhs=None,
+                                )
+                            )
+                        )
+                    )
+                    for value in values
+                }
+            )
+            return (answer.kind, *normalized)
+    except Exception:  # A non-answer-shaped fragment is definitively not equal.
+        return None
+    return None
+
+
+def _visible_separation_worker(
+    connection: Connection,
+    item_payloads: list[dict[str, object]],
+    source_item_ids: tuple[str, ...],
+    focus_item_ids: set[str] | None,
+) -> None:
+    """Check a bounded source slice so symbolic caches cannot grow unbounded."""
+
+    try:
+        ordered = [AssessmentItem.model_validate(payload) for payload in item_payloads]
+        by_id = {item.item_id: item for item in ordered}
+        sources = [by_id[item_id] for item_id in source_item_ids]
+        def in_scope(source: AssessmentItem, target: AssessmentItem) -> bool:
+            return focus_item_ids is None or bool(
+                {source.item_id, target.item_id} & focus_item_ids
+            )
+
+        targets_by_source = {
+            source.item_id: [
+                target
+                for target in ordered
+                if source.family_id != target.family_id and in_scope(source, target)
+            ]
+            for source in sources
+        }
+        representatives: dict[tuple[object, ...], AssessmentItem] = {}
+        for targets in targets_by_source.values():
+            for target in targets:
+                representatives.setdefault(_candidate_contract_key(target), target)
+        candidates = {
+            (source.item_id, contract): _candidate_texts_for(
+                representative,
+                _visible_fragments(source),
+            )
+            for source in sources
+            for contract, representative in representatives.items()
+            if any(
+                _candidate_contract_key(target) == contract
+                for target in targets_by_source[source.item_id]
+            )
+        }
+        expected_canonical = {
+            target.item_id: _canonical_visible_candidate(
+                target.answer,
+                canonical_submission(target.answer),
+            )
+            for targets in targets_by_source.values()
+            for target in targets
+        }
+        candidate_canonical: dict[
+            tuple[tuple[object, ...], str], tuple[object, ...] | None
+        ] = {}
+
+        comparisons = 0
+        errors: list[str] = []
+        for source in sources:
+            for target in targets_by_source[source.item_id]:
+                for candidate in candidates[
+                    (source.item_id, _candidate_contract_key(target))
+                ]:
+                    comparisons += 1
+                    contract = _candidate_contract_key(target)
+                    cache_key = (contract, candidate)
+                    if cache_key not in candidate_canonical:
+                        candidate_canonical[cache_key] = _canonical_visible_candidate(
+                            target.answer,
+                            candidate,
+                        )
+                    expected = expected_canonical[target.item_id]
+                    candidate_value = candidate_canonical[cache_key]
+                    if (
+                        expected is not None
+                        and candidate_value is not None
+                        and expected != candidate_value
+                    ):
+                        continue
+                    verdict = verify_answer(target.answer, candidate, supervised=False)
+                    if verdict.status == VerificationStatus.CORRECT:
+                        errors.append(
+                            f"{source.item_id}: visible content leaks the answer "
+                            f"for {target.item_id}"
+                        )
+                        break
+                    if verdict.status not in {
+                        VerificationStatus.INCORRECT,
+                        VerificationStatus.INVALID,
+                    }:
+                        errors.append(
+                            f"{source.item_id}: visible comparison for "
+                            f"{target.item_id} was indeterminate ({verdict.code})"
+                        )
+                        break
+        connection.send({"comparisons": comparisons, "errors": errors})
+    except BaseException as exc:  # noqa: BLE001 - worker must fail closed
+        connection.send({"error": type(exc).__name__})
+    finally:
+        connection.close()
+
+
+def _run_visible_separation(
+    ordered: list[AssessmentItem],
+    focus_item_ids: set[str] | None,
+    *,
+    chunk_size: int = 12,
+    timeout_seconds: float = 120.0,
+) -> tuple[int, list[str]]:
+    # Fork keeps the offline compiler's read-only item payload copy-on-write;
+    # platforms without it retain the portable spawn path.
+    method = "fork" if "fork" in multiprocessing.get_all_start_methods() else "spawn"
+    context = multiprocessing.get_context(method)
+    payloads = [item.model_dump(mode="json") for item in ordered]
+    comparisons = 0
+    errors: list[str] = []
+    source_ids = [item.item_id for item in ordered]
+    for offset in range(0, len(source_ids), chunk_size):
+        parent, child = context.Pipe(duplex=False)
+        process = context.Process(
+            target=_visible_separation_worker,
+            args=(
+                child,
+                payloads,
+                tuple(source_ids[offset : offset + chunk_size]),
+                focus_item_ids,
+            ),
+            daemon=True,
+        )
+        process.start()
+        child.close()
+        try:
+            if not parent.poll(timeout_seconds):
+                raise FTCCompilationError("visible-separation worker timed out")
+            result = parent.recv()
+        except EOFError as exc:
+            raise FTCCompilationError(
+                "visible-separation worker exited without a result"
+            ) from exc
+        finally:
+            parent.close()
+            process.join(timeout=1.0)
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=1.0)
+            if process.is_alive():
+                process.kill()
+                process.join(timeout=1.0)
+        if "error" in result:
+            raise FTCCompilationError(
+                f"visible-separation worker failed ({result['error']})"
+            )
+        comparisons += int(result["comparisons"])
+        errors.extend(str(error) for error in result["errors"])
+    return comparisons, errors
+
+
 def validate_inventory_separation(
     items: list[AssessmentItem],
     graph: GraphDocument,
@@ -2248,39 +2514,17 @@ def validate_inventory_separation(
                         "expected answer reused across families "
                         f"{left.family_id!r} and {right.family_id!r}"
                     )
-    candidate_comparisons = 0
     visible_pairs = 0
-    fragments_by_id = {
-        item.item_id: _visible_fragments(item) for item in ordered
-    }
     for source_item in ordered:
         for target in ordered:
             if source_item.family_id == target.family_id:
                 continue
             visible_pairs += 1
-            if not in_scope(source_item, target):
-                continue
-            for candidate in _candidate_texts_for(
-                target,
-                fragments_by_id[source_item.item_id],
-            ):
-                candidate_comparisons += 1
-                verdict = verify_answer(target.answer, candidate, supervised=False)
-                if verdict.status == VerificationStatus.CORRECT:
-                    errors.append(
-                        f"{source_item.item_id}: visible content leaks the answer "
-                        f"for {target.item_id}"
-                    )
-                    break
-                if verdict.status not in {
-                    VerificationStatus.INCORRECT,
-                    VerificationStatus.INVALID,
-                }:
-                    errors.append(
-                        f"{source_item.item_id}: visible comparison for "
-                        f"{target.item_id} was indeterminate ({verdict.code})"
-                    )
-                    break
+    candidate_comparisons, visible_errors = _run_visible_separation(
+        ordered,
+        focus_item_ids,
+    )
+    errors.extend(visible_errors)
     graph_fragments = [
         value
         for node in graph.nodes

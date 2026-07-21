@@ -286,7 +286,7 @@ class DefiniteOrientationTask(StrictFrozenModel):
     kind: Literal["definite_orientation"] = "definite_orientation"
     lower: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    forward_value: int = Field(ge=-300, le=300)
+    forward_value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _ordered_nonzero(self) -> "DefiniteOrientationTask":
@@ -300,8 +300,8 @@ class DefiniteAdditivityTask(StrictFrozenModel):
     lower: int = Field(ge=-10, le=20)
     split: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    left_value: int = Field(ge=-300, le=300)
-    right_value: int = Field(ge=-300, le=300)
+    left_value: int = Field(ge=-2000, le=2000)
+    right_value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _ordered_bounds(self) -> "DefiniteAdditivityTask":
@@ -315,8 +315,8 @@ class DefiniteMissingPieceTask(StrictFrozenModel):
     lower: int = Field(ge=-10, le=20)
     split: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    total_value: int = Field(ge=-300, le=300)
-    left_value: int = Field(ge=-300, le=300)
+    total_value: int = Field(ge=-2000, le=2000)
+    left_value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _ordered_bounds(self) -> "DefiniteMissingPieceTask":
@@ -344,7 +344,7 @@ class DefiniteInterpretationTask(StrictFrozenModel):
     kind: Literal["definite_interpretation"] = "definite_interpretation"
     lower: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    value: int = Field(ge=-300, le=300)
+    value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _different_bounds(self) -> "DefiniteInterpretationTask":
@@ -357,7 +357,7 @@ class DefiniteTwoOrientationsTask(StrictFrozenModel):
     kind: Literal["definite_two_orientations"] = "definite_two_orientations"
     lower: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    forward_value: int = Field(ge=-300, le=300)
+    forward_value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _ordered_nonzero(self) -> "DefiniteTwoOrientationsTask":
@@ -371,8 +371,8 @@ class DefiniteGuidedMappingTask(StrictFrozenModel):
     lower: int = Field(ge=-10, le=20)
     split: int = Field(ge=-10, le=20)
     upper: int = Field(ge=-10, le=20)
-    left_value: int = Field(ge=-300, le=300)
-    right_value: int = Field(ge=-300, le=300)
+    left_value: int = Field(ge=-2000, le=2000)
+    right_value: int = Field(ge=-2000, le=2000)
 
     @model_validator(mode="after")
     def _ordered_distinct_results(self) -> "DefiniteGuidedMappingTask":
