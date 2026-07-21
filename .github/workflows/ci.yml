@@ -151,13 +151,13 @@ jobs:
           python -m pip install -e "backend[dev,api]"
           npm --prefix frontend ci
 
-      - name: Install Chromium runtime
-        run: npx --prefix frontend playwright install --with-deps chromium
+      - name: Install browser runtimes
+        run: npx --prefix frontend playwright install --with-deps chromium firefox webkit
 
       - name: Build unified application
         run: npm --prefix frontend run build
 
-      - name: Run Playwright and axe journey
+      - name: Run cross-browser Playwright and axe journeys
         run: npm --prefix frontend run test:e2e
 
       - name: Upload browser diagnostics

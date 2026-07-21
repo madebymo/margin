@@ -34,9 +34,13 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "firefox", use: { browserName: "firefox" } },
+    { name: "webkit", use: { browserName: "webkit" } },
+  ],
   use: {
     baseURL,
-    browserName: "chromium",
     reducedMotion: "reduce",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

@@ -114,6 +114,17 @@ describe("widget recipes", () => {
     expect(recipes.slider.responseFrom({ value: 3 })).toEqual({ value: 3 });
   });
 
+  it.each([
+    null,
+    { minimum: 2, maximum: 2, step: 1, initial_value: 2 },
+    { minimum: 0, maximum: 2, step: 0, initial_value: 1 },
+    { minimum: 0, maximum: 2, step: 1, initial_value: 3 },
+  ])("rejects a malformed slider presentation instead of emitting NaN", (presentation) => {
+    expect(() => recipes.slider.init({ presentation })).toThrow(
+      /invalid slider presentation/i,
+    );
+  });
+
   it("preserves reviewed mapping order and restores a valid draft", () => {
     const config = {
       left: ["first", "second", "third"],

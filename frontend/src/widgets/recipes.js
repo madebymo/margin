@@ -5,12 +5,25 @@ import { widgetCapability } from "./capabilities.js";
 
 function sliderParams(config) {
   const value = config.params ?? config.presentation ?? config;
-  return {
-    min: Number(value.min ?? value.minimum),
-    max: Number(value.max ?? value.maximum),
-    step: Number(value.step),
-    initial: Number(value.initial_value ?? value.min ?? value.minimum),
+  const params = {
+    min: Number(value?.min ?? value?.minimum),
+    max: Number(value?.max ?? value?.maximum),
+    step: Number(value?.step),
+    initial: Number(value?.initial_value ?? value?.min ?? value?.minimum),
   };
+  if (
+    !Number.isFinite(params.min)
+    || !Number.isFinite(params.max)
+    || !Number.isFinite(params.step)
+    || !Number.isFinite(params.initial)
+    || params.min >= params.max
+    || params.step <= 0
+    || params.initial < params.min
+    || params.initial > params.max
+  ) {
+    throw new TypeError("invalid slider presentation");
+  }
+  return params;
 }
 
 function mappingParts(config) {

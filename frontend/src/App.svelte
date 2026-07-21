@@ -50,6 +50,7 @@
   let widgetDraftState = null;
   let answerElement;
   let choiceElement;
+  let hintElement;
   let transcriptElement;
   let lastFocusedPendingKey = null;
   let lastTranscriptMarker = "";
@@ -307,11 +308,21 @@
   async function submitAnswer() {
     const value = answerText.trim();
     if (!value || busy || !view?.pending) return;
+    const submittedPendingKey = view.pending.key;
+    const restoreAnswerFocus = document.activeElement === answerElement;
     if (apiMode === "v2") {
       try {
         await executeV2Action({ type: "answer", answer: value });
       } catch {
         // Keep the answer in the field so a retry reuses the request id.
+      } finally {
+        if (
+          restoreAnswerFocus &&
+          view?.pending?.key === submittedPendingKey
+        ) {
+          await tick();
+          answerElement?.focus();
+        }
       }
       return;
     }
@@ -329,6 +340,8 @@
 
   async function requestHint() {
     if (busy || !view?.pending) return;
+    const hintedPendingKey = view.pending.key;
+    const restoreHintFocus = document.activeElement === hintElement;
     if (apiMode === "v2") {
       try {
         await executeV2Action(
@@ -337,6 +350,11 @@
         );
       } catch {
         // The authoritative stale view, when supplied, has already been applied.
+      } finally {
+        if (restoreHintFocus && view?.pending?.key === hintedPendingKey) {
+          await tick();
+          hintElement?.focus();
+        }
       }
       return;
     }
@@ -967,6 +985,7 @@
             <div class="composer-actions">
               {#if view.pending?.can_hint}
                 <button
+                  bind:this={hintElement}
                   type="button"
                   class="secondary"
                   disabled={busy}

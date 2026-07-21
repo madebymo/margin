@@ -3,7 +3,13 @@ import { expect, test } from "@playwright/test";
 
 async function expectNoAccessibilityViolations(page, state) {
   const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .withTags([
+      "wcag2a",
+      "wcag2aa",
+      "wcag21a",
+      "wcag21aa",
+      "wcag22aa",
+    ])
     .analyze();
   const violations = results.violations.map((violation) => ({
     id: violation.id,
@@ -14,10 +20,21 @@ async function expectNoAccessibilityViolations(page, state) {
   expect(violations, `${state} accessibility violations`).toEqual([]);
 }
 
+function tabKeyFor(page, { reverse = false } = {}) {
+  const browserName = page.context().browser()?.browserType().name();
+  const modifiers = [];
+  if (process.platform === "darwin" && browserName === "webkit") {
+    modifiers.push("Alt");
+  }
+  if (reverse) modifiers.push("Shift");
+  return [...modifiers, "Tab"].join("+");
+}
+
 async function tabTo(page, target, limit = 40) {
   await expect(target).toBeVisible();
+  const tabKey = tabKeyFor(page);
   for (let index = 0; index < limit; index += 1) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(tabKey);
     if (await target.evaluate((node) => node === document.activeElement)) {
       return;
     }
@@ -51,34 +68,19 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
   await tabTo(page, start);
   await page.keyboard.press("Enter");
 
-  const answer = page.getByLabel("Your answer");
+  const answer = page.getByLabel("Your expression");
   await expect(page.getByRole("heading", { name: "Power rule" })).toBeVisible();
   await expect(page.getByText("Update 0")).toBeVisible();
   await expect(answer).toBeFocused();
 
-  const competingTab = await page.context().newPage();
-  await competingTab.goto("/");
-  await expect(competingTab.getByText("Update 0")).toBeVisible();
-  await expect(competingTab.getByLabel("Your answer")).toBeFocused();
-
-  await page.keyboard.press("Tab");
+  await page.keyboard.press(tabKeyFor(page));
   const hint = page.getByRole("button", { name: "Get a hint" });
   await expect(hint).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByText("Update 1")).toBeVisible();
   await expect(page.getByText("Hint", { exact: true })).toBeVisible();
 
-  await competingTab.keyboard.type("0");
-  await competingTab.keyboard.press("Enter");
-  await expect(competingTab.getByText("Update 1")).toBeVisible();
-  await expect(competingTab.getByRole("alert")).toBeVisible();
-  await expect(
-    competingTab.getByText(
-      /revision changed|authoritative snapshot|changed elsewhere|latest state/i,
-    ),
-  ).toBeVisible();
-
-  await tabTo(page, answer);
+  await page.keyboard.press(tabKeyFor(page, { reverse: true }));
   await expect(answer).toBeFocused();
   await page.keyboard.type("0");
   await page.keyboard.press("Enter");
@@ -99,7 +101,7 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
   await expect(
     page.getByText("Guided text practice complete. Now try an unseen check."),
   ).toBeVisible();
-  await expect(page.getByLabel("Your answer")).toBeFocused();
+  await expect(page.getByLabel("Your expression")).toBeFocused();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("heading", { name: "Progress" })).toBeVisible();
@@ -154,8 +156,39 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
   await expect(
     page.getByRole("heading", { name: "Learning path complete" }),
   ).toBeVisible();
-  await expect(page.getByText(/was solved independently/i)).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Tutor conversation history" })
+      .getByText(/was solved independently/i),
+  ).toBeVisible();
   await expectNoAccessibilityViolations(page, "completed lesson");
+});
+
+test("a competing tab receives the authoritative stale snapshot", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start my learning path" }).click();
+  await expect(page.getByText("Update 0")).toBeVisible();
+
+  const competingTab = await page.context().newPage();
+  await competingTab.goto("/");
+  await expect(competingTab.getByText("Update 0")).toBeVisible();
+
+  await page.getByRole("button", { name: "Get a hint" }).click();
+  await expect(page.getByText("Update 1")).toBeVisible();
+
+  const competingAnswer = competingTab.getByLabel("Your expression");
+  await competingAnswer.fill("0");
+  await competingAnswer.press("Enter");
+  await expect(competingTab.getByText("Update 1")).toBeVisible();
+  await expect(competingTab.getByRole("alert")).toBeVisible();
+  await expect(
+    competingTab.getByText(
+      /revision changed|authoritative snapshot|changed elsewhere|latest state/i,
+    ),
+  ).toBeVisible();
+  await expect(page.getByText("Update 1")).toBeVisible();
 });
 
 test("reload restores the exact authoritative pending interaction", async ({
@@ -163,7 +196,7 @@ test("reload restores the exact authoritative pending interaction", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Start my learning path" }).click();
-  const answer = page.getByLabel("Your answer");
+  const answer = page.getByLabel("Your expression");
   await answer.fill("0");
   await answer.press("Enter");
   await expect(page.getByText("Update 1")).toBeVisible();
@@ -203,7 +236,7 @@ test("reload recovers a committed create whose response and cookie were lost", a
   await page.reload();
 
   await expect(page.getByText("Update 0")).toBeVisible();
-  await expect(page.getByLabel("Your answer")).toBeFocused();
+  await expect(page.getByLabel("Your expression")).toBeFocused();
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -238,7 +271,7 @@ test("reload recovers a committed reset only with its request proof", async ({
   await page.reload();
 
   await expect(page.getByText("Update 0")).toBeVisible();
-  await expect(page.getByLabel("Your answer")).toBeFocused();
+  await expect(page.getByLabel("Your expression")).toBeFocused();
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -284,6 +317,6 @@ test("a malformed archived widget fails safely without replacing the active inpu
   await expect(
     page.getByRole("button", { name: "Continue with a text alternative" }),
   ).toHaveCount(0);
-  await expect(page.getByLabel("Your answer")).toBeFocused();
+  await expect(page.getByLabel("Your expression")).toBeFocused();
   await expectNoAccessibilityViolations(page, "malformed widget fallback");
 });
