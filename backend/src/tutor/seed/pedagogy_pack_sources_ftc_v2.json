@@ -1,0 +1,493 @@
+{
+  "schema_version": 2,
+  "source_version": "ftc-wave-pedagogy-draft-v2",
+  "graph_version": 2,
+  "pack_sources": [
+    {
+      "source_id": "pedagogy.source.graph_reading",
+      "revision": 1,
+      "kc_id": "kc.fun.graph_reading",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.graph_reading.axes_coordinates",
+          "description": "Reverses horizontal inputs and vertical outputs.",
+          "error_signature": "Reports a plotted point with its coordinates in the opposite order.",
+          "remediation_hint": "Name the horizontal input first and the vertical function value second."
+        },
+        {
+          "id": "m.graph_reading.intercept_confusion",
+          "description": "Uses the wrong zero-coordinate test for an intercept.",
+          "error_signature": "Calls a point an x-intercept when its x-coordinate, rather than its height, is zero.",
+          "remediation_hint": "For an x-intercept set the height to zero; for a y-intercept set the input to zero."
+        },
+        {
+          "id": "m.graph_reading.slope_direction",
+          "description": "Reads vertical change without keeping a consistent left-to-right direction.",
+          "error_signature": "Rise and run are subtracted in opposite directions, producing the wrong sign.",
+          "remediation_hint": "Choose left and right endpoints once, then subtract right minus left for both coordinates."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.graph_reading.terrain_map",
+          "description": "A function graph is a terrain route: an input names a horizontal location, the height names the output, and slope records the climb per horizontal step.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "graph_coordinate_swap: reports output before input",
+        "graph_intercept_axis_swap: tests the wrong coordinate for zero",
+        "graph_slope_direction_mismatch: rise and run use opposite subtraction orders"
+      ],
+      "sources": [
+        "OpenStax Precalculus 2e, Section 1.1: Functions and Function Notation.",
+        "OpenStax Calculus Volume 1, Section 1.1: Review of Functions."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Read a graph from left to right: x is the input, f(x) is the height, and each exact point connects those two values."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "slope=(right y-left y)/(right x-left x)",
+          "spoken_text": "Slope is right y minus left y divided by right x minus left x."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Intercepts are zero-coordinate points, while increasing and decreasing intervals describe how height changes as x moves right."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Label the horizontal and vertical axes, then copy the exact endpoint coordinates before doing any arithmetic."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "point=(input,output)",
+          "spoken_text": "A plotted point is written as input first, output second."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For slope, draw the horizontal run and vertical rise separately and subtract both in the same direction."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.area_under_curve",
+      "revision": 1,
+      "kc_id": "kc.int.area_under_curve",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.area_under_curve.omits_region",
+          "description": "Adds only some of the nonoverlapping regions.",
+          "error_signature": "The reported total equals a proper subset of the listed rectangle and triangle areas.",
+          "remediation_hint": "Mark every region after its area has been included exactly once."
+        },
+        {
+          "id": "m.area_under_curve.triangle_factor",
+          "description": "Treats a triangle as a full rectangle.",
+          "error_signature": "Uses base times height without the one-half factor.",
+          "remediation_hint": "Pair the triangle with its matching rectangle and take half of that rectangle area."
+        },
+        {
+          "id": "m.area_under_curve.uses_endpoint_height",
+          "description": "Uses a listed dimension as the area or as an unrelated endpoint value.",
+          "error_signature": "The answer copies a width or height without applying the shape formula.",
+          "remediation_hint": "Name the shape first, then write its complete area formula before substituting dimensions."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.area_under_curve.floor_tiles",
+          "description": "Accumulated area is a tiled floor: partition the region into nonoverlapping familiar tiles, find each tile's area, and count every tile once.",
+          "widget_affinity": [
+            "slider",
+            "mapping"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "area_region_omitted: one listed nonoverlapping shape is absent from the sum",
+        "area_triangle_not_halved: base times height is used as the triangle area",
+        "area_dimension_copied: a width or height is reported without applying an area formula"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 5.1: Approximating Areas.",
+        "OpenStax Precalculus 2e, Section 1.6: Absolute Value Functions."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "For a nonnegative piecewise-linear region, partition the space under the graph into rectangles and triangles."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "A_rectangle=w*h; A_triangle=b*h/2",
+          "spoken_text": "Rectangle area is width times height; triangle area is base times height divided by two."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Because the pieces do not overlap and stay above the axis, the total area is the ordinary sum of their areas."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Sketch a boundary around each rectangle or triangle and write one formula beside each piece."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "total area=sum of nonoverlapping piece areas",
+          "spoken_text": "Total area is the sum of all nonoverlapping piece areas."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Check off each piece after adding it and verify that every triangle contribution includes one-half."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.riemann_sums",
+      "revision": 1,
+      "kc_id": "kc.int.riemann_sums",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.riemann_sums.endpoint_choice",
+          "description": "Chooses heights from the wrong side of each subinterval.",
+          "error_signature": "A left sum uses right endpoints, or a right sum uses left endpoints.",
+          "remediation_hint": "Write each subinterval first and circle the endpoint named by the method."
+        },
+        {
+          "id": "m.riemann_sums.omits_width",
+          "description": "Adds heights but does not turn them into rectangle areas.",
+          "error_signature": "The reported value is the sum of heights without the common-width factor.",
+          "remediation_hint": "Write width times height for every rectangle before adding."
+        },
+        {
+          "id": "m.riemann_sums.midpoint_confusion",
+          "description": "Treats a midpoint sample as an endpoint sample.",
+          "error_signature": "The selected x-values sit at subinterval edges rather than their centers.",
+          "remediation_hint": "Mark both endpoints of each subinterval, then locate the point halfway between them."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.riemann_sums.fence_panels",
+          "description": "A Riemann sum is a row of equal-width fence panels: the method chooses each panel's height, and width times height gives its contribution.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "riemann_wrong_endpoint: samples the opposite edge of each subinterval",
+        "riemann_width_omitted: adds heights without multiplying by common width",
+        "riemann_midpoint_shift: uses an edge in place of the subinterval center"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 5.1: Approximating Areas.",
+        "OpenStax Calculus Volume 1, Section 5.2: The Definite Integral."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A Riemann sum partitions an interval into equal widths and assigns one sampled height to each rectangle."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "rectangle contribution=common width*selected height",
+          "spoken_text": "Each rectangle contribution is the common width times its selected height."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Left, right, and midpoint methods differ only in which sample supplies each height."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "List the subintervals in order and write L, R, or M beside the selected point for each one."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "sum=width*(height one+height two+more heights)",
+          "spoken_text": "The rectangle sum is width times the sum of all selected heights."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Count selected heights and subintervals; the counts must match before you multiply."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.definite_integral",
+      "revision": 1,
+      "kc_id": "kc.int.definite_integral",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.definite_integral.bound_order",
+          "description": "Treats reversed bounds as the same direction.",
+          "error_signature": "The value keeps its sign when the starting and ending bounds are exchanged.",
+          "remediation_hint": "Read the lower written bound as the start and negate the value when direction reverses."
+        },
+        {
+          "id": "m.definite_integral.ignores_sign",
+          "description": "Counts every geometric region as positive.",
+          "error_signature": "Areas below the horizontal axis are added by magnitude instead of contributing negatively.",
+          "remediation_hint": "Attach a positive sign above the axis and a negative sign below it before adding."
+        },
+        {
+          "id": "m.definite_integral.breaks_additivity",
+          "description": "Combines adjacent intervals with subtraction or drops one piece.",
+          "error_signature": "The whole-interval value is not the sum of the two consistently oriented pieces.",
+          "remediation_hint": "Write the two adjacent intervals end to end and add their signed values."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.definite_integral.trip_ledger",
+          "description": "A definite integral is a directed trip ledger: contributions in the chosen direction carry signs, adjacent trip segments add, and reversing the trip reverses the total.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "definite_bounds_reversed_without_sign: direction changes but sign does not",
+        "definite_unsigned_area: negative contributions are replaced by magnitudes",
+        "definite_additivity_break: adjacent signed values are not added"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 5.2: The Definite Integral.",
+        "OpenStax Calculus Volume 1, Section 5.3: The Fundamental Theorem of Calculus."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "A definite integral is signed accumulation from its starting bound to its ending bound."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "integral_[b,a] f(x) dx=-integral_[a,b] f(x) dx",
+          "spoken_text": "The integral from b to a equals the negative of the integral from a to b."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Adjacent intervals add when their directions agree; contributions below the axis remain negative."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Write an arrow from the starting bound to the ending bound and keep that direction through every piece."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "whole signed accumulation=left piece+right piece",
+          "spoken_text": "The whole signed accumulation equals the left piece plus the right piece."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Before adding, label each region or supplied value with its sign and verify that adjacent endpoints meet."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.antiderivatives",
+      "revision": 1,
+      "kc_id": "kc.int.antiderivatives",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.antiderivatives.keeps_exponent",
+          "description": "Changes a coefficient but leaves the power unchanged.",
+          "error_signature": "Differentiating the proposed term produces a power one lower than the required term.",
+          "remediation_hint": "Raise the exponent by one before adjusting the coefficient."
+        },
+        {
+          "id": "m.antiderivatives.multiplies_coefficient",
+          "description": "Multiplies by the new exponent instead of dividing by it.",
+          "error_signature": "The derivative of the proposed term has an extra factor of the new exponent.",
+          "remediation_hint": "After raising the power, divide the old coefficient by that new power."
+        },
+        {
+          "id": "m.antiderivatives.drops_term",
+          "description": "Antidifferentiates only part of a polynomial.",
+          "error_signature": "Differentiating the proposed result fails to reproduce one given term.",
+          "remediation_hint": "Process every polynomial term separately, then combine the results."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.antiderivatives.reverse_machine",
+          "description": "Differentiation is a machine with a reversible polynomial setting: an antiderivative runs each power-rule step backward, while an arbitrary constant records what differentiation cannot recover.",
+          "widget_affinity": [
+            "mapping",
+            "slider"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "antiderivative_power_unchanged: output exponent does not increase",
+        "antiderivative_coefficient_multiplied: coefficient is multiplied by the new exponent",
+        "antiderivative_term_dropped: derivative of the response omits a source term"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 4.10: Antiderivatives.",
+        "OpenStax Calculus Volume 1, Section 5.3: The Fundamental Theorem of Calculus."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "An antiderivative is checked by differentiation, so each polynomial term reverses one power-rule step."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "new power=old power+1; new coefficient=old coefficient/new power",
+          "spoken_text": "The new power is the old power plus one, and the new coefficient is the old coefficient divided by the new power."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "One arbitrary constant is included because every constant has derivative zero."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Make a two-column table with each derivative term on the left and its reversed power-rule term on the right."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "differentiate the candidate -> recover the given polynomial",
+          "spoken_text": "Differentiate the candidate and confirm that it recovers the given polynomial."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "If the check fails, compare exponents first, then coefficients, and finally confirm that no term was omitted."
+        }
+      ]
+    },
+    {
+      "source_id": "pedagogy.source.ftc",
+      "revision": 1,
+      "kc_id": "kc.int.ftc",
+      "author": "AI-assisted implementation draft (unreviewed)",
+      "misconceptions": [
+        {
+          "id": "m.ftc.adds_endpoint_values",
+          "description": "Adds the two antiderivative endpoint values.",
+          "error_signature": "The result uses ending value plus starting value instead of their directed difference.",
+          "remediation_hint": "Write ending value minus starting value before substituting either number."
+        },
+        {
+          "id": "m.ftc.reverses_subtraction",
+          "description": "Subtracts endpoint values in the opposite order.",
+          "error_signature": "The response is the negative of the correctly oriented result.",
+          "remediation_hint": "Match the first evaluation to the upper bound and subtract the evaluation at the lower bound."
+        },
+        {
+          "id": "m.ftc.uses_integrand_values",
+          "description": "Evaluates the integrand at the endpoints instead of an antiderivative.",
+          "error_signature": "The work substitutes bounds into f rather than into a function whose derivative is f.",
+          "remediation_hint": "Name and verify an antiderivative F before evaluating either endpoint."
+        }
+      ],
+      "metaphors": [
+        {
+          "id": "met.ftc.odometer",
+          "description": "An antiderivative acts like an accumulation odometer: the change in its reading from the starting bound to the ending bound gives the accumulated amount between them.",
+          "widget_affinity": [
+            "slider",
+            "mapping"
+          ]
+        }
+      ],
+      "error_patterns": [
+        "ftc_endpoint_addition: endpoint antiderivative values are added",
+        "ftc_subtraction_reversed: lower value is reduced by upper value",
+        "ftc_integrand_substitution: bounds are substituted into the integrand"
+      ],
+      "sources": [
+        "OpenStax Calculus Volume 1, Section 5.3: The Fundamental Theorem of Calculus.",
+        "OpenStax Calculus Volume 1, Section 4.10: Antiderivatives."
+      ],
+      "lesson_narrative": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The Fundamental Theorem turns a definite integral into an endpoint change in any antiderivative of the integrand."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "integral_[a,b] f(x) dx=F(b)-F(a)",
+          "spoken_text": "The integral from a to b of f of x equals F of b minus F of a."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "The antiderivative supplies F, and the written bound order determines ending value minus starting value."
+        }
+      ],
+      "remediation": [
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Separate the work into three lines: identify F, evaluate F at the ending bound, then subtract F at the starting bound."
+        },
+        {
+          "kind": "math",
+          "role": "worked_step",
+          "expression": "endpoint change=ending antiderivative value-starting antiderivative value",
+          "spoken_text": "Endpoint change is ending antiderivative value minus starting antiderivative value."
+        },
+        {
+          "kind": "text",
+          "role": "instruction",
+          "text": "Differentiate F once to verify the integrand before using either endpoint."
+        }
+      ]
+    }
+  ]
+}
