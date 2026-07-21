@@ -1,0 +1,476 @@
+{
+  "schema_version": 1,
+  "manifest_version": "solve-quadratics-review-manifest-v2",
+  "graph_version": 2,
+  "compiler_version": "solve-quadratics-item-compiler-v2",
+  "entries": [
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.01",
+      "revision": 1,
+      "source_digest": "3892304c611eb3c59f901835e499e612a73d71d71be458a90d2dbdcfc9794beb",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.02",
+      "revision": 1,
+      "source_digest": "bcc26316fcc0c94bf0328a6019ce1a6ef24b20e24dbaa6fd8baf0118f62b3aff",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.03",
+      "revision": 1,
+      "source_digest": "1b9e9a496186229453c4f0bc234fad1a949adf5074f7c929dc3858e3b04703ff",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.04",
+      "revision": 1,
+      "source_digest": "e880cd7df4bc78540e2a7eebee84afcfac94b87fff50a56216db80e8f4ee0630",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.01",
+      "revision": 1,
+      "source_digest": "6c0014704e720fc9d992a1fcf81c2a06df408897dfffdc58fde21dd0d1707069",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.02",
+      "revision": 1,
+      "source_digest": "135424127bdbab07a308b4f911f142ff4d649c6d95ffc035f4369fb28e1c9b33",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.03",
+      "revision": 1,
+      "source_digest": "bb9682292f7278ef57e23ccd82ca50be6f5e4d74fbe50eba319e89402fa6cfa1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.04",
+      "revision": 1,
+      "source_digest": "7a465a11bdb460f989f79f1f0a9b7906b59815746767607def448bb92931cea7",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.05",
+      "revision": 1,
+      "source_digest": "884f575804c6fa3b6a6e9d0ad2338578a13b57668ed4e9571d2dddafbb7e2d5b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.guided_widget.01",
+      "revision": 1,
+      "source_digest": "554f55cf4f63d7de2a0e49dc6d62e9bc2cdb0ecdea01922fc9533371d4f9230b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.capstone.01",
+      "revision": 1,
+      "source_digest": "3dc8da406ebe698382695adea31ca9bc923e8baadf3f88e8c3aa9a1ccd4b2ff5",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.capstone.02",
+      "revision": 1,
+      "source_digest": "0c266b3a3a72ac1c0c11f23573e9003cbc296d842709a5ee3d69a073646cf627",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.worked_example.01",
+      "revision": 1,
+      "source_digest": "5355138c8d896410db085f3468164cf843c7de44acac2c113ffe99b5663046c0",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.01",
+      "revision": 2,
+      "source_digest": "e9c0eddf44ba92f40ed3e8d883605b66944364bc16ab2f98a47354334826ffb1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.02",
+      "revision": 1,
+      "source_digest": "2b16a90be838671c2a4c7c5134bc12b5df5111898c633bf0dbd6bb649eea61e1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.03",
+      "revision": 1,
+      "source_digest": "3845f74425c1b9b25e919c0cbd3da12edd59ec45cfbeb35e0abc8355b7b017b4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.04",
+      "revision": 1,
+      "source_digest": "32b5e1e067f6c59b200c45612de928d6551ef737fbff2604de10d32c923cbf92",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.01",
+      "revision": 1,
+      "source_digest": "9ee804f48c606e8fe5c7fd9cf637b613501b80c992210dbecf88e7569095b89d",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.02",
+      "revision": 1,
+      "source_digest": "db1d077912bcc26ef3906d0e29326cff2b7b4acd43d75d0b1258606c1bd4af29",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.03",
+      "revision": 1,
+      "source_digest": "3de19d4b24e7a274a6e77b47af538553c16d84fe242abfa0ec4cdc6958cd0683",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.04",
+      "revision": 1,
+      "source_digest": "230fe6a8fb3f176af42146f49ccee0a12f72cae960269fc3e170469e4f875858",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.05",
+      "revision": 1,
+      "source_digest": "93f3a722c800d927d55786d06ed665c6ed103e52d6e03f495a842db163f49eb2",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.guided_widget.01",
+      "revision": 1,
+      "source_digest": "480826be14912ec844e6d563aa72225711d86aee299a2dc9dab7a147b07abd04",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.capstone.01",
+      "revision": 1,
+      "source_digest": "e952703c16b72f4309a3ac17318972edad9be0c8cdce190f847f899e03098374",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.capstone.02",
+      "revision": 1,
+      "source_digest": "1f1d0b526e97de4e18b367da74ae64db06680f3c22256db32f485202a19401f4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.worked_example.01",
+      "revision": 1,
+      "source_digest": "fdbe96705c8a12c08ec26a7a78f2a164b14815ac5b2418d63ee33cf635200dde",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.01",
+      "revision": 1,
+      "source_digest": "13e346d8aa8547e00c299bcd178e93a2e0fc4d31b736d9fc6c2495fdae62b217",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.02",
+      "revision": 2,
+      "source_digest": "d5dfe269ef456827f954b0cf931d1eebb88744e6a64548b89ef83a3af979d0d4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.03",
+      "revision": 2,
+      "source_digest": "44490c267c23dd7bf32705d2b00fdcb87a5ae0bd6bfc46678170265238778ddc",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.04",
+      "revision": 1,
+      "source_digest": "1e666ede1cbad37c9d5e7f8530b754ce49b0bc97d992bbf601a9be631b085e93",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.01",
+      "revision": 1,
+      "source_digest": "d4a39125b884a223206ca1708661ea2e0356f9ba7d4dd60876b6db79408a6ec4",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.02",
+      "revision": 1,
+      "source_digest": "4ad6fcfe00c96f1a867aebf2163a4767651e6684e0bcf4b98e47d24a675661ba",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.03",
+      "revision": 1,
+      "source_digest": "25e568bd56c4d610aa8a11f1b18133a299189dd5674389fa288f0b725b45cedd",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.04",
+      "revision": 1,
+      "source_digest": "ce2c1cbcf3b04033ce8bf1a60e6c48f52263efe5626471d5f7ad95000f00e74b",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.05",
+      "revision": 1,
+      "source_digest": "7476c023ad5d2cb76983ac0c58710fe69bdf42bfe3c266528cc2518b6a6e0b47",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.guided_widget.01",
+      "revision": 2,
+      "source_digest": "fdc55f825a80eca127a7094b117ce534f66575f78959abfdb17349e2c6bb42c3",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.capstone.01",
+      "revision": 1,
+      "source_digest": "b2303ad38d082e7d68ef9f11f74378ca38b697de911393219d53d5043a34d450",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.capstone.02",
+      "revision": 1,
+      "source_digest": "406b00959bc9e8a2650256eb5175d4915073507413a77dff559add380d2d8c35",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.worked_example.01",
+      "revision": 1,
+      "source_digest": "ba993cf8374df083aabc16baf68979cba14b64ec9d07f592a2ca9020cf5e0424",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.01",
+      "revision": 1,
+      "source_digest": "dab3693881b6c77b9862edd8bf2201e81d32f170bc8350221bae51f5df202276",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.02",
+      "revision": 1,
+      "source_digest": "f5f46f0d804cbd838a7785e1b0d6ee92037af16d2dd14e783c9ba7e2846669b7",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.03",
+      "revision": 1,
+      "source_digest": "21fceeb9b88b22eb91f2a4d4167e31445f3bfd4fb47ce047dd2441ab4eb59f22",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.04",
+      "revision": 1,
+      "source_digest": "5f21ceab93400ae8ea32e84f39ab5abd77b650c750917b7eb6194ad8af2d426f",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.01",
+      "revision": 1,
+      "source_digest": "832c7498ac781f1ca3d380b08f14c4ef79892376ee3d3bc58f5599e1477bc124",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.02",
+      "revision": 1,
+      "source_digest": "3195a4c9ed37fbc81b32c09c959bfcb1ab3de92d13cc273f504aa3af4282fe15",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.03",
+      "revision": 1,
+      "source_digest": "885a334df72d470673e4e4198f32194a0de839497d8a7d7257c20a7ef73a4fd1",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.04",
+      "revision": 1,
+      "source_digest": "72d2ada7a84324fcd9d6188a7791b371bf54f4bfaa1e6b2b3f914f30cf718f52",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.05",
+      "revision": 1,
+      "source_digest": "7045872d5bb0dc09a14e8977aa5e820a00f064d529f007973b796e55b7f89771",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.guided_widget.01",
+      "revision": 1,
+      "source_digest": "1bc7025279433b943998d701942b4cff41178daafe4e06bd84f9dee37583e932",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.capstone.01",
+      "revision": 1,
+      "source_digest": "652fc78af3564b56c4a446c4faf6ab6f421b8e2010ba39887a681c7d1fef7fd3",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.capstone.02",
+      "revision": 1,
+      "source_digest": "d0b7526a6a29752ac7262ff9cb1e21487b86a8f22d3b2b24c506e9e38fa310bc",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.worked_example.01",
+      "revision": 1,
+      "source_digest": "1c8da08b99a9062b18e52a16d0432d84227a342593a9c8764a4041aceb8ca060",
+      "decision": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "notes": null
+    }
+  ]
+}

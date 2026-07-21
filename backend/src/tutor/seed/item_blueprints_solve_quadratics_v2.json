@@ -1,0 +1,1553 @@
+{
+  "schema_version": 1,
+  "blueprint_version": "solve-quadratics-wave-source-v2",
+  "output_bank_version": "solve-quadratics-wave-draft-v2",
+  "graph_version": 2,
+  "authoring_source": "curated-solve-quadratics-wave-source-v2",
+  "author": "AI-assisted implementation draft (unreviewed)",
+  "target_kcs": [
+    "kc.alg.factoring",
+    "kc.alg.polynomial_ops",
+    "kc.alg.solve_linear",
+    "kc.alg.solve_quadratic"
+  ],
+  "released_kcs": [],
+  "families": [
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.01",
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.direct_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "polynomial_direct_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": -2,
+            "quadratic": -3,
+            "linear": -3,
+            "constant": -3,
+            "display_order": "descending"
+          },
+          "add_right": {
+            "cubic": -1,
+            "quadratic": -1,
+            "linear": -5,
+            "constant": -2,
+            "display_order": "ascending"
+          },
+          "subtract_left": {
+            "cubic": -2,
+            "quadratic": -5,
+            "linear": -3,
+            "constant": -5,
+            "display_order": "interleaved"
+          },
+          "subtract_right": {
+            "cubic": -2,
+            "quadratic": 1,
+            "linear": -4,
+            "constant": 0,
+            "display_order": "descending"
+          },
+          "expand": {
+            "left_linear": 1,
+            "left_constant": 2,
+            "right_linear": 3,
+            "right_constant": -1
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.02",
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.correction_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_correction_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": -1,
+            "quadratic": -1,
+            "linear": 0,
+            "constant": 2,
+            "display_order": "ascending"
+          },
+          "add_right": {
+            "cubic": 2,
+            "quadratic": 2,
+            "linear": -1,
+            "constant": 0,
+            "display_order": "interleaved"
+          },
+          "subtract_left": {
+            "cubic": 1,
+            "quadratic": 0,
+            "linear": -1,
+            "constant": -1,
+            "display_order": "descending"
+          },
+          "subtract_right": {
+            "cubic": 2,
+            "quadratic": 3,
+            "linear": 1,
+            "constant": 3,
+            "display_order": "ascending"
+          },
+          "expand": {
+            "left_linear": 2,
+            "left_constant": -3,
+            "right_linear": -2,
+            "right_constant": 2
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.03",
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.03",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.sparse_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_sparse_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": 1,
+            "quadratic": 0,
+            "linear": 3,
+            "constant": -6,
+            "display_order": "ascending"
+          },
+          "add_right": {
+            "cubic": -3,
+            "quadratic": 5,
+            "linear": 0,
+            "constant": 2,
+            "display_order": "descending"
+          },
+          "subtract_left": {
+            "cubic": 4,
+            "quadratic": 5,
+            "linear": 1,
+            "constant": 0,
+            "display_order": "ascending"
+          },
+          "subtract_right": {
+            "cubic": -1,
+            "quadratic": 5,
+            "linear": 6,
+            "constant": 6,
+            "display_order": "interleaved"
+          },
+          "expand": {
+            "left_linear": -1,
+            "left_constant": 4,
+            "right_linear": 4,
+            "right_constant": -3
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.diagnostic.04",
+      "family_id": "family.sqv2.polynomial_ops.diagnostic.04",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.mixed_expression",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_mixed_expression",
+        "core": {
+          "add_left": {
+            "cubic": 1,
+            "quadratic": 3,
+            "linear": -5,
+            "constant": -1,
+            "display_order": "descending"
+          },
+          "add_right": {
+            "cubic": -1,
+            "quadratic": -3,
+            "linear": -6,
+            "constant": 4,
+            "display_order": "ascending"
+          },
+          "subtract_left": {
+            "cubic": -2,
+            "quadratic": -3,
+            "linear": 3,
+            "constant": 7,
+            "display_order": "interleaved"
+          },
+          "subtract_right": {
+            "cubic": 3,
+            "quadratic": -4,
+            "linear": -2,
+            "constant": -6,
+            "display_order": "descending"
+          },
+          "expand": {
+            "left_linear": 3,
+            "left_constant": -5,
+            "right_linear": -3,
+            "right_constant": 4
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.01",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.checkin.01",
+      "family_id": "family.sqv2.polynomial_ops.checkin.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.coefficient_audit",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_coefficient_audit",
+        "core": {
+          "add_left": {
+            "cubic": 2,
+            "quadratic": -4,
+            "linear": -2,
+            "constant": 4,
+            "display_order": "ascending"
+          },
+          "add_right": {
+            "cubic": 1,
+            "quadratic": 0,
+            "linear": -2,
+            "constant": 6,
+            "display_order": "interleaved"
+          },
+          "subtract_left": {
+            "cubic": 1,
+            "quadratic": 2,
+            "linear": 5,
+            "constant": -6,
+            "display_order": "descending"
+          },
+          "subtract_right": {
+            "cubic": -2,
+            "quadratic": -2,
+            "linear": 3,
+            "constant": -3,
+            "display_order": "ascending"
+          },
+          "expand": {
+            "left_linear": -2,
+            "left_constant": 6,
+            "right_linear": 5,
+            "right_constant": -5
+          }
+        },
+        "add_power": 2,
+        "subtract_power": 1,
+        "expand_power": 0
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.02",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.checkin.02",
+      "family_id": "family.sqv2.polynomial_ops.checkin.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.reverse_portfolio",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_reverse_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": -2,
+            "quadratic": -2,
+            "linear": 1,
+            "constant": -4,
+            "display_order": "interleaved"
+          },
+          "add_right": {
+            "cubic": 3,
+            "quadratic": 3,
+            "linear": 2,
+            "constant": -7,
+            "display_order": "descending"
+          },
+          "subtract_left": {
+            "cubic": 4,
+            "quadratic": -6,
+            "linear": 7,
+            "constant": -2,
+            "display_order": "ascending"
+          },
+          "subtract_right": {
+            "cubic": -3,
+            "quadratic": 0,
+            "linear": -5,
+            "constant": 0,
+            "display_order": "interleaved"
+          },
+          "expand": {
+            "left_linear": 4,
+            "left_constant": -7,
+            "right_linear": -4,
+            "right_constant": 6
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.03",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.checkin.03",
+      "family_id": "family.sqv2.polynomial_ops.checkin.03",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.table_portfolio",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_table_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": -1,
+            "quadratic": 0,
+            "linear": 4,
+            "constant": 1,
+            "display_order": "descending"
+          },
+          "add_right": {
+            "cubic": -2,
+            "quadratic": -5,
+            "linear": 6,
+            "constant": -5,
+            "display_order": "ascending"
+          },
+          "subtract_left": {
+            "cubic": -2,
+            "quadratic": -1,
+            "linear": -6,
+            "constant": 2,
+            "display_order": "interleaved"
+          },
+          "subtract_right": {
+            "cubic": 1,
+            "quadratic": 2,
+            "linear": 0,
+            "constant": 3,
+            "display_order": "descending"
+          },
+          "expand": {
+            "left_linear": -3,
+            "left_constant": 8,
+            "right_linear": 6,
+            "right_constant": -7
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.04",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.checkin.04",
+      "family_id": "family.sqv2.polynomial_ops.checkin.04",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.sparse_portfolio",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_sparse_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": 1,
+            "quadratic": 0,
+            "linear": -4,
+            "constant": 6,
+            "display_order": "ascending"
+          },
+          "add_right": {
+            "cubic": -1,
+            "quadratic": -2,
+            "linear": 0,
+            "constant": -3,
+            "display_order": "interleaved"
+          },
+          "subtract_left": {
+            "cubic": 1,
+            "quadratic": 4,
+            "linear": -4,
+            "constant": 0,
+            "display_order": "descending"
+          },
+          "subtract_right": {
+            "cubic": -2,
+            "quadratic": 4,
+            "linear": 5,
+            "constant": 6,
+            "display_order": "interleaved"
+          },
+          "expand": {
+            "left_linear": 5,
+            "left_constant": -9,
+            "right_linear": -5,
+            "right_constant": 8
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.checkin.05",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.checkin.05",
+      "family_id": "family.sqv2.polynomial_ops.checkin.05",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.mixed_expression",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_mixed_expression",
+        "core": {
+          "add_left": {
+            "cubic": 1,
+            "quadratic": 4,
+            "linear": -1,
+            "constant": -2,
+            "display_order": "interleaved"
+          },
+          "add_right": {
+            "cubic": 2,
+            "quadratic": 1,
+            "linear": 1,
+            "constant": -1,
+            "display_order": "descending"
+          },
+          "subtract_left": {
+            "cubic": 4,
+            "quadratic": -4,
+            "linear": -2,
+            "constant": -7,
+            "display_order": "ascending"
+          },
+          "subtract_right": {
+            "cubic": 2,
+            "quadratic": -5,
+            "linear": -3,
+            "constant": -6,
+            "display_order": "interleaved"
+          },
+          "expand": {
+            "left_linear": -4,
+            "left_constant": 3,
+            "right_linear": 2,
+            "right_constant": -9
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.guided_widget.01",
+      "family_id": "family.sqv2.polynomial_ops.guided_widget.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.guided_match",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_guided_match",
+        "core": {
+          "add_left": {
+            "cubic": 2,
+            "quadratic": -3,
+            "linear": 2,
+            "constant": 3,
+            "display_order": "descending"
+          },
+          "add_right": {
+            "cubic": -3,
+            "quadratic": 4,
+            "linear": 5,
+            "constant": 1,
+            "display_order": "ascending"
+          },
+          "subtract_left": {
+            "cubic": -2,
+            "quadratic": 1,
+            "linear": 0,
+            "constant": -3,
+            "display_order": "interleaved"
+          },
+          "subtract_right": {
+            "cubic": -1,
+            "quadratic": -3,
+            "linear": 2,
+            "constant": -3,
+            "display_order": "descending"
+          },
+          "expand": {
+            "left_linear": 6,
+            "left_constant": -4,
+            "right_linear": -1,
+            "right_constant": 5
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.capstone.01",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.capstone.01",
+      "family_id": "family.sqv2.polynomial_ops.capstone.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.reverse_portfolio",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_reverse_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": -2,
+            "quadratic": -1,
+            "linear": 5,
+            "constant": -5,
+            "display_order": "ascending"
+          },
+          "add_right": {
+            "cubic": -1,
+            "quadratic": -4,
+            "linear": -4,
+            "constant": 3,
+            "display_order": "interleaved"
+          },
+          "subtract_left": {
+            "cubic": 1,
+            "quadratic": 6,
+            "linear": 2,
+            "constant": 1,
+            "display_order": "descending"
+          },
+          "subtract_right": {
+            "cubic": 3,
+            "quadratic": -1,
+            "linear": -6,
+            "constant": 0,
+            "display_order": "ascending"
+          },
+          "expand": {
+            "left_linear": -5,
+            "left_constant": 5,
+            "right_linear": 3,
+            "right_constant": -4
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.capstone.02",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.capstone.02",
+      "family_id": "family.sqv2.polynomial_ops.capstone.02",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.mixed_expression",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "polynomial_mixed_expression",
+        "core": {
+          "add_left": {
+            "cubic": -1,
+            "quadratic": 1,
+            "linear": -3,
+            "constant": 0,
+            "display_order": "interleaved"
+          },
+          "add_right": {
+            "cubic": 1,
+            "quadratic": -1,
+            "linear": 0,
+            "constant": 5,
+            "display_order": "descending"
+          },
+          "subtract_left": {
+            "cubic": 4,
+            "quadratic": -2,
+            "linear": 4,
+            "constant": 5,
+            "display_order": "ascending"
+          },
+          "subtract_right": {
+            "cubic": -2,
+            "quadratic": 1,
+            "linear": -1,
+            "constant": 3,
+            "display_order": "interleaved"
+          },
+          "expand": {
+            "left_linear": 2,
+            "left_constant": -6,
+            "right_linear": -6,
+            "right_constant": 3
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.polynomial_ops.worked_example.01",
+      "revision": 1,
+      "item_id": "item.sqv2.polynomial_ops.worked_example.01",
+      "family_id": "family.sqv2.polynomial_ops.worked_example.01",
+      "kc_id": "kc.alg.polynomial_ops",
+      "construct_id": "polynomial.direct_portfolio",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "polynomial_direct_portfolio",
+        "core": {
+          "add_left": {
+            "cubic": 1,
+            "quadratic": 3,
+            "linear": 0,
+            "constant": 5,
+            "display_order": "descending"
+          },
+          "add_right": {
+            "cubic": 3,
+            "quadratic": 2,
+            "linear": 4,
+            "constant": 7,
+            "display_order": "ascending"
+          },
+          "subtract_left": {
+            "cubic": -2,
+            "quadratic": 3,
+            "linear": 6,
+            "constant": -8,
+            "display_order": "interleaved"
+          },
+          "subtract_right": {
+            "cubic": -3,
+            "quadratic": 3,
+            "linear": 4,
+            "constant": 6,
+            "display_order": "descending"
+          },
+          "expand": {
+            "left_linear": -2,
+            "left_constant": 7,
+            "right_linear": 4,
+            "right_constant": -2
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.01",
+      "revision": 2,
+      "item_id": "item.sqv2.factoring.diagnostic.01",
+      "family_id": "family.sqv2.factoring.diagnostic.01",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.direct_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "factoring_direct_portfolio",
+        "core": {
+          "gcf": {
+          "common_coefficient": 2,
+          "common_exponent": 1,
+          "residual_linear": 3,
+          "residual_constant": 7
+          },
+          "monic": {
+            "lower_root": -4,
+            "upper_root": 3
+          },
+          "difference": {
+            "scale": 1,
+            "magnitude": 2
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.diagnostic.02",
+      "family_id": "family.sqv2.factoring.diagnostic.02",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.correction_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_correction_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": -3,
+            "common_exponent": 2,
+            "residual_linear": 2,
+            "residual_constant": -3
+          },
+          "monic": {
+            "lower_root": 2,
+            "upper_root": 5
+          },
+          "difference": {
+            "scale": -2,
+            "magnitude": 3
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.diagnostic.03",
+      "family_id": "family.sqv2.factoring.diagnostic.03",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.missing_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_missing_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 4,
+            "common_exponent": 0,
+            "residual_linear": 5,
+            "residual_constant": 7
+          },
+          "monic": {
+            "lower_root": -6,
+            "upper_root": -2
+          },
+          "difference": {
+            "scale": 3,
+            "magnitude": 4
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.diagnostic.04",
+      "family_id": "family.sqv2.factoring.diagnostic.04",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.table_portfolio",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_table_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": -5,
+            "common_exponent": 1,
+            "residual_linear": 4,
+            "residual_constant": -5
+          },
+          "monic": {
+            "lower_root": 4,
+            "upper_root": 4
+          },
+          "difference": {
+            "scale": -4,
+            "magnitude": 5
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.01",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.checkin.01",
+      "family_id": "family.sqv2.factoring.checkin.01",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.verification_portfolio",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_verification_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 6,
+            "common_exponent": 2,
+            "residual_linear": 7,
+            "residual_constant": 9
+          },
+          "monic": {
+            "lower_root": -5,
+            "upper_root": 1
+          },
+          "difference": {
+            "scale": 5,
+            "magnitude": 2
+          }
+        },
+        "check_value": -2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.02",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.checkin.02",
+      "family_id": "family.sqv2.factoring.checkin.02",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.transfer_portfolio",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_transfer_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": -7,
+            "common_exponent": 0,
+            "residual_linear": 3,
+            "residual_constant": -4
+          },
+          "monic": {
+            "lower_root": 0,
+            "upper_root": 6
+          },
+          "difference": {
+            "scale": -6,
+            "magnitude": 3
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.03",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.checkin.03",
+      "family_id": "family.sqv2.factoring.checkin.03",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.table_portfolio",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_table_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 8,
+            "common_exponent": 1,
+            "residual_linear": 5,
+            "residual_constant": 6
+          },
+          "monic": {
+            "lower_root": -7,
+            "upper_root": 2
+          },
+          "difference": {
+            "scale": 2,
+            "magnitude": 4
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.04",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.checkin.04",
+      "family_id": "family.sqv2.factoring.checkin.04",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.missing_portfolio",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_missing_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": -9,
+            "common_exponent": 2,
+            "residual_linear": 2,
+            "residual_constant": -7
+          },
+          "monic": {
+            "lower_root": -3,
+            "upper_root": -1
+          },
+          "difference": {
+            "scale": -3,
+            "magnitude": 5
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.checkin.05",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.checkin.05",
+      "family_id": "family.sqv2.factoring.checkin.05",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.correction_portfolio",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_correction_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 3,
+            "common_exponent": 0,
+            "residual_linear": 7,
+            "residual_constant": 5
+          },
+          "monic": {
+            "lower_root": 1,
+            "upper_root": 7
+          },
+          "difference": {
+            "scale": 3,
+            "magnitude": 6
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.guided_widget.01",
+      "family_id": "family.sqv2.factoring.guided_widget.01",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.guided_match",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_guided_match",
+        "core": {
+          "gcf": {
+            "common_coefficient": -4,
+            "common_exponent": 1,
+            "residual_linear": 4,
+            "residual_constant": -3
+          },
+          "monic": {
+            "lower_root": -2,
+            "upper_root": 5
+          },
+          "difference": {
+            "scale": -2,
+            "magnitude": 7
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.capstone.01",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.capstone.01",
+      "family_id": "family.sqv2.factoring.capstone.01",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.transfer_portfolio",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "factoring_transfer_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 5,
+            "common_exponent": 2,
+            "residual_linear": 3,
+            "residual_constant": 8
+          },
+          "monic": {
+            "lower_root": -6,
+            "upper_root": 3
+          },
+          "difference": {
+            "scale": 1,
+            "magnitude": 8
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.capstone.02",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.capstone.02",
+      "family_id": "family.sqv2.factoring.capstone.02",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.verification_portfolio",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "factoring_verification_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": -6,
+            "common_exponent": 0,
+            "residual_linear": 5,
+            "residual_constant": -7
+          },
+          "monic": {
+            "lower_root": 2,
+            "upper_root": 8
+          },
+          "difference": {
+            "scale": -2,
+            "magnitude": 6
+          }
+        },
+        "check_value": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.factoring.worked_example.01",
+      "revision": 1,
+      "item_id": "item.sqv2.factoring.worked_example.01",
+      "family_id": "family.sqv2.factoring.worked_example.01",
+      "kc_id": "kc.alg.factoring",
+      "construct_id": "factoring.direct_portfolio",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "factoring_direct_portfolio",
+        "core": {
+          "gcf": {
+            "common_coefficient": 7,
+            "common_exponent": 1,
+            "residual_linear": 2,
+            "residual_constant": 5
+          },
+          "monic": {
+            "lower_root": -8,
+            "upper_root": -3
+          },
+          "difference": {
+            "scale": 2,
+            "magnitude": 7
+          }
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.diagnostic.01",
+      "family_id": "family.sqv2.solve_linear.diagnostic.01",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.two_sided",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "linear_two_sided",
+        "equation": {
+          "left_coefficient": 2,
+          "left_constant": 1,
+          "right_coefficient": 0,
+          "right_constant": -21
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.02",
+      "revision": 2,
+      "item_id": "item.sqv2.solve_linear.diagnostic.02",
+      "family_id": "family.sqv2.solve_linear.diagnostic.02",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.distributed",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_distributed",
+        "multiplier": 2,
+        "inner_coefficient": 2,
+        "inner_constant": -1,
+        "added_constant": 1,
+        "right_coefficient": 3,
+        "right_constant": 24
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.03",
+      "revision": 2,
+      "item_id": "item.sqv2.solve_linear.diagnostic.03",
+      "family_id": "family.sqv2.solve_linear.diagnostic.03",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.one_side",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+          "kind": "linear_one_side",
+        "coefficient": 1,
+        "constant": -7,
+        "target": -32,
+          "variable_side": "right"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.diagnostic.04",
+      "family_id": "family.sqv2.solve_linear.diagnostic.04",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.correction",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_correction",
+        "equation": {
+          "left_coefficient": -1,
+          "left_constant": 2,
+          "right_coefficient": 0,
+          "right_constant": 19
+        },
+        "mistake": "sign_transfer"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.checkin.01",
+      "family_id": "family.sqv2.solve_linear.checkin.01",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.reversed",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_reversed",
+        "equation": {
+          "left_coefficient": 1,
+          "left_constant": -2,
+          "right_coefficient": 0,
+          "right_constant": 17
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.02",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.checkin.02",
+      "family_id": "family.sqv2.solve_linear.checkin.02",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.grouped",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_grouped",
+        "left_multiplier": 2,
+        "left_shift": 7,
+        "right_multiplier": 1,
+        "right_shift": 1
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.03",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.checkin.03",
+      "family_id": "family.sqv2.solve_linear.checkin.03",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.double_distributed",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_double_distributed",
+        "left_multiplier": 2,
+        "left_coefficient": 3,
+        "left_constant": -4,
+        "right_multiplier": 5,
+        "right_coefficient": 1,
+        "right_constant": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.04",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.checkin.04",
+      "family_id": "family.sqv2.solve_linear.checkin.04",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.one_side",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_one_side",
+        "coefficient": 2,
+        "constant": 1,
+        "target": -37,
+        "variable_side": "left"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.checkin.05",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.checkin.05",
+      "family_id": "family.sqv2.solve_linear.checkin.05",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.distributed",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_distributed",
+        "multiplier": 2,
+        "inner_coefficient": 2,
+        "inner_constant": 1,
+        "added_constant": -1,
+        "right_coefficient": 2,
+        "right_constant": 35
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.guided_widget.01",
+      "revision": 2,
+      "item_id": "item.sqv2.solve_linear.guided_widget.01",
+      "family_id": "family.sqv2.solve_linear.guided_widget.01",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.guided_balance",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_guided_balance",
+        "equation": {
+        "left_coefficient": 5,
+        "left_constant": -5,
+        "right_coefficient": 2,
+        "right_constant": 25
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.capstone.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.capstone.01",
+      "family_id": "family.sqv2.solve_linear.capstone.01",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.double_distributed",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "linear_double_distributed",
+        "left_multiplier": 2,
+        "left_coefficient": 3,
+        "left_constant": 4,
+        "right_multiplier": 5,
+        "right_coefficient": 1,
+        "right_constant": -3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.capstone.02",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.capstone.02",
+      "family_id": "family.sqv2.solve_linear.capstone.02",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.correction",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "linear_correction",
+        "equation": {
+          "left_coefficient": 1,
+          "left_constant": -1,
+          "right_coefficient": 0,
+          "right_constant": 28
+        },
+        "mistake": "partial_division"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_linear.worked_example.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_linear.worked_example.01",
+      "family_id": "family.sqv2.solve_linear.worked_example.01",
+      "kc_id": "kc.alg.solve_linear",
+      "construct_id": "linear.two_sided",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "linear_two_sided",
+        "equation": {
+          "left_coefficient": -1,
+          "left_constant": 0,
+          "right_coefficient": 0,
+          "right_constant": 29
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.01",
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.expanded",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "quadratic_expanded",
+        "roots": {
+          "lower": -3,
+          "upper": 4
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.02",
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.shifted",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_shifted",
+        "roots": {
+          "lower": 2,
+          "upper": 5
+        },
+        "right_constant": 7
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.03",
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.03",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.sparse_difference",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_sparse_difference",
+        "magnitude": 6
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.diagnostic.04",
+      "family_id": "family.sqv2.solve_quadratic.diagnostic.04",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.correction",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_correction",
+        "roots": {
+          "lower": -4,
+          "upper": -1
+        },
+        "mistake": "not_zero"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.checkin.01",
+      "family_id": "family.sqv2.solve_quadratic.checkin.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.reversed",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_reversed",
+        "roots": {
+          "lower": 0,
+          "upper": 3
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.02",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.checkin.02",
+      "family_id": "family.sqv2.solve_quadratic.checkin.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.factored",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_factored",
+        "roots": {
+          "lower": -5,
+          "upper": 2
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.03",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.checkin.03",
+      "family_id": "family.sqv2.solve_quadratic.checkin.03",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.repeated",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_repeated",
+        "root": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.04",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.checkin.04",
+      "family_id": "family.sqv2.solve_quadratic.checkin.04",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.both_sides",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_both_sides",
+        "roots": {
+          "lower": -2,
+          "upper": 6
+        },
+        "right_linear": 2,
+        "right_constant": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.checkin.05",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.checkin.05",
+      "family_id": "family.sqv2.solve_quadratic.checkin.05",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.expanded",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_expanded",
+        "roots": {
+          "lower": 1,
+          "upper": 7
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.guided_widget.01",
+      "family_id": "family.sqv2.solve_quadratic.guided_widget.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.guided_factor_map",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_guided_factor_map",
+        "roots": {
+          "lower": -3,
+          "upper": 5
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.capstone.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.capstone.01",
+      "family_id": "family.sqv2.solve_quadratic.capstone.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.both_sides",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "quadratic_both_sides",
+        "roots": {
+          "lower": -6,
+          "upper": 3
+        },
+        "right_linear": -1,
+        "right_constant": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.capstone.02",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.capstone.02",
+      "family_id": "family.sqv2.solve_quadratic.capstone.02",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.correction",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "quadratic_correction",
+        "roots": {
+          "lower": 2,
+          "upper": 8
+        },
+        "mistake": "factor_sign"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.sqv2.solve_quadratic.worked_example.01",
+      "revision": 1,
+      "item_id": "item.sqv2.solve_quadratic.worked_example.01",
+      "family_id": "family.sqv2.solve_quadratic.worked_example.01",
+      "kc_id": "kc.alg.solve_quadratic",
+      "construct_id": "quadratic.expanded",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "quadratic_expanded",
+        "roots": {
+          "lower": -7,
+          "upper": -2
+        }
+      }
+    }
+  ]
+}
