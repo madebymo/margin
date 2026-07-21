@@ -1,0 +1,2026 @@
+{
+  "schema_version": 1,
+  "blueprint_version": "ftc-wave-v2.1.0",
+  "output_bank_version": "draft-ftc-wave-v2.1.0",
+  "graph_version": 2,
+  "authoring_source": "assessment-draft/ftc-wave-v2.1",
+  "author": "AI-assisted implementation draft (unreviewed)",
+  "target_kcs": [
+    "kc.fun.graph_reading",
+    "kc.int.area_under_curve",
+    "kc.int.riemann_sums",
+    "kc.int.definite_integral",
+    "kc.int.antiderivatives",
+    "kc.int.ftc"
+  ],
+  "released_kcs": [],
+  "families": [
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.diagnostic.01",
+      "family_id": "family.ftcv2.graph_reading.diagnostic.01",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.point_value",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "graph_point_value",
+        "graph": {
+          "points": [
+            {
+              "x": -6,
+              "y": 2
+            },
+            {
+              "x": -2,
+              "y": 6
+            },
+            {
+              "x": 2,
+              "y": 10
+            }
+          ]
+        },
+        "point_index": 2
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.diagnostic.02",
+      "family_id": "family.ftcv2.graph_reading.diagnostic.02",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.intercepts",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_intercepts",
+        "graph": {
+          "points": [
+            {
+              "x": -6,
+              "y": 0
+            },
+            {
+              "x": 0,
+              "y": 6
+            },
+            {
+              "x": 4,
+              "y": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.diagnostic.03",
+      "family_id": "family.ftcv2.graph_reading.diagnostic.03",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.slope",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_slope",
+        "graph": {
+          "points": [
+            {
+              "x": -5,
+              "y": 4
+            },
+            {
+              "x": -1,
+              "y": 12
+            },
+            {
+              "x": 3,
+              "y": 8
+            }
+          ]
+        },
+        "segment_index": 0
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.diagnostic.04",
+      "family_id": "family.ftcv2.graph_reading.diagnostic.04",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.behavior",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_behavior",
+        "graph": {
+          "points": [
+            {
+              "x": -10,
+              "y": 14
+            },
+            {
+              "x": -4,
+              "y": 8
+            },
+            {
+              "x": 0,
+              "y": 4
+            },
+            {
+              "x": 4,
+              "y": 12
+            }
+          ]
+        },
+        "behavior": "increasing"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.checkin.01",
+      "family_id": "family.ftcv2.graph_reading.checkin.01",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.ordered_read",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_ordered_read",
+        "graph": {
+          "points": [
+            {
+              "x": -7,
+              "y": 3
+            },
+            {
+              "x": -3,
+              "y": 11
+            },
+            {
+              "x": 1,
+              "y": 15
+            },
+            {
+              "x": 5,
+              "y": 7
+            }
+          ]
+        },
+        "point_indices": [
+          0,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.checkin.02",
+      "family_id": "family.ftcv2.graph_reading.checkin.02",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.point_value",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "graph_point_value",
+        "graph": {
+          "points": [
+            {
+              "x": -6,
+              "y": 16
+            },
+            {
+              "x": -2,
+              "y": 12
+            },
+            {
+              "x": 2,
+              "y": 8
+            }
+          ]
+        },
+        "point_index": 1
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.checkin.03",
+      "family_id": "family.ftcv2.graph_reading.checkin.03",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.slope",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_slope",
+        "graph": {
+          "points": [
+            {
+              "x": -10,
+              "y": 14
+            },
+            {
+              "x": -6,
+              "y": 2
+            },
+            {
+              "x": -2,
+              "y": 6
+            }
+          ]
+        },
+        "segment_index": 0
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.checkin.04",
+      "family_id": "family.ftcv2.graph_reading.checkin.04",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.behavior",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_behavior",
+        "graph": {
+          "points": [
+            {
+              "x": -10,
+              "y": 2
+            },
+            {
+              "x": -6,
+              "y": 6
+            },
+            {
+              "x": -2,
+              "y": 10
+            },
+            {
+              "x": 2,
+              "y": 6
+            }
+          ]
+        },
+        "behavior": "decreasing"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.checkin.05",
+      "family_id": "family.ftcv2.graph_reading.checkin.05",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.intercepts",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "graph_intercepts",
+        "graph": {
+          "points": [
+            {
+              "x": -4,
+              "y": 0
+            },
+            {
+              "x": 0,
+              "y": 12
+            },
+            {
+              "x": 4,
+              "y": 16
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.guided_widget.01",
+      "family_id": "family.ftcv2.graph_reading.guided_widget.01",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.guided_mapping",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "graph_guided_mapping",
+        "graph": {
+          "points": [
+            {
+              "x": -6,
+              "y": 4
+            },
+            {
+              "x": -2,
+              "y": 12
+            },
+            {
+              "x": 2,
+              "y": 16
+            },
+            {
+              "x": 6,
+              "y": 8
+            }
+          ]
+        },
+        "point_indices": [
+          0,
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.capstone.01",
+      "family_id": "family.ftcv2.graph_reading.capstone.01",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.ordered_read",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "graph_ordered_read",
+        "graph": {
+          "points": [
+            {
+              "x": -10,
+              "y": 16
+            },
+            {
+              "x": -4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 8
+            },
+            {
+              "x": 4,
+              "y": 12
+            }
+          ]
+        },
+        "point_indices": [
+          0,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.capstone.02",
+      "family_id": "family.ftcv2.graph_reading.capstone.02",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.behavior",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "graph_behavior",
+        "graph": {
+          "points": [
+            {
+              "x": -6,
+              "y": 14
+            },
+            {
+              "x": -2,
+              "y": 10
+            },
+            {
+              "x": 2,
+              "y": 6
+            },
+            {
+              "x": 6,
+              "y": 10
+            }
+          ]
+        },
+        "behavior": "decreasing"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.graph_reading.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.graph_reading.worked_example.01",
+      "family_id": "family.ftcv2.graph_reading.worked_example.01",
+      "kc_id": "kc.fun.graph_reading",
+      "construct_id": "graph.slope",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "graph_slope",
+        "graph": {
+          "points": [
+            {
+              "x": -10,
+              "y": 15
+            },
+            {
+              "x": -4,
+              "y": 3
+            },
+            {
+              "x": 2,
+              "y": 9
+            }
+          ]
+        },
+        "segment_index": 0
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.diagnostic.01",
+      "family_id": "family.ftcv2.area_under_curve.diagnostic.01",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.rectangle",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "area_rectangle",
+        "region": {
+          "width": 11,
+          "height": 13
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.diagnostic.02",
+      "family_id": "family.ftcv2.area_under_curve.diagnostic.02",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.triangle",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "area_triangle",
+        "region": {
+          "base": 12,
+          "height": 18
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.diagnostic.03",
+      "family_id": "family.ftcv2.area_under_curve.diagnostic.03",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.composite",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_composite",
+        "region": {
+          "rectangles": [
+            {
+              "width": 8,
+              "height": 16
+            }
+          ],
+          "triangles": [
+            {
+              "base": 10,
+              "height": 14
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.diagnostic.04",
+      "family_id": "family.ftcv2.area_under_curve.diagnostic.04",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.missing_height",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_missing_height",
+        "shape": "triangle",
+        "width_or_base": 12,
+        "height": 16
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.checkin.01",
+      "family_id": "family.ftcv2.area_under_curve.checkin.01",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.ordered_parts",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_ordered_parts",
+        "rectangle": {
+          "width": 8,
+          "height": 14
+        },
+        "triangle": {
+          "base": 10,
+          "height": 12
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.checkin.02",
+      "family_id": "family.ftcv2.area_under_curve.checkin.02",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.rectangle",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "area_rectangle",
+        "region": {
+          "width": 9,
+          "height": 18
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.checkin.03",
+      "family_id": "family.ftcv2.area_under_curve.checkin.03",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.triangle",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "area_triangle",
+        "region": {
+          "base": 10,
+          "height": 20
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.checkin.04",
+      "family_id": "family.ftcv2.area_under_curve.checkin.04",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.composite",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_composite",
+        "region": {
+          "rectangles": [
+            {
+              "width": 12,
+              "height": 15
+            }
+          ],
+          "triangles": [
+            {
+              "base": 8,
+              "height": 16
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.checkin.05",
+      "family_id": "family.ftcv2.area_under_curve.checkin.05",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.missing_height",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_missing_height",
+        "shape": "rectangle",
+        "width_or_base": 11,
+        "height": 19
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.guided_widget.01",
+      "family_id": "family.ftcv2.area_under_curve.guided_widget.01",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.guided_slider",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "area_guided_slider",
+        "region": {
+          "rectangles": [
+            {
+              "width": 11,
+              "height": 16
+            }
+          ],
+          "triangles": [
+            {
+              "base": 12,
+              "height": 12
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.capstone.01",
+      "family_id": "family.ftcv2.area_under_curve.capstone.01",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.composite",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "area_composite",
+        "region": {
+          "rectangles": [
+            {
+              "width": 11,
+              "height": 18
+            }
+          ],
+          "triangles": [
+            {
+              "base": 12,
+              "height": 16
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.capstone.02",
+      "family_id": "family.ftcv2.area_under_curve.capstone.02",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.ordered_parts",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "area_ordered_parts",
+        "rectangle": {
+          "width": 12,
+          "height": 14
+        },
+        "triangle": {
+          "base": 8,
+          "height": 18
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.area_under_curve.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.area_under_curve.worked_example.01",
+      "family_id": "family.ftcv2.area_under_curve.worked_example.01",
+      "kc_id": "kc.int.area_under_curve",
+      "construct_id": "area.composite",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "area_composite",
+        "region": {
+          "rectangles": [
+            {
+              "width": 11,
+              "height": 16
+            }
+          ],
+          "triangles": [
+            {
+              "base": 10,
+              "height": 18
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.diagnostic.01",
+      "family_id": "family.ftcv2.riemann_sums.diagnostic.01",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.left",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "riemann_left",
+        "table": {
+          "lower": 0,
+          "width": 4,
+          "values": [
+            18,
+            20,
+            21,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.diagnostic.02",
+      "family_id": "family.ftcv2.riemann_sums.diagnostic.02",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.right",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "riemann_right",
+        "table": {
+          "lower": 1,
+          "width": 5,
+          "values": [
+            12,
+            15,
+            18,
+            20
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.diagnostic.03",
+      "family_id": "family.ftcv2.riemann_sums.diagnostic.03",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.midpoint",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_midpoint",
+        "table": {
+          "lower": 0,
+          "width": 4,
+          "values": [
+            12,
+            18,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.diagnostic.04",
+      "family_id": "family.ftcv2.riemann_sums.diagnostic.04",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.compare",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_compare",
+        "table": {
+          "lower": 2,
+          "width": 3,
+          "values": [
+            14,
+            16,
+            20,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.checkin.01",
+      "family_id": "family.ftcv2.riemann_sums.checkin.01",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.contributions",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_contributions",
+        "width": 4,
+        "heights": [
+          12,
+          16,
+          20
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.checkin.02",
+      "family_id": "family.ftcv2.riemann_sums.checkin.02",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.missing_height",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_missing_height",
+        "width": 3,
+        "known_heights": [
+          12,
+          14,
+          16
+        ],
+        "missing_height": 20
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.checkin.03",
+      "family_id": "family.ftcv2.riemann_sums.checkin.03",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.left",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "riemann_left",
+        "table": {
+          "lower": -2,
+          "width": 3,
+          "values": [
+            20,
+            24,
+            26,
+            28
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.checkin.04",
+      "family_id": "family.ftcv2.riemann_sums.checkin.04",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.right",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_right",
+        "table": {
+          "lower": 0,
+          "width": 4,
+          "values": [
+            14,
+            18,
+            21,
+            26
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.checkin.05",
+      "family_id": "family.ftcv2.riemann_sums.checkin.05",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.midpoint",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_midpoint",
+        "table": {
+          "lower": 1,
+          "width": 2,
+          "values": [
+            24,
+            26,
+            28
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.guided_widget.01",
+      "family_id": "family.ftcv2.riemann_sums.guided_widget.01",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.guided_mapping",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "riemann_guided_mapping",
+        "table": {
+          "lower": 0,
+          "width": 5,
+          "values": [
+            12,
+            16,
+            20,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.capstone.01",
+      "family_id": "family.ftcv2.riemann_sums.capstone.01",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.compare",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "riemann_compare",
+        "table": {
+          "lower": -3,
+          "width": 5,
+          "values": [
+            14,
+            18,
+            20,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.capstone.02",
+      "family_id": "family.ftcv2.riemann_sums.capstone.02",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.contributions",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "riemann_contributions",
+        "width": 3,
+        "heights": [
+          16,
+          20,
+          24,
+          28
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.riemann_sums.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.riemann_sums.worked_example.01",
+      "family_id": "family.ftcv2.riemann_sums.worked_example.01",
+      "kc_id": "kc.int.riemann_sums",
+      "construct_id": "riemann.left",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "riemann_left",
+        "table": {
+          "lower": 0,
+          "width": 4,
+          "values": [
+            15,
+            18,
+            20,
+            24
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.diagnostic.01",
+      "family_id": "family.ftcv2.definite_integral.diagnostic.01",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.orientation",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "definite_orientation",
+        "lower": 0,
+        "upper": 4,
+        "forward_value": 311
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.diagnostic.02",
+      "family_id": "family.ftcv2.definite_integral.diagnostic.02",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.additivity",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_additivity",
+        "lower": 1,
+        "split": 5,
+        "upper": 9,
+        "left_value": 312,
+        "right_value": 313
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.diagnostic.03",
+      "family_id": "family.ftcv2.definite_integral.diagnostic.03",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.signed_regions",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_signed_regions",
+        "signed_areas": [
+          96,
+          -42,
+          98
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.diagnostic.04",
+      "family_id": "family.ftcv2.definite_integral.diagnostic.04",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.interpretation",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "definite_interpretation",
+        "lower": -2,
+        "upper": 6,
+        "value": 316
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.checkin.01",
+      "family_id": "family.ftcv2.definite_integral.checkin.01",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.missing_piece",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_missing_piece",
+        "lower": 0,
+        "split": 4,
+        "upper": 8,
+        "total_value": 701,
+        "left_value": 317
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.checkin.02",
+      "family_id": "family.ftcv2.definite_integral.checkin.02",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.two_orientations",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "definite_two_orientations",
+        "lower": 2,
+        "upper": 7,
+        "forward_value": 318
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.checkin.03",
+      "family_id": "family.ftcv2.definite_integral.checkin.03",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.orientation",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_orientation",
+        "lower": -3,
+        "upper": 5,
+        "forward_value": 319
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.checkin.04",
+      "family_id": "family.ftcv2.definite_integral.checkin.04",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.additivity",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_additivity",
+        "lower": 0,
+        "split": 6,
+        "upper": 12,
+        "left_value": 320,
+        "right_value": 321
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.checkin.05",
+      "family_id": "family.ftcv2.definite_integral.checkin.05",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.signed_regions",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_signed_regions",
+        "signed_areas": [
+          92,
+          -46,
+          98
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.guided_widget.01",
+      "family_id": "family.ftcv2.definite_integral.guided_widget.01",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.guided_mapping",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "definite_guided_mapping",
+        "lower": 1,
+        "split": 6,
+        "upper": 11,
+        "left_value": 324,
+        "right_value": 325
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.capstone.01",
+      "family_id": "family.ftcv2.definite_integral.capstone.01",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.missing_piece",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "definite_missing_piece",
+        "lower": -2,
+        "split": 3,
+        "upper": 8,
+        "total_value": 702,
+        "left_value": 326
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.capstone.02",
+      "family_id": "family.ftcv2.definite_integral.capstone.02",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.two_orientations",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "definite_two_orientations",
+        "lower": 4,
+        "upper": 10,
+        "forward_value": 327
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.definite_integral.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.definite_integral.worked_example.01",
+      "family_id": "family.ftcv2.definite_integral.worked_example.01",
+      "kc_id": "kc.int.definite_integral",
+      "construct_id": "definite.additivity",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "definite_additivity",
+        "lower": 0,
+        "split": 5,
+        "upper": 10,
+        "left_value": 328,
+        "right_value": 329
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.diagnostic.01",
+      "family_id": "family.ftcv2.antiderivatives.diagnostic.01",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.single",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "antiderivative_single",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 11,
+              "exponent": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.diagnostic.02",
+      "family_id": "family.ftcv2.antiderivatives.diagnostic.02",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.binomial",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_binomial",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 13,
+              "exponent": 5
+            },
+            {
+              "coefficient": -7,
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.diagnostic.03",
+      "family_id": "family.ftcv2.antiderivatives.diagnostic.03",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.correction",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_correction",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 9,
+              "exponent": 4
+            },
+            {
+              "coefficient": 8,
+              "exponent": 3
+            }
+          ]
+        },
+        "mistake": "kept_power"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.diagnostic.04",
+      "family_id": "family.ftcv2.antiderivatives.diagnostic.04",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.derivative_check",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_derivative_check",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 12,
+              "exponent": 6
+            },
+            {
+              "coefficient": -5,
+              "exponent": 3
+            },
+            {
+              "coefficient": 6,
+              "exponent": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.checkin.01",
+      "family_id": "family.ftcv2.antiderivatives.checkin.01",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.trinomial",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_trinomial",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 14,
+              "exponent": 5
+            },
+            {
+              "coefficient": 9,
+              "exponent": 3
+            },
+            {
+              "coefficient": -8,
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.checkin.02",
+      "family_id": "family.ftcv2.antiderivatives.checkin.02",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.coefficient_audit",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_coefficient_audit",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 10,
+              "exponent": 6
+            },
+            {
+              "coefficient": -11,
+              "exponent": 4
+            },
+            {
+              "coefficient": 7,
+              "exponent": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.checkin.03",
+      "family_id": "family.ftcv2.antiderivatives.checkin.03",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.binomial",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_binomial",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -13,
+              "exponent": 6
+            },
+            {
+              "coefficient": 12,
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.checkin.04",
+      "family_id": "family.ftcv2.antiderivatives.checkin.04",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.correction",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_correction",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 15,
+              "exponent": 5
+            },
+            {
+              "coefficient": -9,
+              "exponent": 2
+            }
+          ]
+        },
+        "mistake": "did_not_divide"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.checkin.05",
+      "family_id": "family.ftcv2.antiderivatives.checkin.05",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.derivative_check",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "antiderivative_derivative_check",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -12,
+              "exponent": 5
+            },
+            {
+              "coefficient": 11,
+              "exponent": 3
+            },
+            {
+              "coefficient": -6,
+              "exponent": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.guided_widget.01",
+      "family_id": "family.ftcv2.antiderivatives.guided_widget.01",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.guided_mapping",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "antiderivative_guided_mapping",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 8,
+              "exponent": 6
+            },
+            {
+              "coefficient": 13,
+              "exponent": 4
+            },
+            {
+              "coefficient": -10,
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.capstone.01",
+      "family_id": "family.ftcv2.antiderivatives.capstone.01",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.trinomial",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "antiderivative_trinomial",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 15,
+              "exponent": 6
+            },
+            {
+              "coefficient": -14,
+              "exponent": 3
+            },
+            {
+              "coefficient": 9,
+              "exponent": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.capstone.02",
+      "family_id": "family.ftcv2.antiderivatives.capstone.02",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.coefficient_audit",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "antiderivative_coefficient_audit",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -14,
+              "exponent": 6
+            },
+            {
+              "coefficient": 10,
+              "exponent": 5
+            },
+            {
+              "coefficient": -11,
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.antiderivatives.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.antiderivatives.worked_example.01",
+      "family_id": "family.ftcv2.antiderivatives.worked_example.01",
+      "kc_id": "kc.int.antiderivatives",
+      "construct_id": "antiderivative.binomial",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "antiderivative_binomial",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 7,
+              "exponent": 5
+            },
+            {
+              "coefficient": 15,
+              "exponent": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.diagnostic.01",
+      "family_id": "family.ftcv2.ftc.diagnostic.01",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.supplied",
+      "surface": "diagnostic",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "ftc_supplied",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 9,
+              "exponent": 4
+            },
+            {
+              "coefficient": 7,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": 1,
+        "upper": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.diagnostic.02",
+      "family_id": "family.ftcv2.ftc.diagnostic.02",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.derive",
+      "surface": "diagnostic",
+      "allocation_order": 20,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_derive",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 8,
+              "exponent": 5
+            },
+            {
+              "coefficient": -6,
+              "exponent": 2
+            }
+          ]
+        },
+        "lower": 0,
+        "upper": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.diagnostic.03",
+      "family_id": "family.ftcv2.ftc.diagnostic.03",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.reversed",
+      "surface": "diagnostic",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_reversed",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 7,
+              "exponent": 4
+            },
+            {
+              "coefficient": 5,
+              "exponent": 2
+            }
+          ]
+        },
+        "lower": 1,
+        "upper": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.diagnostic.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.diagnostic.04",
+      "family_id": "family.ftcv2.ftc.diagnostic.04",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.correction",
+      "surface": "diagnostic",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_correction",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 11,
+              "exponent": 3
+            },
+            {
+              "coefficient": -8,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": -1,
+        "upper": 3,
+        "mistake": "used_integrand"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.checkin.01",
+      "family_id": "family.ftcv2.ftc.checkin.01",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.split",
+      "surface": "checkin",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_split",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 12,
+              "exponent": 3
+            },
+            {
+              "coefficient": 7,
+              "exponent": 2
+            }
+          ]
+        },
+        "lower": 0,
+        "split": 2,
+        "upper": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.checkin.02",
+      "family_id": "family.ftcv2.ftc.checkin.02",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.ordered_intervals",
+      "surface": "checkin",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "ftc_ordered_intervals",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 6,
+              "exponent": 4
+            },
+            {
+              "coefficient": 13,
+              "exponent": 1
+            }
+          ]
+        },
+        "first_bounds": [
+          0,
+          3
+        ],
+        "second_bounds": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.03",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.checkin.03",
+      "family_id": "family.ftcv2.ftc.checkin.03",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.supplied",
+      "surface": "checkin",
+      "allocation_order": 30,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_supplied",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 10,
+              "exponent": 5
+            },
+            {
+              "coefficient": 9,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": 1,
+        "upper": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.04",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.checkin.04",
+      "family_id": "family.ftcv2.ftc.checkin.04",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.derive",
+      "surface": "checkin",
+      "allocation_order": 40,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_derive",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": -9,
+              "exponent": 4
+            },
+            {
+              "coefficient": 14,
+              "exponent": 2
+            }
+          ]
+        },
+        "lower": -1,
+        "upper": 3
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.checkin.05",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.checkin.05",
+      "family_id": "family.ftcv2.ftc.checkin.05",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.reversed",
+      "surface": "checkin",
+      "allocation_order": 50,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_reversed",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 13,
+              "exponent": 3
+            },
+            {
+              "coefficient": -7,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": 0,
+        "upper": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.guided_widget.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.guided_widget.01",
+      "family_id": "family.ftcv2.ftc.guided_widget.01",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.guided_slider",
+      "surface": "guided_widget",
+      "allocation_order": 10,
+      "difficulty": "core",
+      "task": {
+        "kind": "ftc_guided_slider",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 8,
+              "exponent": 3
+            },
+            {
+              "coefficient": 5,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": 1,
+        "upper": 4
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.capstone.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.capstone.01",
+      "family_id": "family.ftcv2.ftc.capstone.01",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.correction",
+      "surface": "capstone",
+      "allocation_order": 10,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "ftc_correction",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 15,
+              "exponent": 4
+            },
+            {
+              "coefficient": -10,
+              "exponent": 1
+            }
+          ]
+        },
+        "lower": -1,
+        "upper": 2,
+        "mistake": "added_endpoints"
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.capstone.02",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.capstone.02",
+      "family_id": "family.ftcv2.ftc.capstone.02",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.ordered_intervals",
+      "surface": "capstone",
+      "allocation_order": 20,
+      "difficulty": "stretch",
+      "task": {
+        "kind": "ftc_ordered_intervals",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 14,
+              "exponent": 3
+            },
+            {
+              "coefficient": 9,
+              "exponent": 1
+            }
+          ]
+        },
+        "first_bounds": [
+          0,
+          2
+        ],
+        "second_bounds": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "blueprint_id": "blueprint.ftcv2.ftc.worked_example.01",
+      "revision": 1,
+      "item_id": "item.ftcv2.ftc.worked_example.01",
+      "family_id": "family.ftcv2.ftc.worked_example.01",
+      "kc_id": "kc.int.ftc",
+      "construct_id": "ftc.supplied",
+      "surface": "worked_example",
+      "allocation_order": 10,
+      "difficulty": "foundation",
+      "task": {
+        "kind": "ftc_supplied",
+        "polynomial": {
+          "terms": [
+            {
+              "coefficient": 11,
+              "exponent": 4
+            },
+            {
+              "coefficient": 12,
+              "exponent": 2
+            }
+          ]
+        },
+        "lower": 0,
+        "upper": 3
+      }
+    }
+  ]
+}
