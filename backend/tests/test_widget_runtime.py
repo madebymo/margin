@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from tutor.api.app import create_app
 from tutor.orchestrator.machine import SessionOrchestrator, SessionPhase, _score_widget
+from tutor.runtime_capabilities import widget_capability_manifest, widget_supported
 from tutor.schemas.common import ResponseClass
 from tutor.schemas.learner import LearnerProfile
 from tutor.schemas.widgets import (
@@ -193,6 +194,27 @@ def _paths_in(value, prefix=""):
     elif isinstance(value, list):
         for item in value:
             yield from _paths_in(item, prefix)
+
+
+def _correct_response_for(widget: WidgetConfig) -> dict:
+    """Build a valid response from server-only truth for runtime contract tests."""
+    if isinstance(widget, SliderWidget):
+        return {"value": widget.success_condition.target}
+    if isinstance(widget, ClickRegionWidget):
+        return {"selected": list(widget.correct_region_ids)}
+    if isinstance(widget, MappingWidget):
+        return {"pairs": [list(pair) for pair in widget.correct_pairs]}
+    if isinstance(widget, LiveInputWidget):
+        return {"text": widget.checker.expected}
+    raise TypeError(f"unsupported widget type: {type(widget).__name__}")
+
+
+def _widget_is_enabled_for_current_runtime(widget: WidgetConfig) -> bool:
+    capability_type = {"mapping": "mapping_v1", "slider": "slider_v1"}.get(
+        widget.widget_type,
+        widget.widget_type,
+    )
+    return widget_supported(capability_type, widget_capability_manifest())
 
 
 def test_every_widget_field_has_an_explicit_client_classification():
@@ -573,13 +595,14 @@ def test_machine_widget_records_complete_formative_attempt_trajectory(graph):
     orchestrator = SessionOrchestrator(graph, "kc.der.chain_rule", PROFILE)
     outputs = _drive_to_teach(orchestrator)
     lesson = next(i for i in outputs if i.kind == "lesson" and i.widget)
-    assert lesson.widget["widget_type"] == "live_input"
     _, server_widget = orchestrator._active_widgets[lesson.key]
-    assert isinstance(server_widget, LiveInputWidget)
+    assert type(server_widget) in CLIENT_SAFE_FIELD_PATHS
+    assert _widget_is_enabled_for_current_runtime(server_widget)
+    assert lesson.widget["widget_type"] == server_widget.widget_type
 
     events_before = len(orchestrator.learner.events)
     correct, message = orchestrator.answer_widget(
-        lesson.key, {"text": server_widget.checker.expected}
+        lesson.key, _correct_response_for(server_widget)
     )
     assert correct
     assert message
@@ -590,7 +613,7 @@ def test_machine_widget_records_complete_formative_attempt_trajectory(graph):
 
     # Every formative attempt is retained; v2 learner models exclude widget
     # events from mastery rather than discarding the trajectory.
-    correct_again, _ = orchestrator.answer_widget(lesson.key, {"text": "garbage"})
+    correct_again, _ = orchestrator.answer_widget(lesson.key, {})
     assert correct_again is False
     assert len(orchestrator.learner.events) == events_before + 2
     assert orchestrator.learner.events[-1].attempt_number == 2
@@ -619,21 +642,25 @@ def test_widget_endpoint_over_http(graph):
 
     lesson = next(i for i in data["interactions"] if i["kind"] == "lesson" and i["widget"])
     _, server_widget = orchestrator._active_widgets[lesson["key"]]
-    assert isinstance(server_widget, LiveInputWidget)
+    assert type(server_widget) in CLIENT_SAFE_FIELD_PATHS
+    assert _widget_is_enabled_for_current_runtime(server_widget)
     client_paths = set(_paths_in(lesson["widget"]))
     assert client_paths == CLIENT_SAFE_FIELD_PATHS[type(server_widget)]
     answer_paths = ANSWER_BEARING_FIELD_PATHS[type(server_widget)]
     assert answer_paths.isdisjoint(client_paths)
     response = client.post(
         f"/sessions/{session_id}/widget",
-        json={"key": lesson["key"], "response": {"text": server_widget.checker.expected}},
+        json={
+            "key": lesson["key"],
+            "response": _correct_response_for(server_widget),
+        },
     )
     assert response.status_code == 200
     assert response.json()["correct"] is True
 
     wrong = client.post(
         f"/sessions/{session_id}/widget",
-        json={"key": lesson["key"], "response": {"text": "nope"}},
+        json={"key": lesson["key"], "response": {}},
     )
     assert wrong.json()["correct"] is False
 

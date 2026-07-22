@@ -63,10 +63,17 @@ def _approved_pack(
     )
 
 
-def _catalog(*packs: PedagogyPack, graph_version: int = 1) -> PedagogyPackCatalog:
+def _catalog(
+    *packs: PedagogyPack,
+    graph_version: int | None = None,
+) -> PedagogyPackCatalog:
     return PedagogyPackCatalog(
         catalog_version="test-pedagogy-v1",
-        graph_version=graph_version,
+        graph_version=(
+            load_graph().graph_version
+            if graph_version is None
+            else graph_version
+        ),
         published_by="Release manager",
         published_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
         packs=list(packs),
@@ -76,7 +83,8 @@ def _catalog(*packs: PedagogyPack, graph_version: int = 1) -> PedagogyPackCatalo
 def test_packaged_catalog_is_an_honest_empty_release():
     catalog = load_pedagogy_catalog()
 
-    assert catalog.catalog_version == "pedagogy-catalog-empty-v1"
+    assert catalog.schema_version == 2
+    assert catalog.catalog_version == "pedagogy-catalog-empty-v2"
     assert catalog.graph_version == load_graph().graph_version
     assert catalog.packs == ()
     assert validate_pedagogy_catalog(catalog, load_graph()) == []
@@ -219,10 +227,11 @@ def test_catalog_validation_checks_graph_pin_inventory_and_required_coverage():
     ) == []
 
     graph_payload = graph.model_dump(mode="json")
-    graph_payload["graph_version"] = 2
-    graph_v2 = GraphDocument.model_validate(graph_payload)
-    assert validate_pedagogy_catalog(catalog, graph_v2) == [
-        "graph version mismatch: catalog=1, graph=2"
+    graph_payload["graph_version"] = graph.graph_version + 1
+    mismatched_graph = GraphDocument.model_validate(graph_payload)
+    assert validate_pedagogy_catalog(catalog, mismatched_graph) == [
+        "graph version mismatch: "
+        f"catalog={graph.graph_version}, graph={graph.graph_version + 1}"
     ]
 
     assert validate_pedagogy_catalog(
