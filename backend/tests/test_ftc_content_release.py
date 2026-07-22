@@ -38,6 +38,7 @@ from tutor.packs.review_compiler import (
     validate_review_bundle,
 )
 from tutor.schemas.assessment import (
+    AntiderivativeAnswerSpec,
     AssessmentSurface,
     BlankPromptSegment,
     ChoiceAnswerSpec,
@@ -261,6 +262,16 @@ def test_compiled_bank_is_exact_schema_v3_draft_only(compiled):
             "interval_set": 3,
         }
     )
+    antiderivative_items = [
+        item for item in bank.items if isinstance(item.answer, AntiderivativeAnswerSpec)
+    ]
+    assert len(antiderivative_items) == 13
+    assert all(item.answer.require_explicit_constant for item in antiderivative_items)
+    for item in antiderivative_items:
+        without_constant = item.answer.expected.removesuffix("+C")
+        verdict = verify_answer(item.answer, without_constant, supervised=False)
+        assert verdict.status == VerificationStatus.INCORRECT
+        assert verdict.code == "explicit_constant_required"
     assert report.errors == ()
     assert report.answer_pairs_checked == 78 * 77 // 2 == 3003
     assert report.literal_visible_pairs_checked == 78 * 77 == 6006
