@@ -49,7 +49,7 @@ python scripts/export_json_schemas.py                         # regenerate schem
 docker compose up -d db                                       # local Postgres 16
 ```
 
-Environment: `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (LLM providers), `TUTOR_LLM_MODEL` (model override), `DATABASE_URL` (DB engine; defaults to in-memory SQLite).
+Environment: `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (LLM providers), `TUTOR_LLM_MODEL` (model override), `DATABASE_URL` (DB engine; defaults to in-memory SQLite). All of these can be set in a gitignored `.env` at the repo root — `tutor.api.app`, `tutor.cli`, and `tutor.packs.ingest` call `load_dotenv()` at import; real environment variables take precedence.
 
 ## Architecture
 
