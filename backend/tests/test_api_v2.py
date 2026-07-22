@@ -1960,6 +1960,40 @@ def test_reset_keeps_cookie_when_durable_authorization_is_unavailable(monkeypatc
     assert "delete_cookie" not in response.headers.get("set-cookie", "")
 
 
+def test_action_status_dependency_failure_returns_unchanged_retryable_snapshot(
+    monkeypatch,
+):
+    app = _v2_app(durable=True)
+    client = TestClient(app)
+    created, _ = _create(client)
+    assert created.status_code == 200
+    initial = created.json()
+
+    def fail_status(token_hash):
+        raise RuntimeError("database checkout unavailable")
+
+    monkeypatch.setattr(
+        app.state.v2_persistence,
+        "resume_token_status",
+        fail_status,
+    )
+    response = client.post(
+        f"/api/v2/sessions/{initial['session_id']}/actions",
+        json=_hint(initial),
+    )
+
+    assert response.status_code == 503
+    assert response.json()["code"] == "persistence_unavailable"
+    assert response.json()["retryable"] is True
+    assert response.json()["session"] == initial
+    assert (
+        app.state.v2_store.view(
+            app.state.v2_store.get(initial["session_id"])
+        ).model_dump(mode="json")
+        == initial
+    )
+
+
 def test_durable_checkpoint_restores_exact_session_after_memory_loss():
     app = _v2_app(durable=True)
     client = TestClient(app)

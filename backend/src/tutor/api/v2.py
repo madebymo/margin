@@ -1095,6 +1095,7 @@ def install_v2_routes(
         measure_resume: bool = False,
         allow_quarantined: bool = False,
         quarantine_snapshot: ReleaseQuarantineSnapshot | None = None,
+        mutation_dependency_error: bool = False,
     ) -> tuple[V2SessionHandle | None, str | None, JSONResponse | None]:
         def outside_eligible_failure(outcome: str) -> None:
             if not measure_resume:
@@ -1137,6 +1138,22 @@ def install_v2_routes(
             )
         hashed = _token_hash(raw)
 
+        # A durable authorization lookup must still fail closed.  For a
+        # mutation, retain a cookie-bound local handle only so a transient
+        # database dependency failure can return the unchanged snapshot the
+        # client should keep displaying; it is never used to authorize or
+        # apply the mutation.
+        local_error_handle = None
+        if mutation_dependency_error:
+            try:
+                candidate = store.resolve_token(hashed)
+                if session_id is None or hmac.compare_digest(
+                    candidate.session_id, session_id
+                ):
+                    local_error_handle = candidate
+            except (KeyError, ResumeTokenExpired):
+                pass
+
         if persistence is None:
             try:
                 handle = store.resolve_token(hashed)
@@ -1161,6 +1178,18 @@ def install_v2_routes(
                 durable_status = persistence.resume_token_status(hashed)
             except Exception:  # noqa: BLE001 - authorization dependency failure
                 outside_eligible_failure("status_failures")
+                if mutation_dependency_error:
+                    return None, hashed, _error(
+                        503,
+                        "persistence_unavailable",
+                        "the mutation could not be durably authorized; retry shortly",
+                        (
+                            store.view(local_error_handle)
+                            if local_error_handle is not None
+                            else None
+                        ),
+                        retryable=True,
+                    )
                 return None, hashed, _error(
                     503,
                     "session_restore_unavailable",
@@ -2159,6 +2188,7 @@ def install_v2_routes(
             request,
             session_id,
             quarantine_snapshot=quarantine_snapshot,
+            mutation_dependency_error=True,
         )
         if error is not None:
             return error
