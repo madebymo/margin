@@ -60,6 +60,9 @@ export function transcriptEntryAnnouncement(entry) {
   const prompt = promptSegmentsAnnouncement(entry.prompt_segments);
   const content = structured || prompt || nonblank(entry.text);
   if (!content) return "";
-  const speaker = entry.role === "student" ? "Your response" : "Tutor update";
+  const speaker =
+    entry.role === "student"
+      ? "Your response"
+      : nonblank(entry.coach_label) || "Tutor update";
   return `${speaker}: ${content}`;
 }

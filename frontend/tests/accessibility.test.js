@@ -67,4 +67,17 @@ describe("screen-reader transcript announcements", () => {
     ).toBe("Your response: x^2");
     expect(transcriptEntryAnnouncement({ role: "tutor", text: "  " })).toBe("");
   });
+
+  it("announces attributed coaching as a GPT-5.6 coach update", () => {
+    expect(
+      transcriptEntryAnnouncement({
+        role: "tutor",
+        kind: "coach",
+        coach_label: "GPT-5.6 coach",
+        text: "Name the outer operation before choosing a rule.",
+      }),
+    ).toBe(
+      "GPT-5.6 coach: Name the outer operation before choosing a rule.",
+    );
+  });
 });

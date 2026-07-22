@@ -4,6 +4,7 @@ import {
   catalogEmptyMessage,
   canPreserveAnswerDraft,
   isWidgetPending,
+  normalizeCoachingCapability,
   normalizeGoalCatalog,
   normalizeGoals,
   normalizeSessionView,
@@ -11,6 +12,71 @@ import {
 } from "../src/session.js";
 
 describe("authoritative session normalization", () => {
+  it("keeps coaching unavailable when the server publishes no capability", () => {
+    expect(normalizeCoachingCapability({ goals: [] })).toEqual({
+      available: false,
+      provider: "openai",
+      model: "gpt-5.6",
+      model_label: "GPT-5.6",
+      reason: "GPT-5.6 coaching is not configured on this server.",
+    });
+  });
+
+  it("recognizes an explicitly configured GPT-5.6 coaching mode", () => {
+    expect(
+      normalizeCoachingCapability({
+        coaching: {
+          available: true,
+          provider: "openai",
+          model: "gpt-5.6",
+        },
+      }),
+    ).toEqual({
+      available: true,
+      provider: "openai",
+      model: "gpt-5.6",
+      model_label: "GPT-5.6",
+      reason: "",
+    });
+  });
+
+  it("preserves safe GPT-5.6 coach attribution on transcript entries", () => {
+    const view = normalizeSessionView({
+      session_id: "coached-session",
+      transcript: [
+        {
+          sequence: 1,
+          role: "tutor",
+          kind: "coach",
+          text: "Try describing the outer operation first.",
+          generated_by: {
+            provider: "openai",
+            model: "gpt-5.6-terra",
+            policy_version: "coach-v1",
+            focus: "strategy",
+          },
+        },
+      ],
+    });
+
+    expect(view.transcript[0]).toMatchObject({
+      kind: "coach",
+      coach_label: "GPT-5.6 coach",
+      generated_by: {
+        provider: "openai",
+        model: "gpt-5.6-terra",
+        policy_version: "coach-v1",
+        focus: "strategy",
+      },
+      attribution: {
+        provider: "openai",
+        model: "gpt-5.6-terra",
+        policy_version: "coach-v1",
+        focus: "strategy",
+      },
+    });
+  });
+
   it("normalizes a wrapped v2 snapshot without exposing unknown server fields", () => {
     const view = normalizeSessionView({
       view: {

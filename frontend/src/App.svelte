@@ -22,6 +22,7 @@
     catalogEmptyMessage,
     canPreserveAnswerDraft,
     isWidgetPending,
+    normalizeCoachingCapability,
     normalizeGoalCatalog,
     normalizeSessionView,
     pendingAcceptsText,
@@ -39,6 +40,7 @@
   let apiMode = "v2";
   let bootState = "loading";
   let goals = [];
+  let coachingCapability = normalizeCoachingCapability();
   let catalogRollout = {
     status: "paused",
     reason: "Loading the trustworthy goal catalog.",
@@ -61,7 +63,7 @@
 
   let goalId = "";
   let courseBand = "calculus_1";
-  const contentMode = "curated";
+  let contentMode = "curated";
 
   const coordinator = new MutationCoordinator(async (action) => {
     if (!view?.session_id || !view?.pending?.key) {
@@ -101,9 +103,17 @@
       goals = catalog.goals;
       catalogRollout = catalog.rollout;
       goalId = goals[0]?.id ?? "";
+      coachingCapability = normalizeCoachingCapability(goalPayload);
+      contentMode = coachingCapability.available ? "llm_coaching" : "curated";
       apiMode = "v2";
       try {
-        installWidgetCapabilities(await apiV2.capabilities(signal));
+        const capabilityPayload = await apiV2.capabilities(signal);
+        installWidgetCapabilities(capabilityPayload);
+        coachingCapability = normalizeCoachingCapability(
+          capabilityPayload,
+          goalPayload,
+        );
+        contentMode = coachingCapability.available ? "llm_coaching" : "curated";
       } catch (capabilityError) {
         if (capabilityError?.name === "AbortError") throw capabilityError;
         installMinimalWidgetCapabilities();
@@ -115,6 +125,8 @@
       if (error instanceof ApiError && [404, 405].includes(error.status)) {
         apiMode = "v2";
         goals = [];
+        coachingCapability = normalizeCoachingCapability();
+        contentMode = "curated";
         catalogRollout = {
           status: "paused",
           reason: "The trustworthy session API is unavailable on this server.",
@@ -263,6 +275,9 @@
             age_band: "adult",
             content_mode: contentMode,
             context: null,
+            ...(contentMode === "llm_coaching"
+              ? { provider: coachingCapability.provider }
+              : {}),
           }),
         );
         createCoordinator.clearRetry();
@@ -679,10 +694,44 @@
             </select>
           </label>
 
-          <div class="curated-notice">
-            <strong>Curated learning flow</strong>
-            <span>Authored teaching and server-checked questions stay separate.</span>
-          </div>
+          <fieldset class="content-mode-picker">
+            <legend>Teaching style</legend>
+            <label class:selected={contentMode === "llm_coaching"}>
+              <input
+                type="radio"
+                name="content-mode"
+                value="llm_coaching"
+                bind:group={contentMode}
+                disabled={busy || !coachingCapability.available}
+                aria-describedby={!coachingCapability.available
+                  ? "coaching-availability"
+                  : undefined}
+              >
+              <span class="mode-copy">
+                <strong>GPT-5.6 coaching</strong>
+                <small>Curated math + GPT-5.6 coaching — OpenAI explains; Margin scores.</small>
+              </span>
+            </label>
+            <label class:selected={contentMode === "curated"}>
+              <input
+                type="radio"
+                name="content-mode"
+                value="curated"
+                bind:group={contentMode}
+                disabled={busy}
+              >
+              <span class="mode-copy">
+                <strong>Curated only</strong>
+                <small>Reviewed lessons with deterministic server-side scoring.</small>
+              </span>
+            </label>
+          </fieldset>
+
+          {#if !coachingCapability.available}
+            <p id="coaching-availability" class="coaching-availability" role="status">
+              {coachingCapability.reason}
+            </p>
+          {/if}
 
           <button
             type="button"
@@ -805,20 +854,19 @@
         </section>
 
         <div class="content-mode">
-          {#if view.release_id?.startsWith("nonproduction.fixture.")}
-            <span>Release status</span>
-            <strong>Engineering demo</strong>
-            <p>Synthetic content for assessment—not a released curriculum.</p>
-          {:else}
-            <span>Lesson content</span>
-            <strong>
-              {view.content_mode.effective === "llm_coaching"
-                ? "Adaptive coaching"
-                : "Curated lessons"}
-            </strong>
-            {#if view.content_mode.fallback_reason}
-              <p>{view.content_mode.fallback_reason}</p>
-            {/if}
+          <span>Lesson mode</span>
+          <strong>
+            {view.content_mode.effective === "llm_coaching"
+              ? "GPT-5.6 coaching"
+              : "Curated lessons"}
+          </strong>
+          {#if view.content_mode.effective === "llm_coaching"}
+            <p class="mode-description">
+              Curated math + GPT-5.6 coaching — OpenAI explains; Margin scores.
+            </p>
+          {/if}
+          {#if view.content_mode.fallback_reason}
+            <p class="mode-fallback">{view.content_mode.fallback_reason}</p>
           {/if}
         </div>
       </aside>
@@ -836,9 +884,6 @@
             <h2>{phaseLabel(view.phase)}</h2>
           </div>
           <div class="topbar-status">
-            {#if view.release_id?.startsWith("nonproduction.fixture.")}
-              <span class="demo-badge">Demo</span>
-            {/if}
             <span class:memory-only={view.durability !== "durable"} class="durability">
               {view.durability === "durable" ? "Saved" : "Not durably saved"}
             </span>
@@ -867,6 +912,7 @@
               class:tutor-bubble={entry.role === "tutor"}
               class:system-bubble={entry.role === "system"}
               class:hint-bubble={entry.kind === "hint"}
+              class:coach-bubble={entry.kind === "coach" || Boolean(entry.coach_label)}
               class:assessment-bubble={["probe", "checkin", "capstone"].includes(entry.kind)}
               class="message"
             >
@@ -877,6 +923,8 @@
                 <span class="message-label">
                   {entry.kind === "capstone"
                     ? "Goal problem"
+                    : entry.kind === "coach" || entry.coach_label
+                      ? entry.coach_label || "GPT-5.6 coach"
                     : entry.kind === "probe"
                       ? "Check-in"
                       : entry.kind === "checkin"

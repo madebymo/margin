@@ -70,7 +70,6 @@ test("unified v2 lesson retries and completes without a page refresh", async ({
 
   const answer = page.getByLabel("Your expression");
   await expect(page.getByRole("heading", { name: "Power rule" })).toBeVisible();
-  await expect(page.getByText("Engineering demo", { exact: true })).toBeVisible();
   await expect(page.getByText("Update 0")).toBeVisible();
   await expect(answer).toBeFocused();
 

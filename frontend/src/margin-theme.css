@@ -311,6 +311,35 @@ textarea:focus-visible,
   color: var(--muted);
 }
 
+.content-mode-picker label {
+  color: var(--ink);
+  background: var(--paper-2);
+  border-color: var(--grid-strong);
+}
+
+.content-mode-picker label:hover:not(:has(input:disabled)) {
+  border-color: var(--accent-line);
+}
+
+.content-mode-picker label.selected {
+  background: var(--gradient-accent-soft);
+  border-color: var(--accent-line);
+  box-shadow: inset 0 0 0 1px rgb(116 176 255 / 20%);
+}
+
+.content-mode-picker input {
+  accent-color: var(--accent-text);
+}
+
+.content-mode-picker .mode-copy strong {
+  color: var(--ink);
+}
+
+.content-mode-picker .mode-copy small,
+.coaching-availability {
+  color: var(--muted);
+}
+
 .curated-notice {
   background: var(--accent-soft);
   border-color: var(--accent-line);
@@ -514,6 +543,14 @@ textarea:focus-visible,
   color: var(--retry-text);
 }
 
+.content-mode .mode-description {
+  color: var(--muted);
+}
+
+.content-mode .mode-fallback {
+  color: var(--retry-text);
+}
+
 /* Conversation */
 
 .conversation-panel {
@@ -568,8 +605,7 @@ textarea:focus-visible,
 
 .durability,
 .phase-pill,
-.revision,
-.demo-badge {
+.revision {
   padding: 6px 9px;
   border: 1px solid var(--grid);
   border-radius: var(--radius-s);
@@ -595,12 +631,6 @@ textarea:focus-visible,
   color: var(--accent-text);
   background: var(--accent-soft);
   border-color: var(--accent-line);
-}
-
-.demo-badge {
-  color: var(--retry-text);
-  background: var(--retry-soft);
-  border-color: var(--retry-line);
 }
 
 .revision {
@@ -643,6 +673,17 @@ textarea:focus-visible,
   color: var(--ink);
   background: transparent;
   border-color: transparent;
+}
+
+.tutor-bubble.coach-bubble {
+  padding: 15px 17px;
+  background: var(--gradient-accent-soft);
+  border-color: var(--accent-line);
+  box-shadow: inset 3px 0 0 var(--retry);
+}
+
+.coach-bubble .message-label {
+  color: var(--accent-text);
 }
 
 .tutor-mark {

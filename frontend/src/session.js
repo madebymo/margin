@@ -91,6 +91,91 @@ export function normalizeGoalCatalog(payload) {
   };
 }
 
+const DEFAULT_COACHING_CAPABILITY = Object.freeze({
+  available: false,
+  provider: "openai",
+  model: "gpt-5.6",
+  model_label: "GPT-5.6",
+  reason: "GPT-5.6 coaching is not configured on this server.",
+});
+
+function contentModeRows(payload) {
+  if (!payload || typeof payload !== "object") return [];
+  const rows =
+    payload.supported_content_modes ??
+    payload.content_modes ??
+    payload.capabilities?.supported_content_modes ??
+    payload.capabilities?.content_modes;
+  return Array.isArray(rows) ? rows : [];
+}
+
+function coachingRecord(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const direct =
+    payload.coaching ??
+    payload.content_mode_capabilities?.llm_coaching ??
+    payload.capabilities?.coaching;
+  if (direct && typeof direct === "object") return direct;
+  if (typeof direct === "boolean") return { available: direct };
+  if (typeof payload.coaching_available === "boolean") {
+    return {
+      available: payload.coaching_available,
+      provider: payload.coaching_provider,
+      model: payload.coaching_model,
+      reason: payload.coaching_unavailable_reason,
+    };
+  }
+  return contentModeRows(payload).find((row) => {
+    const id = typeof row === "string" ? row : row?.id ?? row?.mode ?? row?.name;
+    return id === "llm_coaching";
+  }) ?? null;
+}
+
+function coachingModelLabel(model, provider) {
+  if (/^gpt-?5\.6(?:$|[-_])/i.test(model)) return "GPT-5.6";
+  if (model) return model;
+  return provider === "openai" ? "OpenAI" : humanizeIdentifier(provider);
+}
+
+/**
+ * Normalize an optional server declaration that genuine coaching is configured.
+ *
+ * Older catalogs expose no content-mode capability. They deliberately remain
+ * curated-only rather than optimistically requesting a mode that the server
+ * would immediately downgrade.
+ */
+export function normalizeCoachingCapability(...payloads) {
+  for (const payload of payloads) {
+    const record = coachingRecord(payload);
+    if (record == null) continue;
+    const isString = typeof record === "string";
+    const available = isString
+      ? record === "llm_coaching"
+      : Boolean(record.available ?? record.configured ?? record.enabled ?? true);
+    const provider = isString
+      ? "openai"
+      : String(record.provider ?? "openai").toLowerCase();
+    const model = isString ? "gpt-5.6" : String(record.model ?? "gpt-5.6");
+    const reason = isString
+      ? ""
+      : typeof record.reason === "string"
+        ? record.reason.trim()
+        : "";
+    return {
+      available,
+      provider,
+      model,
+      model_label: coachingModelLabel(model, provider),
+      reason:
+        reason ||
+        (available
+          ? ""
+          : "GPT-5.6 coaching is not configured on this server."),
+    };
+  }
+  return { ...DEFAULT_COACHING_CAPABILITY };
+}
+
 export function catalogEmptyMessage(rollout) {
   const reason = rollout?.reason?.trim();
   switch (rollout?.status) {
@@ -186,6 +271,33 @@ function normalizeTranscriptEntry(entry, index) {
           segments: Array.isArray(block.segments) ? block.segments : [],
         }))
     : [];
+  const rawAttribution =
+    entry.generated_by && typeof entry.generated_by === "object"
+      ? entry.generated_by
+      : entry.attribution && typeof entry.attribution === "object"
+        ? entry.attribution
+        : null;
+  const isCoach = ["coach", "coaching", "llm_coaching"].includes(
+    String(kindValue).toLowerCase(),
+  );
+  const attribution =
+    rawAttribution || isCoach
+      ? {
+          provider: String(rawAttribution?.provider ?? entry.provider ?? "openai"),
+          model: String(rawAttribution?.model ?? entry.model ?? "gpt-5.6"),
+          policy_version:
+            (rawAttribution?.policy_version ?? rawAttribution?.prompt_version) == null
+              ? null
+              : String(
+                  rawAttribution.policy_version ?? rawAttribution.prompt_version,
+                ),
+          focus:
+            rawAttribution?.focus == null ? null : String(rawAttribution.focus),
+        }
+      : null;
+  const coachLabel = attribution
+    ? `${coachingModelLabel(attribution.model, attribution.provider)} coach`
+    : null;
   return {
     id: String(entry.id ?? entry.sequence ?? `${key}-${index}`),
     key: String(key),
@@ -198,6 +310,9 @@ function normalizeTranscriptEntry(entry, index) {
     widget_state: entry.widget_state ?? null,
     widget_status: entry.widget_status ?? entry.status ?? null,
     widget_attempt_number: entry.widget_attempt_number ?? null,
+    generated_by: attribution,
+    attribution,
+    coach_label: coachLabel,
     raw: entry,
   };
 }

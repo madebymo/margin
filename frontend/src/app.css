@@ -350,6 +350,65 @@ legend {
   margin-bottom: 8px;
 }
 
+.content-mode-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.content-mode-picker legend {
+  margin-bottom: 0;
+}
+
+.content-mode-picker label {
+  min-height: 58px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.content-mode-picker label.selected {
+  background: var(--green-50);
+  border-color: var(--green-700);
+  box-shadow: inset 0 0 0 1px var(--green-700);
+}
+
+.content-mode-picker label:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.content-mode-picker input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--green-700);
+}
+
+.mode-copy,
+.mode-copy strong,
+.mode-copy small {
+  display: block;
+}
+
+.mode-copy small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.coaching-availability {
+  margin: -9px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .choice-card {
   min-height: 44px;
   margin-top: 7px;
@@ -658,6 +717,14 @@ legend {
   line-height: 1.4;
 }
 
+.content-mode .mode-description {
+  color: var(--muted);
+}
+
+.content-mode .mode-fallback {
+  color: var(--gold-700);
+}
+
 .conversation-panel {
   min-width: 0;
   min-height: 0;
@@ -840,6 +907,15 @@ polyline.plot-series {
   background: #f1f4f1;
   border-color: #e1e7e2;
   border-bottom-left-radius: 5px;
+}
+
+.coach-bubble {
+  background: linear-gradient(135deg, var(--green-50), var(--violet-100));
+  border-color: var(--green-700);
+}
+
+.coach-bubble .message-label {
+  color: var(--green-700);
 }
 
 .student-bubble {
