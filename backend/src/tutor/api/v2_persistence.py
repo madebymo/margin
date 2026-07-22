@@ -360,6 +360,15 @@ class V2PersistenceService:
                         updated_at=handle.updated_at,
                     )
                 )
+                # The initial exposure, transcript, token, and receipt rows all
+                # reference this checkpoint.  SQLAlchemy has no ORM
+                # relationships connecting these independently constructed
+                # rows, so its unit-of-work sorter is not guaranteed to emit
+                # the parent first.  PostgreSQL enforces the foreign keys at
+                # statement time (unlike the SQLite unit-test setup), making
+                # the ordering explicit while keeping the entire create in one
+                # atomic transaction.
+                session.flush()
                 session.add(
                     ResumeTokenRow(
                         learner_id=handle.learner_id,
