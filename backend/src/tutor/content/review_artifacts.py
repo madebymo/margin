@@ -84,4 +84,15 @@ def kc_attestation_set_digest(
 ) -> str:
     """Bind final release review to exact KC independence attestations."""
     ordered = sorted(attestations, key=lambda item: (item.kc_id, item.attestation_id))
-    return canonical_digest([item.model_dump(mode="json") for item in ordered])
+    payloads: list[dict[str, object]] = []
+    for item in ordered:
+        payload = item.model_dump(mode="json")
+        # Preserve the exact digest of retained schema-v1 attestations, whose
+        # bytes predate mastery-claim and constructor-coverage fields. New
+        # schema-v2 records always supply both and therefore bind both.
+        if item.mastery_claim is None:
+            payload.pop("mastery_claim", None)
+        if not item.construct_ids:
+            payload.pop("construct_ids", None)
+        payloads.append(payload)
+    return canonical_digest(payloads)

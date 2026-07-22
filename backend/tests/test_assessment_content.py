@@ -35,6 +35,7 @@ from tutor.schemas.assessment import (
     NumericAnswerSpec,
     OrderedTupleAnswerSpec,
     PromptSemanticRole,
+    SymbolicAnswerSpec,
     TextPromptSegment,
 )
 from tutor.schemas.learner import EvidenceEvent
@@ -1036,3 +1037,31 @@ def test_cross_answer_domains_distinguish_inequality_from_indeterminate(bank):
 
     assert not _answers_equivalent(cube, numeric)
     assert not _answers_equivalent(finite_set, ordered_tuple)
+
+
+def test_disjoint_declared_symbol_languages_are_not_verifier_failures(bank):
+    cube = next(
+        item for item in bank.items if item.item_id == "item.power.diagnostic.cube"
+    )
+    quartic = next(
+        item
+        for item in bank.items
+        if item.item_id == "item.power.diagnostic.quartic"
+    )
+    z_power = quartic.model_copy(
+        update={
+            "answer": SymbolicAnswerSpec(expected="z^4", variables=["z"]),
+        }
+    )
+
+    assert not _answers_equivalent(cube, z_power)
+
+    # Shared constants remain comparable even when the surrounding contracts
+    # declare different variables, so answer reuse still fails closed.
+    x_constant = cube.model_copy(
+        update={"answer": SymbolicAnswerSpec(expected="2", variables=["x"])}
+    )
+    z_constant = quartic.model_copy(
+        update={"answer": SymbolicAnswerSpec(expected="2", variables=["z"])}
+    )
+    assert _answers_equivalent(x_constant, z_constant)

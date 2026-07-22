@@ -611,3 +611,17 @@ def test_attestations_require_independent_review():
             accessibility=True,
             instructional_clarity=True,
         )
+
+
+def test_schema_v1_kc_attestation_digest_excludes_additive_v2_fields(modern_release):
+    reviews = modern_release[3]
+    kc = reviews.kc_attestations[0]
+    legacy_payload = kc.model_dump(mode="json")
+    legacy_payload.pop("mastery_claim")
+    legacy_payload.pop("construct_ids")
+
+    restored = KCApprovalAttestation.model_validate(legacy_payload)
+
+    assert restored.mastery_claim is None
+    assert restored.construct_ids == ()
+    assert kc_attestation_set_digest([restored]) == canonical_digest([legacy_payload])

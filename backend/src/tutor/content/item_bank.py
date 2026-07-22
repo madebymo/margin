@@ -553,6 +553,17 @@ def _compare_answers(
 
     left_submission = _canonical_submission(left)
     right_submission = _canonical_submission(right)
+    if not _candidate_fits_answer_contract(
+        left, right_submission
+    ) and not _candidate_fits_answer_contract(right, left_submission):
+        # The two canonical submissions belong to disjoint declared symbol
+        # languages (for example a one-base ``z`` exponent task and an ``x``
+        # derivative task).  Parser rejection in both directions is therefore
+        # expected and proves that neither answer can be submitted for the
+        # other family; it is not a verifier outage.  Constants shared across
+        # differently declared contracts still reach the verifier because
+        # they fit both languages and must continue to trigger reuse.
+        return _EquivalenceComparison(_EquivalenceState.UNEQUAL)
     left_verdict = _safe_verify(
         left.answer,
         right_submission,

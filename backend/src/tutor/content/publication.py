@@ -88,11 +88,17 @@ def prepare_release_candidate(
     )
 
 
-def _validate_modern_content(
+def validate_release_candidate_content(
     graph: GraphDocument,
     item_bank: ItemBankDocument,
     pedagogy_catalog: PedagogyPackCatalog,
 ) -> None:
+    """Validate candidate content before review or publication.
+
+    This intentionally performs no approval inference.  It is public so an
+    offline attestation-scaffold builder can bind reviewers to the exact same
+    candidate checks used at the publication boundary.
+    """
     if item_bank.schema_version < 3:
         raise ReleasePublicationError(
             "publication requires an accessibility-complete schema-v3 item bank"
@@ -181,7 +187,7 @@ def validate_release_reviews(
     publication: ReleasePublicationMetadata,
 ) -> tuple[ReleaseCandidate, PublishedReleaseManifest]:
     """Fail closed unless every exact artifact has independent human approval."""
-    _validate_modern_content(graph, item_bank, pedagogy_catalog)
+    validate_release_candidate_content(graph, item_bank, pedagogy_catalog)
     candidate = prepare_release_candidate(graph, item_bank, pedagogy_catalog)
     released = tuple(sorted(item_bank.released_kcs))
     items_by_family = _items_by_family(item_bank)
