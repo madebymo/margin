@@ -14,7 +14,9 @@ import json
 import multiprocessing
 import os
 import re
+import shutil
 import sys
+import tempfile
 from collections import Counter
 from dataclasses import dataclass
 from fractions import Fraction
@@ -375,7 +377,13 @@ def family_digest(
     source: ProductQuotientBlueprintDocument,
     family: ReleaseFamilyBlueprint,
 ) -> str:
-    """Bind review to family math plus the declared source and authorship."""
+    """Bind review to family content, compiler output, graph, and authorship.
+
+    Release-admission coordinates are intentionally excluded. A family review
+    remains valid when the exact reviewed content moves from a draft bank into
+    an admitted bank; the release attestation separately binds the final bank
+    version, released-KC closure, and complete bundle bytes.
+    """
     canonical = json.dumps(
         {
             "author": source.author,
@@ -385,8 +393,6 @@ def family_digest(
             "compiled_artifact": _compiled_review_artifact(source, family),
             "family": family.model_dump(mode="json"),
             "graph_version": source.graph_version,
-            "output_bank_version": source.output_bank_version,
-            "released_kcs": sorted(source.released_kcs),
             "schema_version": source.schema_version,
             "target_kcs": sorted(source.target_kcs),
         },
@@ -1407,6 +1413,49 @@ def compile_release_inventory(
     return bank, report
 
 
+def promote_reviewed_inventory(
+    source: ProductQuotientBlueprintDocument,
+    manifest: ContentReviewManifest,
+    graph: GraphDocument,
+    *,
+    bank_version: str,
+) -> tuple[
+    ProductQuotientBlueprintDocument,
+    ItemBankDocument,
+    InventorySeparationReport,
+]:
+    """Admit the exact reviewed closure without creating review decisions.
+
+    The caller must provide a manifest in which every source review is already
+    independently approved. This helper changes only release-admission
+    coordinates, then runs the ordinary compiler and all separation checks.
+    """
+
+    incomplete = [
+        f"{entry.blueprint_id}@{entry.revision}:{entry.decision.value}"
+        for entry in manifest.entries
+        if entry.decision != ReviewDecision.APPROVED
+    ]
+    if incomplete:
+        preview = ", ".join(sorted(incomplete)[:5])
+        suffix = "" if len(incomplete) <= 5 else f" (+{len(incomplete) - 5} more)"
+        raise ProductQuotientCompilationError(
+            "promotion requires every source review to be independently approved; "
+            f"incomplete={preview}{suffix}"
+        )
+
+    payload = source.model_dump(mode="json")
+    payload.update(
+        {
+            "output_bank_version": bank_version,
+            "released_kcs": sorted(TARGET_CLOSURE),
+        }
+    )
+    promoted_source = ProductQuotientBlueprintDocument.model_validate(payload)
+    bank, report = compile_release_inventory(promoted_source, manifest, graph)
+    return promoted_source, bank, report
+
+
 def _atomic_write_bank(path: Path, bank: ItemBankDocument) -> None:
     """Durably replace a compiled bank only after validating staged bytes."""
     payload = bank.model_dump_json(indent=2) + "\n"
@@ -1439,34 +1488,179 @@ def _atomic_write_bank(path: Path, bank: ItemBankDocument) -> None:
             temporary_path.unlink(missing_ok=True)
 
 
+def _write_fsynced_new(path: Path, payload: bytes) -> None:
+    with path.open("xb") as destination:
+        destination.write(payload)
+        destination.flush()
+        os.fsync(destination.fileno())
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def write_promotion_candidate(
+    destination: Path,
+    source: ProductQuotientBlueprintDocument,
+    manifest: ContentReviewManifest,
+    bank: ItemBankDocument,
+    graph: GraphDocument,
+) -> None:
+    """Atomically expose one exact, validated private promotion candidate."""
+
+    if set(source.released_kcs) != set(TARGET_CLOSURE):
+        raise ProductQuotientCompilationError(
+            "promotion source must admit the exact Product/Quotient closure"
+        )
+    if set(bank.released_kcs) != set(TARGET_CLOSURE):
+        raise ProductQuotientCompilationError(
+            "promotion bank must admit the exact Product/Quotient closure"
+        )
+    if bank.bank_version != source.output_bank_version:
+        raise ProductQuotientCompilationError(
+            "promotion source and bank versions do not match"
+        )
+    if (
+        bank.graph_version != graph.graph_version
+        or source.graph_version != graph.graph_version
+    ):
+        raise ProductQuotientCompilationError(
+            "promotion source, bank, and graph versions do not match"
+        )
+    if any(entry.decision != ReviewDecision.APPROVED for entry in manifest.entries):
+        raise ProductQuotientCompilationError(
+            "promotion candidate contains an incomplete source review"
+        )
+    if any(item.review_status != ReviewStatus.HUMAN_APPROVED for item in bank.items):
+        raise ProductQuotientCompilationError(
+            "promotion candidate contains a non-approved item"
+        )
+
+    destination = Path(destination)
+    if destination.exists():
+        raise ProductQuotientCompilationError(
+            "promotion destination already exists; bank version reuse is forbidden"
+        )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+        )
+    )
+    try:
+        _write_fsynced_new(
+            staging / "assessment-source.json",
+            (source.model_dump_json(indent=2) + "\n").encode("utf-8"),
+        )
+        _write_fsynced_new(
+            staging / "assessment-reviews.json",
+            (manifest.model_dump_json(indent=2) + "\n").encode("utf-8"),
+        )
+        _write_fsynced_new(
+            staging / "item-bank.json",
+            (bank.model_dump_json(indent=2) + "\n").encode("utf-8"),
+        )
+
+        staged_source = ProductQuotientBlueprintDocument.model_validate_json(
+            (staging / "assessment-source.json").read_bytes()
+        )
+        staged_manifest = ContentReviewManifest.model_validate_json(
+            (staging / "assessment-reviews.json").read_bytes()
+        )
+        staged_bank = ItemBankDocument.model_validate_json(
+            (staging / "item-bank.json").read_bytes()
+        )
+        rebuilt_bank, _report = compile_release_inventory(
+            staged_source,
+            staged_manifest,
+            graph,
+        )
+        if (
+            staged_source != source
+            or staged_manifest != manifest
+            or staged_bank != bank
+        ):
+            raise ProductQuotientCompilationError(
+                "staged promotion bytes changed before admission"
+            )
+        if rebuilt_bank != staged_bank:
+            raise ProductQuotientCompilationError(
+                "staged promotion bank does not recompile exactly"
+            )
+        _fsync_directory(staging)
+        os.replace(staging, destination)
+        _fsync_directory(destination.parent)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Check the pending inventory or write its deterministic compiled bank."""
+    """Check/compile the draft or promote an independently reviewed inventory."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE_PATH)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST_PATH)
     parser.add_argument("--graph", type=Path, default=DEFAULT_GRAPH_PATH)
+    parser.add_argument(
+        "--promote-bank-version",
+        default=None,
+        help="admit the exact reviewed closure under this immutable bank version",
+    )
+    parser.add_argument(
+        "--promotion-out-dir",
+        type=Path,
+        default=None,
+        help="atomically write source, reviews, and bank for the reviewed candidate",
+    )
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
-    if not args.check and args.out is None:
+    promoting = args.promote_bank_version is not None
+    if args.promotion_out_dir is not None and not promoting:
+        parser.error("--promotion-out-dir requires --promote-bank-version")
+    if promoting and args.out is not None:
+        parser.error("use --promotion-out-dir, not --out, for an atomic promotion")
+    if not args.check and args.out is None and args.promotion_out_dir is None:
         parser.error("nothing to do: pass --check and/or --out PATH")
     try:
         source = load_source(args.source)
         manifest = load_manifest(args.manifest)
         graph = GraphDocument.model_validate_json(args.graph.read_text(encoding="utf-8"))
-        bank, report = compile_release_inventory(source, manifest, graph)
+        if promoting:
+            source, bank, report = promote_reviewed_inventory(
+                source,
+                manifest,
+                graph,
+                bank_version=args.promote_bank_version,
+            )
+        else:
+            bank, report = compile_release_inventory(source, manifest, graph)
     except Exception as exc:  # noqa: BLE001 - fail closed at the CLI boundary
         print(f"Product/Quotient inventory INVALID: {exc}", file=sys.stderr)
         return 1
-    if args.out is not None:
+    if args.out is not None or args.promotion_out_dir is not None:
         try:
-            _atomic_write_bank(args.out, bank)
+            if args.promotion_out_dir is not None:
+                write_promotion_candidate(
+                    args.promotion_out_dir,
+                    source,
+                    manifest,
+                    bank,
+                    graph,
+                )
+            elif args.out is not None:
+                _atomic_write_bank(args.out, bank)
         except Exception as exc:  # noqa: BLE001 - preserve any prior destination
-            print(f"Product/Quotient bank write FAILED: {exc}", file=sys.stderr)
+            print(f"Product/Quotient output write FAILED: {exc}", file=sys.stderr)
             return 1
     status_counts = Counter(item.review_status for item in bank.items)
     print(
-        "Product/Quotient inventory OK: "
+        f"Product/Quotient {'promotion' if promoting else 'inventory'} OK: "
         f"{len(bank.items)} total families, "
         f"{status_counts[ReviewStatus.DRAFT]} draft, "
         f"{status_counts[ReviewStatus.HUMAN_APPROVED]} approved, "
@@ -1474,7 +1668,8 @@ def main(argv: list[str] | None = None) -> int:
         f"{report.visible_candidate_comparisons_checked} "
         "visible candidate comparisons, "
         f"{report.literal_visible_pairs_checked} literal cross-family scans, "
-        f"released KCs={len(bank.released_kcs)}"
+        f"released KCs={len(bank.released_kcs)}, "
+        f"bank version={bank.bank_version}"
     )
     return 0
 

@@ -16,12 +16,12 @@ from tutor.content.product_quotient_attestations import (
 )
 from tutor.content.product_quotient_release import (
     TARGET_CLOSURE,
-    compile_release_inventory,
     family_digest,
     load_manifest,
     load_source,
+    promote_reviewed_inventory,
 )
-from tutor.content.publication import validate_release_reviews
+from tutor.content.publication import ReleasePublicationError, publish_release
 from tutor.content.review_artifacts import canonical_json_bytes
 from tutor.packs.review_compiler import (
     compile_pedagogy_catalog,
@@ -53,9 +53,9 @@ def _approved_assessment_reviews(source) -> ContentReviewManifest:
     }
     for entry in payload["entries"]:
         identity = (entry["blueprint_id"], entry["revision"])
+        assert entry["source_digest"] == family_digest(source, families[identity])
         entry.update(
             {
-                "source_digest": family_digest(source, families[identity]),
                 "decision": "approved",
                 "reviewed_by": "Independent test mathematics reviewer",
                 "reviewed_at": _FAMILY_REVIEWED_AT,
@@ -82,14 +82,14 @@ def _approved_pedagogy_reviews() -> PedagogyReviewManifest:
 @pytest.fixture(scope="module")
 def exact_candidate():
     graph = load_graph()
-    source = load_source().model_copy(
-        update={
-            "released_kcs": sorted(TARGET_CLOSURE),
-            "output_bank_version": "test-product-quotient-release-v1",
-        }
+    draft_source = load_source()
+    assessment_reviews = _approved_assessment_reviews(draft_source)
+    source, item_bank, _report = promote_reviewed_inventory(
+        draft_source,
+        assessment_reviews,
+        graph,
+        bank_version="test-product-quotient-release-v1",
     )
-    assessment_reviews = _approved_assessment_reviews(source)
-    item_bank, _report = compile_release_inventory(source, assessment_reviews, graph)
     pedagogy_source = load_pedagogy_source()
     pedagogy_reviews = _approved_pedagogy_reviews()
     pedagogy_catalog = compile_pedagogy_catalog(
@@ -207,9 +207,10 @@ def test_scaffold_requires_completed_source_manifests(exact_candidate):
         )
 
 
-def test_explicit_test_reviews_finalize_schema_v2_and_validate(
+def test_actual_manifest_path_finalizes_and_publishes_immutable_release(
     exact_candidate,
     exact_scaffold,
+    tmp_path,
 ):
     expected = exact_scaffold
     filled = _fill_with_test_approvals(expected)
@@ -223,17 +224,43 @@ def test_explicit_test_reviews_finalize_schema_v2_and_validate(
     assert len(reviews.kc_attestations) == 4
     assert all(item.mastery_claim for item in reviews.kc_attestations)
     assert all(item.construct_ids for item in reviews.kc_attestations)
-    candidate, manifest = validate_release_reviews(
+    publication = ReleasePublicationMetadata(
+        published_by="Test-only publisher",
+        published_at=datetime(2026, 7, 20, 19, 0, tzinfo=timezone.utc),
+    )
+    destination = tmp_path / "product-quotient-release"
+    manifest = publish_release(
+        destination,
         graph,
         bank,
         catalog,
         reviews,
-        ReleasePublicationMetadata(
-            published_by="Test-only publisher",
-            published_at=datetime(2026, 7, 20, 19, 0, tzinfo=timezone.utc),
-        ),
+        publication,
     )
-    assert manifest.bundle_sha256 == candidate.bundle_sha256
+    assert manifest.bundle_sha256 == expected.release_attestation.bundle_sha256
+    assert manifest.bank_version == bank.bank_version
+    assert manifest.catalog_version == catalog.catalog_version
+    assert manifest.released_kcs == tuple(sorted(TARGET_CLOSURE))
+    assert {path.name for path in destination.iterdir()} == {
+        "bundle.json",
+        "bundle.sha256",
+        "release-manifest.json",
+        "release-reviews.json",
+    }
+
+    published_bytes = {path.name: path.read_bytes() for path in destination.iterdir()}
+    with pytest.raises(ReleasePublicationError, match="already exists"):
+        publish_release(
+            destination,
+            graph,
+            bank,
+            catalog,
+            reviews,
+            publication,
+        )
+    assert {
+        path.name: path.read_bytes() for path in destination.iterdir()
+    } == published_bytes
 
 
 def test_finalizer_rejects_changed_exact_binding(exact_scaffold):

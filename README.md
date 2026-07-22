@@ -333,12 +333,46 @@ record their own decisions through the separate review workflow after inspecting
 the packet's exact digests.
 
 After the 52 family and four pedagogy source reviews are genuinely complete,
-bind those decisions to the exact compiled Product/Quotient candidate without
-creating an approval:
+promote the assessment admission coordinates and compile the pedagogy catalog.
+Promotion creates no decisions: it rejects any assessment manifest that is not
+already fully approved by independent reviewers. The three assessment outputs
+are staged, recompiled, and exposed as one directory so a partial source/bank
+pair cannot escape:
+
+```bash
+python -m tutor.content.product_quotient_release \
+  --source backend/src/tutor/seed/item_blueprints_product_quotient_v2.json \
+  --manifest /private/completed-product-quotient-assessment-reviews.json \
+  --graph backend/src/tutor/seed/kc_graph_calc1.json \
+  --promote-bank-version product-quotient-release-v1 \
+  --promotion-out-dir /private/product-quotient-candidate-v1 \
+  --check
+
+python -m tutor.packs.review_compiler \
+  --source backend/src/tutor/seed/pedagogy_pack_sources_product_quotient_v2.json \
+  --manifest /private/completed-product-quotient-pedagogy-reviews.json \
+  --graph backend/src/tutor/seed/kc_graph_calc1.json \
+  --catalog-version product-quotient-pedagogy-v1 \
+  --published-by "Release preparer name" \
+  --published-at 2026-07-21T16:00:00Z \
+  --check \
+  --out /private/reviewed-product-quotient-pedagogy.json
+```
+
+Family review digests bind source content, exact compiled learner-visible
+artifacts, compiler, graph, and authorship—not the bank version or admission
+list. The final release attestation below binds those coordinates and the exact
+bundle SHA-256. Bind the completed source decisions to that exact candidate
+without creating a final approval:
 
 ```bash
 python -m tutor.content.product_quotient_attestations \
-  --item-bank /private/reviewed-product-quotient-bank.json \
+  --graph backend/src/tutor/seed/kc_graph_calc1.json \
+  --assessment-source /private/product-quotient-candidate-v1/assessment-source.json \
+  --assessment-reviews /private/product-quotient-candidate-v1/assessment-reviews.json \
+  --item-bank /private/product-quotient-candidate-v1/item-bank.json \
+  --pedagogy-source backend/src/tutor/seed/pedagogy_pack_sources_product_quotient_v2.json \
+  --pedagogy-reviews /private/completed-product-quotient-pedagogy-reviews.json \
   --pedagogy-catalog /private/reviewed-product-quotient-pedagogy.json \
   --release-id release.product-quotient.v1 \
   --check \
@@ -348,7 +382,34 @@ python -m tutor.content.product_quotient_attestations \
 The output is a pending-only schema that publication cannot consume. Reviewers
 must explicitly fill every family, KC, and exact-release judgment. Passing the
 filled file back with `--filled-scaffold` validates that no digest-bound field
-changed and only then emits a schema-v2 `ReleaseReviewManifest`.
+changed and only then emits a schema-v2 `ReleaseReviewManifest`; pass the same
+private source and review paths again. The resulting manifest can then cross
+the immutable publication boundary:
+
+```bash
+python -m tutor.content.product_quotient_attestations \
+  --graph backend/src/tutor/seed/kc_graph_calc1.json \
+  --assessment-source /private/product-quotient-candidate-v1/assessment-source.json \
+  --assessment-reviews /private/product-quotient-candidate-v1/assessment-reviews.json \
+  --item-bank /private/product-quotient-candidate-v1/item-bank.json \
+  --pedagogy-source backend/src/tutor/seed/pedagogy_pack_sources_product_quotient_v2.json \
+  --pedagogy-reviews /private/completed-product-quotient-pedagogy-reviews.json \
+  --pedagogy-catalog /private/reviewed-product-quotient-pedagogy.json \
+  --release-id release.product-quotient.v1 \
+  --filled-scaffold /private/product-quotient-attestation-filled.json \
+  --check \
+  --out /private/product-quotient-release-reviews.json
+
+python -m tutor.content.publication \
+  --graph backend/src/tutor/seed/kc_graph_calc1.json \
+  --item-bank /private/product-quotient-candidate-v1/item-bank.json \
+  --pedagogy-catalog /private/reviewed-product-quotient-pedagogy.json \
+  --reviews /private/product-quotient-release-reviews.json \
+  --published-by "Release publisher name" \
+  --published-at 2026-07-21T20:00:00Z \
+  --check \
+  --out-dir /srv/tutor/releases/product-quotient-v1
+```
 
 Every packaged wave is deliberately marked AI-assisted and unreviewed. These
 automated integrity checks do not establish instructional validity or

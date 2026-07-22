@@ -24,7 +24,9 @@ from tutor.content.product_quotient_release import (
     load_manifest,
     load_source,
     main,
+    promote_reviewed_inventory,
     validate_inventory_separation,
+    write_promotion_candidate,
 )
 from tutor.schemas.assessment import (
     AssessmentHint,
@@ -528,13 +530,12 @@ def test_manifest_binds_every_exact_family_and_remains_pending(source, manifest)
         assert review.reviewed_at is None
 
 
-def test_digest_binds_every_release_and_promotion_input(source):
+def test_digest_binds_family_content_but_not_release_admission_coordinates(source):
     family = source.families[0]
     baseline = family_digest(source, family)
 
     for field, changed in (
         ("blueprint_version", "product-quotient-release-v1.0.1"),
-        ("output_bank_version", "draft-product-quotient-release-v1.0.1"),
         ("graph_version", source.graph_version + 1),
         ("authoring_source", source.authoring_source + "-changed"),
         ("author", "A different unreviewed author"),
@@ -542,8 +543,11 @@ def test_digest_binds_every_release_and_promotion_input(source):
     ):
         assert family_digest(source.model_copy(update={field: changed}), family) != baseline
 
-    promoted = source.model_copy(update={"released_kcs": list(source.target_kcs)})
-    assert family_digest(promoted, family) != baseline
+    for admission_update in (
+        {"output_bank_version": "product-quotient-release-v1.0.1"},
+        {"released_kcs": list(source.target_kcs)},
+    ):
+        assert family_digest(source.model_copy(update=admission_update), family) == baseline
 
 
 def test_any_source_math_change_invalidates_the_bound_review(source, manifest, graph):
@@ -856,6 +860,107 @@ def test_atomic_output_is_complete_and_schema_valid(tmp_path):
     assert payload.endswith("\n")
     bank = release_module.ItemBankDocument.model_validate_json(payload)
     assert len(bank.items) == 52
+
+
+def test_promotion_requires_completed_independent_source_reviews(
+    source,
+    manifest,
+    graph,
+):
+    with pytest.raises(ProductQuotientCompilationError, match="every source review"):
+        promote_reviewed_inventory(
+            source,
+            manifest,
+            graph,
+            bank_version="product-quotient-release-v1",
+        )
+
+
+def test_promotion_cli_writes_one_exact_candidate_directory(
+    tmp_path,
+    source,
+    manifest,
+    graph,
+    capsys,
+):
+    approved = _manifest_for_source(source, manifest)
+    review_path = tmp_path / "approved-reviews.json"
+    review_path.write_text(approved.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    destination = tmp_path / "promotion-candidate"
+
+    assert main(
+        [
+            "--manifest",
+            str(review_path),
+            "--promote-bank-version",
+            "product-quotient-release-v1",
+            "--promotion-out-dir",
+            str(destination),
+            "--check",
+        ]
+    ) == 0
+
+    assert {path.name for path in destination.iterdir()} == {
+        "assessment-source.json",
+        "assessment-reviews.json",
+        "item-bank.json",
+    }
+    promoted = ProductQuotientBlueprintDocument.model_validate_json(
+        (destination / "assessment-source.json").read_bytes()
+    )
+    promoted_bank = release_module.ItemBankDocument.model_validate_json(
+        (destination / "item-bank.json").read_bytes()
+    )
+    assert promoted.output_bank_version == "product-quotient-release-v1"
+    assert set(promoted.released_kcs) == TARGET_CLOSURE
+    assert promoted_bank.bank_version == promoted.output_bank_version
+    assert set(promoted_bank.released_kcs) == TARGET_CLOSURE
+    assert "52 approved" in capsys.readouterr().out
+
+
+def test_failed_staged_promotion_never_exposes_a_partial_pair(
+    monkeypatch,
+    tmp_path,
+    source,
+    manifest,
+    graph,
+):
+    approved = _manifest_for_source(source, manifest)
+    promoted, bank, _report = promote_reviewed_inventory(
+        source,
+        approved,
+        graph,
+        bank_version="product-quotient-release-v1",
+    )
+    destination = tmp_path / "promotion-candidate"
+
+    with pytest.raises(ProductQuotientCompilationError, match="exact.*closure"):
+        write_promotion_candidate(
+            destination,
+            promoted,
+            approved,
+            bank.model_copy(update={"released_kcs": []}),
+            graph,
+        )
+    assert not destination.exists()
+
+    real_write = release_module._write_fsynced_new
+    writes = 0
+
+    def fail_second_write(path, payload):
+        nonlocal writes
+        writes += 1
+        if writes == 2:
+            raise OSError("simulated second staged write failure")
+        real_write(path, payload)
+
+    monkeypatch.setattr(release_module, "_write_fsynced_new", fail_second_write)
+
+    with pytest.raises(OSError, match="second staged write failure"):
+        write_promotion_candidate(destination, promoted, approved, bank, graph)
+
+    assert not destination.exists()
+    assert not list(tmp_path.glob(".promotion-candidate.*"))
 
 
 def test_failed_atomic_replace_preserves_existing_destination(
