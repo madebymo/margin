@@ -1,9 +1,32 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { newRequestId } from "../src/api.js";
+import { newRequestId, request } from "../src/api.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("API error messages", () => {
+  it("falls back when a nested error message is blank", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        json: vi.fn().mockResolvedValue({
+          detail: { message: "   " },
+        }),
+      }),
+    );
+
+    await expect(request("/test")).rejects.toMatchObject({
+      name: "ApiError",
+      message: "Bad Request",
+      status: 400,
+      code: "http_400",
+    });
+  });
 });
 
 describe("request id generation", () => {
