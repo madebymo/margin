@@ -23,7 +23,7 @@ COPY backend/src backend/src
 COPY --from=frontend-build \
     /workspace/backend/src/tutor/api/static/dist \
     backend/src/tutor/api/static/dist
-RUN python -m pip install --no-cache-dir "./backend[api,pilot]"
+RUN python -m pip install --no-cache-dir "./backend[api,pilot,llm]"
 
 USER tutor
 EXPOSE 8000

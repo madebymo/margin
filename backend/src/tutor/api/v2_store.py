@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import hmac
 import json
 import logging
 import math
@@ -45,6 +46,8 @@ from tutor.content.release_identity import (
     LEGACY_RELEASE_DIGEST,
     LEGACY_RELEASE_ID,
 )
+from tutor.content.item_bank import bundle_leakage_problems
+from tutor.llm.coaching import CoachPort, CoachingContext, CoachingMessage
 from tutor.schemas.assessment import PlotPromptSegment
 from tutor.orchestrator.machine import Interaction
 
@@ -228,6 +231,8 @@ class V2SessionStore:
         metrics_sink: MetricsSink | None = None,
         metric_dimensions: V2MetricDimensions | None = None,
         metric_dimensions_resolver: Callable[[Any], V2MetricDimensions] | None = None,
+        coach: CoachPort | None = None,
+        coaching_safety_secret: bytes | str | None = None,
         max_sessions: int = 500,
         max_receipts_per_session: int = 256,
         max_episodes_per_learner: int = 32,
@@ -250,6 +255,13 @@ class V2SessionStore:
             capability_manifest_version="unknown",
         )
         self._metric_dimensions_resolver = metric_dimensions_resolver
+        self._coach = coach
+        safety_secret = coaching_safety_secret or b"margin-v2-coaching-safety-v1"
+        self._coaching_safety_secret = (
+            safety_secret.encode("utf-8")
+            if isinstance(safety_secret, str)
+            else safety_secret
+        )
         self._max_sessions = max_sessions
         self._max_receipts = max_receipts_per_session
         self._max_episodes_per_learner = max_episodes_per_learner
@@ -1135,6 +1147,15 @@ class V2SessionStore:
             previous_exposures = self._exposure_records(working)
             additions, widget_attempt = self._invoke(working, action)
             new_events = list(getattr(working.learner, "events", ()))[event_count:]
+            coaching = self._coaching_addition(
+                handle,
+                working,
+                action,
+                additions,
+                new_events,
+            )
+            if coaching is not None:
+                additions = self._insert_coaching(additions, coaching)
             new_exposures = self._changed_exposures(
                 previous_exposures, self._exposure_records(working)
             )
@@ -1980,6 +2001,221 @@ class V2SessionStore:
             )
         return entries
 
+    def _coaching_addition(
+        self,
+        handle: V2SessionHandle,
+        orchestrator: Any,
+        action: SessionAction,
+        additions: list[dict[str, Any]],
+        new_events: list[Any],
+    ) -> dict[str, Any] | None:
+        """Generate prose from post-score facts without granting state authority."""
+
+        if (
+            self._coach is None
+            or handle.content_mode.effective != "llm_coaching"
+            or not isinstance(action, (AnswerAction, WidgetAttemptAction))
+        ):
+            return None
+        event = next(
+            (
+                candidate
+                for candidate in new_events
+                if str(getattr(candidate, "surface", ""))
+                in {"diagnostic", "guided_widget", "checkin", "capstone"}
+            ),
+            None,
+        )
+        if event is None:
+            # Invalid/time-out answers and uncounted widget attempts remain
+            # deterministic and do not expose user input to a provider.
+            return None
+        kc_ids = list(getattr(event, "kc_ids", ()))
+        if len(kc_ids) != 1:
+            return None
+        kc_id = str(kc_ids[0])
+        nodes = getattr(orchestrator, "_nodes", self._graph_nodes)
+        node = nodes.get(kc_id)
+        skill_label = str(getattr(node, "name", "") or self._skill_name(kc_id, nodes))
+        transition = self._coaching_transition(orchestrator, additions)
+        misconception, remediation = self._reviewed_coaching_context(
+            orchestrator,
+            kc_id,
+            getattr(event, "misconception_id", None),
+        )
+        learner = getattr(orchestrator, "learner", None)
+        mastery_status = "not_assessed"
+        mastery = getattr(learner, "mastery_status", None)
+        if callable(mastery):
+            candidate_status = str(mastery(kc_id))
+            if candidate_status in {
+                "confirmed_mastered",
+                "confirmed_gap",
+                "uncertain",
+            }:
+                mastery_status = candidate_status
+        raw_phase = getattr(orchestrator, "phase", "stopped")
+        phase = str(getattr(raw_phase, "value", raw_phase))
+        if phase not in {"diagnose", "plan", "teach", "capstone", "done", "stopped"}:
+            phase = "stopped"
+        context = CoachingContext(
+            phase=phase,
+            surface=str(getattr(event, "surface", "diagnostic")),
+            skill_label=skill_label,
+            outcome="correct" if bool(getattr(event, "correct", False)) else "incorrect",
+            assisted=bool(getattr(event, "assisted", False)),
+            attempt_number=int(getattr(event, "attempt_number", 1) or 1),
+            mastery_status=mastery_status,
+            transition=transition,
+            reviewed_misconception=misconception,
+            reviewed_remediation=remediation,
+        )
+        safety_identifier = hmac.new(
+            self._coaching_safety_secret,
+            handle.learner_id.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        try:
+            message = self._coach.coach(
+                context,
+                safety_identifier=safety_identifier,
+                deep_explanation=transition in {"begin_lesson", "begin_remediation"},
+            )
+        except Exception as exc:  # noqa: BLE001 - coaching is never authoritative
+            logger.warning(
+                "coaching adapter failed closed error_type=%s",
+                type(exc).__name__,
+            )
+            self.record_metric(
+                "coaching_fallbacks",
+                metric_dimensions=handle.metric_dimensions,
+            )
+            return None
+        if not isinstance(message, CoachingMessage):
+            self.record_metric(
+                "coaching_fallbacks",
+                metric_dimensions=handle.metric_dimensions,
+            )
+            return None
+        candidates = self._coaching_leakage_candidates(orchestrator, kc_id)
+        try:
+            leakage = bundle_leakage_problems([message.text], candidates)
+        except Exception as exc:  # noqa: BLE001 - indeterminate means reject
+            logger.warning(
+                "coaching leakage gate rejected indeterminate output error_type=%s",
+                type(exc).__name__,
+            )
+            leakage = ["indeterminate"]
+        if leakage:
+            self.record_metric(
+                "coaching_leakage_rejections",
+                metric_dimensions=handle.metric_dimensions,
+            )
+            return None
+        self.record_metric(
+            "coaching_messages_generated",
+            metric_dimensions=handle.metric_dimensions,
+        )
+        return {
+            "role": "tutor",
+            "kind": "coach",
+            "text": message.text,
+            "interaction_key": action.pending_key,
+            "kc_id": kc_id,
+            "generated_by": {
+                "provider": message.provider,
+                "model": message.model,
+                "policy_version": message.policy_version,
+                "focus": message.focus,
+            },
+        }
+
+    @staticmethod
+    def _coaching_transition(
+        orchestrator: Any,
+        additions: list[dict[str, Any]],
+    ) -> str:
+        for addition in additions:
+            blocks = addition.get("content_blocks") or ()
+            if any(block.get("kind") == "remediation" for block in blocks):
+                return "begin_remediation"
+            if addition.get("kind") == "lesson":
+                return "begin_lesson"
+        raw_phase = getattr(orchestrator, "phase", "stopped")
+        phase = str(getattr(raw_phase, "value", raw_phase))
+        if phase == "done":
+            return "goal_complete"
+        if phase == "stopped":
+            return "progress_saved"
+        if any(
+            addition.get("kind") in {"probe", "checkin", "capstone"}
+            for addition in additions
+        ):
+            return "continue_assessment"
+        return "continue_practice"
+
+    @staticmethod
+    def _reviewed_coaching_context(
+        orchestrator: Any,
+        kc_id: str,
+        misconception_id: str | None,
+    ) -> tuple[str | None, str | None]:
+        if not misconception_id:
+            return None, None
+        catalog = getattr(orchestrator, "_pedagogy_catalog", None)
+        pack = getattr(catalog, "pack_by_kc", {}).get(kc_id) if catalog else None
+        for misconception in getattr(pack, "misconceptions", ()):
+            if misconception.id == misconception_id:
+                return misconception.description, misconception.remediation_hint
+        return None, None
+
+    @staticmethod
+    def _coaching_leakage_candidates(
+        orchestrator: Any,
+        kc_id: str,
+    ) -> list[Any]:
+        bank = getattr(orchestrator, "_bank", None)
+        state = getattr(orchestrator, "exposure_state", None)
+        if bank is None or state is None:
+            return []
+        exposed_families = {
+            record.family_id for record in getattr(state, "exposures", ())
+        }
+        pending = getattr(orchestrator, "pending", None)
+        if callable(pending):
+            pending = pending()
+        if pending is None:
+            pending = getattr(orchestrator, "_pending", None)
+        pending_item_id = getattr(pending, "item_id", None)
+        return [
+            item
+            for item in getattr(bank, "items", ())
+            if item.kc_id == kc_id
+            and (
+                item.family_id not in exposed_families
+                or item.item_id == pending_item_id
+            )
+        ]
+
+    @staticmethod
+    def _insert_coaching(
+        additions: list[dict[str, Any]],
+        coaching: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Place coaching after verdict copy and before the next interaction."""
+
+        result = [dict(addition) for addition in additions]
+        insertion = next(
+            (
+                index
+                for index, addition in enumerate(result)
+                if addition.get("kind") in {"probe", "lesson", "checkin", "capstone"}
+            ),
+            len(result),
+        )
+        result.insert(insertion, coaching)
+        return result
+
     def _action_entries(
         self,
         transcript: list[TranscriptEntry],
@@ -2055,6 +2291,7 @@ class V2SessionStore:
                     ),
                     widget_status=addition.get("widget_status"),
                     widget_attempt_number=addition.get("widget_attempt_number"),
+                    generated_by=addition.get("generated_by"),
                 )
             )
         return entries

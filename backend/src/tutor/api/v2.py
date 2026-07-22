@@ -30,6 +30,7 @@ from tutor.api.v2_metrics import MetricsSink, V2MetricDimensions
 from tutor.api.v2_schemas import (
     APIError,
     CatalogRolloutView,
+    CoachingCapabilityView,
     ContentModeView,
     CreateSessionV2Request,
     GoalCatalog,
@@ -77,6 +78,7 @@ from tutor.api.v2_versions import (
 from tutor.content.exposure import AllocationError
 from tutor.learner.evidence_trust import EvidenceTrustPolicy
 from tutor.learner.params import DEFAULT_PARAMS_V2
+from tutor.llm.coaching import CoachPort
 from tutor.orchestrator.session_v2 import VerificationCapacityUnavailable
 from tutor.schemas.assessment import ItemBankDocument
 from tutor.schemas.kc import GraphDocument
@@ -376,17 +378,18 @@ def _default_factory(
     widget_capabilities: dict[str, Any] | None = None,
     release_id: str | None = None,
     release_digest: str | None = None,
+    coaching_available: bool = False,
 ) -> tuple[Any, ContentModeView]:
     """Build the best available deterministic v2 machine.
 
-    Curated mode is always available.  LLM coaching is explicitly reported as
-    a fallback until a v2 coaching adapter can preserve atomic replay.
+    Curated mode is always available. LLM coaching becomes effective only when
+    the v2 store has a configured, isolated coaching adapter.
     """
     fallback = None
     effective = request.content_mode
-    if request.content_mode == "llm_coaching":
+    if request.content_mode == "llm_coaching" and not coaching_available:
         effective = "curated"
-        fallback = "LLM coaching is unavailable in this v2 runtime; using curated content."
+        fallback = "AI coaching is unavailable; using reviewed lesson content."
     from tutor.orchestrator.session_v2 import SessionOrchestratorV2
 
     orchestrator = SessionOrchestratorV2(
@@ -428,6 +431,8 @@ def install_v2_routes(
     release_quarantine: ReleaseQuarantineProvider | None = None,
     release_quarantine_max_age: timedelta | None = None,
     request_admission_gate: RequestAdmissionGate | None = None,
+    coach: CoachPort | None = None,
+    coaching_required: bool = False,
 ) -> V2SessionStore:
     """Install API v2 without changing any v1 route or response model."""
     token_secret = _resume_secret(resume_token_secret)
@@ -663,9 +668,23 @@ def install_v2_routes(
                 widget_capabilities=active_widget_manifest,
                 release_id=(active_release.release_id if active_release else None),
                 release_digest=active_release_digest,
+                coaching_available=coach is not None,
             )
     else:
         factory = orchestrator_factory
+
+    def enforce_coaching_availability(
+        content_mode: ContentModeView,
+    ) -> ContentModeView:
+        """Never claim live coaching when no isolated coach is configured."""
+
+        if content_mode.effective != "llm_coaching" or coach is not None:
+            return content_mode
+        return ContentModeView(
+            requested=content_mode.requested,
+            effective="curated",
+            fallback_reason="AI coaching is unavailable; using reviewed lesson content.",
+        )
 
     def apply_runtime_widget_capabilities(orchestrator: Any) -> None:
         setter = getattr(orchestrator, "set_runtime_widget_capabilities", None)
@@ -724,6 +743,8 @@ def install_v2_routes(
         metrics_sink=metrics_sink,
         metric_dimensions=active_metric_dimensions,
         metric_dimensions_resolver=session_metric_dimensions,
+        coach=coach,
+        coaching_safety_secret=token_secret,
     )
 
     @app.middleware("http")
@@ -857,6 +878,16 @@ def install_v2_routes(
         observed_gate = gate_snapshot or observe_mutation_gate()
         release_error = release_safety_error(active_release_digest)
         percentage = flags.student_rollout_percent
+        coaching_capability = CoachingCapabilityView(
+            available=coach is not None,
+            provider="openai" if coach is not None else None,
+            model="gpt-5.6" if coach is not None else None,
+            reason=(
+                "GPT-5.6 coaching is available; scoring remains deterministic."
+                if coach is not None
+                else "This deployment is using reviewed lesson content without AI coaching."
+            ),
+        )
         if not assignment.selected:
             reason = (
                 "New pilot sessions are not currently being admitted."
@@ -868,6 +899,7 @@ def install_v2_routes(
             )
             return GoalCatalog(
                 goals=[],
+                coaching=coaching_capability,
                 rollout=CatalogRolloutView(
                     status="not_selected",
                     reason=reason,
@@ -881,6 +913,7 @@ def install_v2_routes(
         ):
             return GoalCatalog(
                 goals=[],
+                coaching=coaching_capability,
                 rollout=CatalogRolloutView(
                     status="paused",
                     reason=(
@@ -893,6 +926,7 @@ def install_v2_routes(
         if not eligible_goals:
             return GoalCatalog(
                 goals=[],
+                coaching=coaching_capability,
                 rollout=CatalogRolloutView(
                     status="content_unavailable",
                     reason=(
@@ -904,6 +938,7 @@ def install_v2_routes(
             )
         return GoalCatalog(
             goals=eligible_goals,
+            coaching=coaching_capability,
             rollout=CatalogRolloutView(
                 status="available",
                 reason="This browser is included in the current pilot rollout.",
@@ -1625,6 +1660,7 @@ def install_v2_routes(
             orchestrator, content_mode = factory(
                 active_graph, goal.target_kc, profile, request_body
             )
+            content_mode = enforce_coaching_availability(content_mode)
             if active_release is None:
                 raise ValueError("active release identity is unavailable")
             bind_release_identity(orchestrator, active_release)
@@ -1944,6 +1980,9 @@ def install_v2_routes(
                     ),
                     replacement_request,
                 )
+                replacement_content_mode = enforce_coaching_availability(
+                    replacement_content_mode
+                )
                 if active_release is None:
                     raise ValueError("active release identity is unavailable")
                 bind_release_identity(replacement_orchestrator, active_release)
@@ -2230,6 +2269,16 @@ def install_v2_routes(
     app.state.v2_persistence = persistence
     app.state.v2_goal_catalog = GoalCatalog(
         goals=eligible_goals,
+        coaching=CoachingCapabilityView(
+            available=coach is not None,
+            provider="openai" if coach is not None else None,
+            model="gpt-5.6" if coach is not None else None,
+            reason=(
+                "GPT-5.6 coaching is available; scoring remains deterministic."
+                if coach is not None
+                else "This deployment is using reviewed lesson content without AI coaching."
+            ),
+        ),
         rollout=CatalogRolloutView(
             status="available" if eligible_goals else "content_unavailable",
             reason="Internal content-readiness view.",
@@ -2310,6 +2359,8 @@ def install_v2_routes(
             active_request_admission,
             NoopRequestAdmissionGate,
         )
+        coaching_configured = coach is not None
+        coaching_ready = coaching_configured or not coaching_required
         return {
             "student_stack_enabled": flags.student_stack_enabled,
             "content_ready": content_ready,
@@ -2317,6 +2368,9 @@ def install_v2_routes(
             "telemetry_healthy": telemetry_healthy,
             "telemetry_dropped_count": telemetry_dropped_count,
             "request_admission_configured": request_admission_configured,
+            "coaching_configured": coaching_configured,
+            "coaching_required": coaching_required,
+            "coaching_ready": coaching_ready,
             "mutations_paused": effective_pause,
             "safety_state_available": safety_state_available,
             "active_release_quarantined": active_release_quarantined,
@@ -2327,6 +2381,7 @@ def install_v2_routes(
                 and safety_state_available
                 and not active_release_quarantined
                 and telemetry_healthy
+                and coaching_ready
             ),
             "mutation_gate": mutation_gate_view(gate_snapshot),
             "release_quarantine": {

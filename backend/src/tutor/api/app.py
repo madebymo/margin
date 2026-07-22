@@ -51,6 +51,7 @@ from tutor.verify import close_verifier_pool
 from tutor.db.migrate_session_v2 import schema_migration_status
 from tutor.db.persistence import PersistenceService
 from tutor.llm.client import LLMError
+from tutor.llm.coaching import CoachPort, OpenAIResponsesCoach
 from tutor.orchestrator.machine import Interaction, SessionOrchestrator
 from tutor.schemas.kc import GraphDocument
 from tutor.schemas.learner import LearnerProfile
@@ -66,6 +67,8 @@ _V2_METRICS_SINK_FACTORY_ENV = "TUTOR_V2_METRICS_SINK_FACTORY"
 _V2_MUTATION_GATE_FACTORY_ENV = "TUTOR_V2_MUTATION_GATE_FACTORY"
 _V2_RELEASE_QUARANTINE_FACTORY_ENV = "TUTOR_V2_RELEASE_QUARANTINE_FACTORY"
 _V2_REQUEST_ADMISSION_FACTORY_ENV = "TUTOR_V2_REQUEST_ADMISSION_FACTORY"
+_V2_OPENAI_COACHING_ENV = "TUTOR_OPENAI_COACHING"
+_V2_OPENAI_COACHING_REQUIRED_ENV = "TUTOR_OPENAI_COACHING_REQUIRED"
 _DEFAULT_DYNAMIC_MUTATION_GATE_MAX_AGE = timedelta(seconds=60)
 
 
@@ -153,6 +156,7 @@ def create_app(
     v2_release_quarantine: ReleaseQuarantineProvider | None = None,
     v2_release_quarantine_max_age: timedelta | None = None,
     v2_request_admission_gate: RequestAdmissionGate | None = None,
+    v2_coach: CoachPort | None = None,
     v2_active_release_bundle: str | Path | None = None,
     v2_active_release_sha256: str | None = None,
     trusted_hosts: tuple[str, ...] | None = None,
@@ -249,6 +253,29 @@ def create_app(
     app.state.persistence = persistence
     v2_flags = V2FeatureFlags.from_environment()
     app.state.v2_feature_flags = v2_flags
+    coaching_required = os.environ.get(
+        _V2_OPENAI_COACHING_REQUIRED_ENV, ""
+    ).lower() in {"1", "true", "yes"}
+    coaching_enabled = coaching_required or os.environ.get(
+        _V2_OPENAI_COACHING_ENV, ""
+    ).lower() in {"1", "true", "yes"}
+    resolved_v2_coach = v2_coach
+    if v2_flags.api_session_v2 and resolved_v2_coach is None and coaching_enabled:
+        try:
+            resolved_v2_coach = OpenAIResponsesCoach()
+        except Exception as exc:  # noqa: BLE001 - configuration remains private
+            logger.error(
+                "OpenAI coaching startup failed error_type=%s",
+                type(exc).__name__,
+            )
+            if coaching_required:
+                raise RuntimeError(
+                    "required OpenAI coaching could not be initialized"
+                ) from None
+    if resolved_v2_coach is not None and callable(
+        getattr(resolved_v2_coach, "close", None)
+    ):
+        runtime_resources.append(resolved_v2_coach)
     redis_settings: RedisFleetSettings | None = None
 
     def builtin_redis() -> tuple[object, RedisFleetSettings]:
@@ -586,6 +613,7 @@ def create_app(
             "request_admission_configured": bool(
                 v2_readiness.get("request_admission_configured")
             ),
+            "coaching_ready": bool(v2_readiness.get("coaching_ready", True)),
             "resume_restoration_state_available": bool(
                 v2_readiness.get("resume_restoration_state_available")
             ),
@@ -719,6 +747,8 @@ def create_app(
             release_quarantine=resolved_v2_release_quarantine,
             release_quarantine_max_age=resolved_v2_release_quarantine_max_age,
             request_admission_gate=resolved_v2_request_admission,
+            coach=resolved_v2_coach,
+            coaching_required=coaching_required,
             active_release_bundle=v2_active_release_bundle,
             active_release_sha256=v2_active_release_sha256,
         )

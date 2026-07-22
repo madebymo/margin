@@ -37,7 +37,7 @@ pilot = [
     "redis>=5.0",
 ]
 llm = [
-    "openai>=1.40",
+    "openai>=2.46,<3",
 ]
 llm-anthropic = [
     "anthropic>=0.40",
