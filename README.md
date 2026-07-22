@@ -6,9 +6,9 @@ confirmed mastery, confirmed gaps, and uncertainty separate, teaches a short
 path of skills, and finishes with an independently authored goal problem.
 
 The trustworthy-session v2 architecture keeps mathematical truth in reviewed,
-versioned content and deterministic verification. LLMs may eventually provide
-coaching language, but they do not author mastery evidence or choose the
-correct answer.
+versioned content and deterministic verification. An optional GPT-5.6 coach
+may adapt the language after scoring, but it cannot author mastery evidence,
+choose the correct answer, or change the learning route.
 
 ## Built with Codex and GPT-5.6
 
@@ -27,13 +27,15 @@ learner interface, deployment runbook, and diagnosis simulations. The work was
 split into reviewable commits and checked with focused unit, concurrency,
 recovery, browser, accessibility, and simulation suites.
 
-This is a build-process claim, not a scoring claim. GPT-5.6 is not Margin's
-mathematical judge: mastery-bearing items come from versioned curated content,
-expected answers remain server-side, and deterministic verification produces
-evidence. The optional runtime LLM adapters are separate from the Codex
-development workflow, and the pilot interface currently exposes curated mode
-only. The accompanying [hackathon video script](HACKATHON_VIDEO_SCRIPT.md)
-includes the on-screen evidence and disclosure beats for this workflow.
+This is not a scoring claim. GPT-5.6 is not Margin's mathematical judge:
+mastery-bearing items come from versioned curated content, expected answers
+remain server-side, and deterministic verification produces evidence. Runtime
+coaching uses a separate, stateless OpenAI Responses API adapter. It receives
+only sanitized post-score facts, returns strict attributed prose, and falls
+back to the already-selected curated transition on any provider, schema,
+capacity, or leakage failure. The accompanying
+[hackathon video script](HACKATHON_VIDEO_SCRIPT.md) includes the on-screen
+evidence and disclosure beats for this workflow.
 
 ## Repository
 
@@ -129,15 +131,21 @@ The terminal v1 compatibility demo remains available:
 python -m tutor.cli
 ```
 
-LLM dependencies are optional:
+GPT-5.6 coaching is optional in development:
 
 ```bash
 pip install -e "backend[llm]"
 export OPENAI_API_KEY=...
+export TUTOR_OPENAI_COACHING=1
 ```
 
-`llm_coaching` is accepted by the v2 intake contract but currently reports an
-explicit fallback to `curated`; it is not presented as an LLM runtime failure.
+When configured, `/api/v2/goals` advertises the coaching capability and the UI
+offers **Curated math + GPT-5.6 coaching — OpenAI explains; Margin scores.**
+Routine turns use `gpt-5.6-terra`; lesson/remediation transitions use
+`gpt-5.6-sol`. Responses are requested with strict Structured Outputs,
+`store=false`, no tools, bounded concurrency, and a short timeout. Set
+`TUTOR_OPENAI_COACHING_REQUIRED=1` for the judge deployment so startup and
+readiness fail rather than silently presenting a curated-only submission.
 
 ## API v2
 
@@ -324,6 +332,24 @@ changes no review manifest, and publishes no release. Independent reviewers
 record their own decisions through the separate review workflow after inspecting
 the packet's exact digests.
 
+After the 52 family and four pedagogy source reviews are genuinely complete,
+bind those decisions to the exact compiled Product/Quotient candidate without
+creating an approval:
+
+```bash
+python -m tutor.content.product_quotient_attestations \
+  --item-bank /private/reviewed-product-quotient-bank.json \
+  --pedagogy-catalog /private/reviewed-product-quotient-pedagogy.json \
+  --release-id release.product-quotient.v1 \
+  --check \
+  --out /private/product-quotient-attestation-scaffold.json
+```
+
+The output is a pending-only schema that publication cannot consume. Reviewers
+must explicitly fill every family, KC, and exact-release judgment. Passing the
+filled file back with `--filled-scaffold` validates that no digest-bound field
+changed and only then emits a schema-v2 `ReleaseReviewManifest`.
+
 Every packaged wave is deliberately marked AI-assisted and unreviewed. These
 automated integrity checks do not establish instructional validity or
 psychometric family independence. Human reviewers must approve construct
@@ -359,6 +385,8 @@ export TUTOR_REDIS_URL='rediss://redis.example.invalid/0'
 export TUTOR_NETWORK_HMAC_SECRET='replace-with-an-independent-32-byte-secret'
 export TUTOR_TRUSTED_PROXY_CIDRS='10.0.0.0/8'
 export OTEL_EXPORTER_OTLP_ENDPOINT='https://otel.example.invalid'
+export OPENAI_API_KEY='load-from-secret-manager'
+export TUTOR_OPENAI_COACHING_REQUIRED=1
 export TUTOR_PILOT_PRODUCTION=1
 export TUTOR_ENABLE_API_SESSION_V2=1
 export TUTOR_ENABLE_CONTENT_ALLOCATION_V2=1
@@ -654,8 +682,16 @@ headed visual review in the target deployment environment.
 
 ## Remaining pilot blockers
 
-- Author and independently review complete item-bank coverage for the five
-  goals and their 22 hard prerequisites; the shipped bank remains a draft.
+- Independently review the Product/Quotient packet (52 families and four
+  pedagogy packs), resolve its 18 family-independence warnings, record four KC
+  attestations, and attest the exact bundle. The repository now generates a
+  non-publishable, digest-bound pending scaffold and refuses to infer any of
+  those 61 human decisions.
+- Author and independently review the remaining catalog coverage needed for
+  all five goals and 22 hard prerequisites; the shipped bank remains a draft.
+- Enable billing for the target GCP project, then provision Cloud Run,
+  PostgreSQL 16, Redis 7, secrets, and the telemetry endpoint. No temporary
+  tunnel or test fixture qualifies as the submission deployment.
 - Collect and review diagnosis shadow metrics on representative legacy
   traffic, then approve the 5/25/100 canary progression. Stable admission and
   failure-isolated shadowing are implemented, but promotion remains an
