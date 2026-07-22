@@ -146,7 +146,7 @@ from tutor.verify.checker import (
     verify_answer,
 )
 
-COMPILER_VERSION = "ftc-item-compiler-v1"
+COMPILER_VERSION = "ftc-item-compiler-v2"
 AUTHOR = "AI-assisted implementation draft (unreviewed)"
 
 GRAPH_KC = "kc.fun.graph_reading"
@@ -1394,7 +1394,11 @@ def _derive_antiderivative(task: FTCMathTask) -> DerivedTask | None:
     polynomial = task.polynomial
     integrand = _derivative_expression(polynomial)
     expected = _antiderivative_expression(polynomial)
-    answer = AntiderivativeAnswerSpec(expected=f"{expected}+C", variable="x")
+    answer = AntiderivativeAnswerSpec(
+        expected=f"{expected}+C",
+        variable="x",
+        require_explicit_constant=True,
+    )
     if isinstance(task, AntiderivativeCorrectionTask):
         wrong_candidate = _antiderivative_wrong(polynomial, task.mistake)
         instruction = "Correct the proposed antiderivative and give the full family."

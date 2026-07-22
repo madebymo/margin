@@ -120,8 +120,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.capstone.01",
         "source_revision": 1,
-        "source_digest": "55843bedb37ac06daf721694977435d51b362bee37bf4e381a2f82936a263079",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "42620d79ec6443b11dcfe07c6ba2dd974aa0a1242851954c98843864b1cb4291",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -252,8 +252,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.capstone.02",
         "source_revision": 1,
-        "source_digest": "f034e3180263405e134d4f45aab574cf2aba03061949418dacb5ee11d2fbf3fc",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "68253a063fb2bb4a92c982ec5259e3d7f9e27bc54dc28d91ff9e383b419440f6",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -385,8 +385,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.checkin.01",
         "source_revision": 1,
-        "source_digest": "0f2ace0db0c05d7bd22f1f22e48a5bfab7d0dea1ffefd4f2dadeaaf444db5491",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "786a0bc0eabb5c125f45b6082a61febf4772de2964ffea4953597dca1080b8d0",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -509,8 +509,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.checkin.02",
         "source_revision": 1,
-        "source_digest": "6064fe81848f8845935dc8826154c73981ad7985902f82ae43d1edce01a3e2dd",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "918e883fdf4dc0dfbe60085e891419bbf623bf4e3fd32690cae9cf594fbbeccb",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -634,8 +634,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.checkin.03",
         "source_revision": 1,
-        "source_digest": "feae7fe469e6276bd05319e35d6a1a25c911b0880f184136e321ba2286ab45e4",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "153dc5a221389321365a3f9ac7b35834c7ab8d5aa4fd204e64cd3cf996ef93b5",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -766,8 +766,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.checkin.04",
         "source_revision": 1,
-        "source_digest": "4ccb24d558e5d87751ccbb54e9a6d53efb059b1ad7db7ae6347d88b2e854a500",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "1c5880c630d6091332740cda8565f620a6796499c0897e369d5e3c0b54443c51",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -890,8 +890,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.checkin.05",
         "source_revision": 1,
-        "source_digest": "442cae8b313f744d6952d35611427e9c652d1492589e448016c8c86c815fe6b9",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "0481cbf7ff186a166083cf7f0df45797a657d21a110a99c3de8d4aa386547364",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1014,8 +1014,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "237a1cf1715685d75435976cd134d635466e769d68e0df0c60cf661382874078",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "b3bbadd305fe48980a82714c93d67d43635eb19bd71bdb02347b6c2fb0e837fc",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1138,8 +1138,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "f52648fc4039d40687192fa6d3eada4821fad9bfbec1d7a5c0613e4282c4e301",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "190505bb7824623af209d0a2e9597f345e9d1dc6be02ae0b0e591601802865a8",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1263,8 +1263,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "3534ffb12cadfa87477fa886cb34c3d23cd48201c722dd4157d07f983358ff71",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "fd0dcbad12f4228da1377e972a44e059b98ee2bc04bf9f3d453aebad815dd9e2",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1395,8 +1395,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "e54dbb5f843b0e9f4c81bc082229b438f9f9b39e42e008c62635ae8120d6389e",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "25b912fe29827c1a0cd0ac320aaa63b2fdcbe227cc6ecf49a20b9421ca1f1c8a",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1528,8 +1528,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "12c49387dd86cf8cfac5a1e3b97806160fc7921eb38a0956f1d9cb300ee3d8f8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "7b14f7b95d3a8f3b1bf293c75e74b6045987782462fb56ece1b441e80aa21a16",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1721,8 +1721,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.graph_reading.worked_example.01",
         "source_revision": 1,
-        "source_digest": "6fb2875defdecb5da5b191d77e19ade3b6c6dfaee3c0a4e5523b9bdea2673ec6",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "77919bec517334dde84c718c643b6b3bdf98d88b7b17c78baf9b719bc7d3ca04",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1786,6 +1786,7 @@
         "expected": "15*x^6-14*x^3+9*x+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -1796,8 +1797,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.capstone.01",
         "source_revision": 1,
-        "source_digest": "7d617de91c05da73497f88f26cfbfbefffaae337b147940a887974fc68074a05",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "c0798361a190aee86250d40810c70151ee9c3931572da6a33243fdf3788e37d5",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1866,6 +1867,7 @@
         "expected": "-14*x^6+10*x^5-11*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -1876,8 +1878,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.capstone.02",
         "source_revision": 1,
-        "source_digest": "29503983d0e28a66121779328cc951394042c0767c17545004b0af5b9e4e1474",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5692e64a3aa3d8ecab1c21739e92b6871766bb5c2c0edeb42fad8f0270afc868",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -1946,6 +1948,7 @@
         "expected": "14*x^5+9*x^3-8*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -1956,8 +1959,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.checkin.01",
         "source_revision": 1,
-        "source_digest": "9704fade841b7508afa2f8077ce0263189a214e6f42d0f7c6bc0c0ac61946bc7",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5538bdae5df7a74e32db319b25d15614503ebbb721894d19159436a3f40b7d24",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2026,6 +2029,7 @@
         "expected": "10*x^6-11*x^4+7*x+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2036,8 +2040,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.checkin.02",
         "source_revision": 1,
-        "source_digest": "50689e4e232b87609476f6e2ccd129c9c2ca9c1dc6960e7d0a3b9e8709b872e6",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "71e6c307b415760103bc53e26ecbf6bf7c86567470182dabf6b3e54d43f2bc06",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2106,6 +2110,7 @@
         "expected": "-13*x^6+12*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2116,8 +2121,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.checkin.03",
         "source_revision": 1,
-        "source_digest": "948639fd9b18641d3ff75ed24ebb3f7bf82d7552ba626d94f77f5ac0e20736d2",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "62bb7053ca67b26788001e172151ca62ae3ee1525fa7d09b0cba81bc21628fe7",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2192,6 +2197,7 @@
         "expected": "15*x^5-9*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2202,8 +2208,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.checkin.04",
         "source_revision": 1,
-        "source_digest": "41bf9e587cf3578b4f75e4173b23cde9fe3f24fe3e1a9aa23d252e9f3a5eb5f8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "1b3c67f4b9a9a35dbef24a8eadd6a72741508c1be8d170570c37aa2b996f18b5",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2272,6 +2278,7 @@
         "expected": "-12*x^5+11*x^3-6*x+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2282,8 +2289,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.checkin.05",
         "source_revision": 1,
-        "source_digest": "413c662cf9d2b0e907f7f83ff80597e3550cebd6e0061840ea1ee2318fa67596",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5b461b334c590275e49464bc1eb4c38c36d0997104cb462a87d30235109be331",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2352,6 +2359,7 @@
         "expected": "11*x^6+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2362,8 +2370,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "d60e3f84f66665b8ec6a9a0f6c3137ea54a1335fa1b0a34fbb4a1569f742a483",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "991ed6f66d5bca6b64b9e6ff2b487e8f6d85bf4c9eea4d501646ffbb025bf3cd",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2432,6 +2440,7 @@
         "expected": "13*x^5-7*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2442,8 +2451,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "3f2bc121160a063acbac1513286ecb03591a5701b520f0ea507cbab109c80877",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "9d4af00a9a3d4ea5cd1c09dfa8ab91b88ba00d017384a3b0195f43debb7faf07",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2518,6 +2527,7 @@
         "expected": "9*x^4+8*x^3+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2528,8 +2538,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "1ebb85963eb5f6b90360438c05db90a654f3c2ff7f63d9744535d846f111bd72",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f668954a206eb876b590b3bc175f50517f494c0af897af758d2226d6e4596e0b",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2598,6 +2608,7 @@
         "expected": "12*x^6-5*x^3+6*x+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2608,8 +2619,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "61005760ae96b9e1c3392524ff587c36fd28930c2801237e16ff7f2abf2b72c1",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "6d799754079b56c09828c3b15a1387f537006af88531fa275dc346d697282373",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2678,6 +2689,7 @@
         "expected": "8*x^6+13*x^4-10*x^2+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2688,8 +2700,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "19f0159dc0ccc91add08411f39d85a7660e6a6fde14357d00ad5575b9523a633",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "3a0dd5aa840c1dc278c3c0d22b07948594c5986a346d47bf441d3c271b3474ce",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2829,6 +2841,7 @@
         "expected": "7*x^5+15*x^3+C",
         "variable": "x",
         "variables": [],
+        "require_explicit_constant": true,
         "functions": []
       },
       "review_status": "draft",
@@ -2839,8 +2852,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.antiderivatives.worked_example.01",
         "source_revision": 1,
-        "source_digest": "95e1a3fdfea3075307bda0f834e7470dc97f1b35fda90934c56325ca18cb6338",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "c61ed6a29951b768325c1275a95435fb56fe42ae61a3581b810002ceabd9f84f",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -2937,8 +2950,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.capstone.01",
         "source_revision": 1,
-        "source_digest": "518fcfa7c7ea156ebc1e8fd712a515b93c636e25d77e9ba805bb670ee281a1e2",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "de640c5419186008c8dd769587aefbbab4029e3f012b55b8596eb1574cfef72c",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3037,8 +3050,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.capstone.02",
         "source_revision": 1,
-        "source_digest": "9d6dd6f05fe8e68c8e1be9b8ad97b70ba9a4da2a1c5a92a86e0490aa92f1f8a1",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "d40541974adc13844481b0885ad98c0360c956a02afa47b7a0aea5afefe3f516",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3137,8 +3150,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.checkin.01",
         "source_revision": 1,
-        "source_digest": "a3228c06e59169715c96c4e94d9ec0bf5aceaa02e40a6f55ce1facfbc32d8069",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "809134ca0a70f11973abf6792efa3e996369931c6b4f9ed9fb68a96508c60c85",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3220,8 +3233,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.checkin.02",
         "source_revision": 1,
-        "source_digest": "7eae59ebdc5278e2707b397b078c7db3845e11099e6b1e49b757924af39a2503",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "69cc106a2511b43550aa78e0c73a38a90f04428f3057a3916823ce05821aa29d",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3303,8 +3316,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.checkin.03",
         "source_revision": 1,
-        "source_digest": "ccabcc25d2fcad21190473cc07886f530c919ec8e8285ac26d5f1e02494cf264",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "57fb3b054438e17d00d625d45004c10485a44ab6c18827b5f352486599470066",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3396,8 +3409,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.checkin.04",
         "source_revision": 1,
-        "source_digest": "1bd2da84da35ee43c0ff8ae32d328d2961b609ac6a9470c3f996c56ee6d64d3b",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "38d6c72255935e2d9eab517b98d7a5339f172ce01494870e3fdac665285488c2",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3488,8 +3501,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.checkin.05",
         "source_revision": 1,
-        "source_digest": "1abfae4d129a33861f67caa07c8e96ad14e4661630eb33a65e80655ae4547bd4",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "ea785dd4200b054ff25ce8ce98eaad6981b13f1802c462f846d4abd11736e253",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3566,8 +3579,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "f05b2074158b1283c653e0d9cfb0f6b47a05915d58f858dc85db1a136cc949d8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "2cfeab265a88a261626c4f55c5435bdf39b8551a93b61c45dc108a79c82a90e5",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3649,8 +3662,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "124a3ecb495e7fdb00db8d81111367b1ed4d1ddcf7ab01be2d7be192f430b87b",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "eaf7ab37a31f35a735c7e5bea5dbb75d6ee35c8eef62ae4033ab11d33a360897",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3742,8 +3755,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "f07b7d962027d79672908fa4ff2aa1a509020641b173566d2ed4a31931bc6b72",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "25c65a7c03260d708391fd061e617710951a6cba53ac4f96f44f262194ae506e",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3834,8 +3847,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "93f06fa0d9f9137dd9d113289151ea37e052009792b9852f6a3e585e1c5113b1",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "657a04581efbcc40a033975f3223c0c99865555de52e25c714a0494b27156502",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -3927,8 +3940,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "208b248e665a63a3aeb8ee07d6b7fecb024d637e9dfc8243afb802a6163f74a8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "098ed0f6e94fa23a33c5bbf8179f2736f9979bbeec744230fdfa9efd6127100b",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4056,8 +4069,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.area_under_curve.worked_example.01",
         "source_revision": 1,
-        "source_digest": "1d07ba512624dd75a5eeb48cfae3cc4f372f10c70d6fdab55a6b34212aeaf808",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "a192074813461f8f82560e063d32a62ddbff9e20513e09aec1cfd4c041ef0ee7",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4135,8 +4148,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.capstone.01",
         "source_revision": 1,
-        "source_digest": "63230f179cffcfbe4ce10bafbb63f5d94bf5853dc942d8842c5cfea813d4a9d9",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "c48ba8c3b8a4e52fe92bed2ece77cb666cca7b96f470d2926c9c3bd295ebc292",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4209,8 +4222,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.capstone.02",
         "source_revision": 1,
-        "source_digest": "c4e4212132dba98e22cd755275c50210de877aaaf902dd6c53e34fa382cb7168",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "24d57ea0ed3b455c0b7d5b4c4a0862486f53be4a9d0ff6aed6e894daa2d0b175",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4288,8 +4301,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.checkin.01",
         "source_revision": 1,
-        "source_digest": "a5d3b912afa441302b8902b039d1ea52c42eb8a4002d39271f75030a59c5fc13",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "7e69e9c06ec9abe8c7c6f493d34ecae37fff818d9117306496c56e77a75fd03a",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4362,8 +4375,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.checkin.02",
         "source_revision": 1,
-        "source_digest": "7dd5de9dc5e6c1959aff3aff6e31e8302b162fef5e4f8cb80ce89a443efa6275",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "283946f357d8096b2c31c60ee1c680a744393a0404ea6fd4cc83f4b85f2b89ff",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4435,8 +4448,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.checkin.03",
         "source_revision": 1,
-        "source_digest": "243255bc822792f40a61b94060ac35aec93ca30c6877d26074562a38b6c3221a",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "b5d4128c280104c2469015832504869ba0553175217d653a112bcca500256614",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4509,8 +4522,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.checkin.04",
         "source_revision": 1,
-        "source_digest": "2992d02073f17cead0e6a6ff3d18fc1b93eb1e71139bf3b350e520bf1438e99d",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "9d802c2714cc0ecec029390945e9b89dc96ed462ab414053720776b30f8f4971",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4595,8 +4608,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.checkin.05",
         "source_revision": 1,
-        "source_digest": "5884e83bfeb5624a96262722d51d8cc744e8c70e832bf44783f3d053ff89ee33",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "2b61dc0d7ee195d281da29045dd530c83e9059326a8a2fdb9f711b690ba0fd22",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4668,8 +4681,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "0fa9981baf21c8f480f457f5494fccb60c3e3a0179fe6f3ad34657b09536e993",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "b200ee27abce8a16c7387bfe3e48e26c6fa6f8d45b02cf75cc574c2120f8db0e",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4742,8 +4755,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "6f06c559962de0809aa0424adc18aeb8a670d80150c2101939e79615ddb0f566",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "3cd1bc0d2c143709ac3baa649d73da727d902c55ca885582d1427994be0a074f",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4828,8 +4841,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "0d4fe7f757612929046721869a998ac533f3f7c0d00d1596225ad5e924a6abc1",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "32e2dbceea89fb6c97f48667b79bc1f0161f52abb650a3bb76825cdfda979a03",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4908,8 +4921,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "8574d9f721c776b2d9a347578062964c9fb0328409a470608d487a25daee8bf5",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "2ca4dee7a2b63cb2fea5ce437162672ad667334098e6b0d3e2e2ed7d2465c69a",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -4983,8 +4996,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "280e5ba1e08961ed6e1be7b409de692a28928c68d2bc6e0822b2cee62a443125",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f54f73043fac75cfc9a14189e3668fea71df332407271bacd945e54fa367921b",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5135,8 +5148,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.definite_integral.worked_example.01",
         "source_revision": 1,
-        "source_digest": "acdc172cc3002211192f18ced88693eba641b18706c5617752d24f1199b6023e",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f14dc2ea302d026180f9428539b9c4f10992751119eb9cd3f195ffde3b8c3cbe",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5209,8 +5222,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.capstone.01",
         "source_revision": 1,
-        "source_digest": "3acb46b05c07b36faee92903ab95fffdfbae7529e87755d96c86a99b0f9a3b35",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "7a30e364cb8b4fea43e576fb60bbb838c38c72368638195ae330e2339d8c6c6e",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5305,8 +5318,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.capstone.02",
         "source_revision": 1,
-        "source_digest": "fc3ca0d24b6a6b820be49b07fa5421c04db13e5bece32f1c9c4f490546570d6e",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "0577a4d12221a75d50e629ec6bb606e765891481c4e5877be084ec8a243d6e13",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5384,8 +5397,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.checkin.01",
         "source_revision": 1,
-        "source_digest": "185fffd183b1132d07a40d191d0b6dd5c1499a088b3f1d2431d01ea72d0a66cd",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "c1558689a81f53be97d683ee2268e4f860be793d5831a190e44ec37a03792b62",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5475,8 +5488,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.checkin.02",
         "source_revision": 1,
-        "source_digest": "529c863f981cc214593f252f5f0fc74f0fa8f87bc36f6597880be23ad79bdf39",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "3446967a671951fe5880a96afbdffd7f2072ffe1ac31ec692e5d508aa615eb7e",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5554,8 +5567,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.checkin.03",
         "source_revision": 1,
-        "source_digest": "072f3c96a7b9e84c42041e55be4038f6374aa39f191cf3c0a011ab0f33683d10",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "379b96deab811a78a7aace7a9b8afc732d829ddba5d7bc135c1445d2ac9c6b06",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5632,8 +5645,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.checkin.04",
         "source_revision": 1,
-        "source_digest": "c62132b436e7708b77494fc5994193cff94749ee526e75f174c4ee7a7d355d60",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "93fbf0560fec7da9057abad6ed33f607810c9ecc2fbbec8d4c9ec32e710b1429",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5710,8 +5723,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.checkin.05",
         "source_revision": 1,
-        "source_digest": "cb5af16f88d2c575555878ff76e1793a20a7659f97b88cb5167db873f820106b",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "8a2cc9fcadb16d9d49b39b0aaa0a892f10dad15e0b6033fd9bef8910504123f1",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5794,8 +5807,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "f977142cf92c5e133b067e1b0872bd6f1bfee6a0de24016d6a5bffeaeff9cd47",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "eaf60204cebcb111a9752a856a78b219c8876c316b8c6058327fe6124c675eec",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5872,8 +5885,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "c8af60042019db78b4a5afd4ddac0efe2d5bcd2a914e78950e18769a5c2e37d5",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "22d9686b331948f5bfdbed8e7a7ed5c2c5a22d9ec845d3a013076e666b16c710",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -5945,8 +5958,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "0ad67cf64b998b8ccfb416ab81aecc5d060847a7d61f362b5a4563e7d1073c2b",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "d232e370de523ba2db418dd9e73a06bb5b93ef706e97bb82bddd126743a17b76",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6029,8 +6042,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "89c0954e1b9cf7d67b70bd92770faba1cb732101cc19f4481d145ee0dc570e14",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "15a32ecd2cc893d5a1a51d5b4af46120019440212357c9cb23f24d742a46994c",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6113,8 +6126,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "a9be4c1e32c211f891e7200bbba64012424723b0ed2e5807d91f438c14934a72",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "6d81022312dc898acc611d7c4840a32830ce0399097493b98e0a474793a1c71e",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6233,8 +6246,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.ftc.worked_example.01",
         "source_revision": 1,
-        "source_digest": "212d29729a8cdeab0e034372ae6fc17349544fba1bb82721394b28a5490a41b8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "b2ff11cad34cc264bba234d78cf928fdb1a4d1a91958284811bfe8e8bcd1a491",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6334,8 +6347,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.capstone.01",
         "source_revision": 1,
-        "source_digest": "918b6b3ebde73f7642d9311bd0c561fa5305a93543619c3f00d87b85fcac9a2a",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f53d38fe53421e7c59c12fadfc604209cb40fe92c4e641ee4a2f1e7d0cb1198d",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6426,8 +6439,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.capstone.02",
         "source_revision": 1,
-        "source_digest": "72764d9d32d2946a2de951def765b29227d3d5043e4209f3fa40534777d9ab38",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5108d2e93c02b28d53a7d4830a1e5f4d139a94377d9f8822c3fb323e3f742094",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6517,8 +6530,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.checkin.01",
         "source_revision": 1,
-        "source_digest": "2963318b96cee3d3f043a9b1c64007a994b694f583ce3434437c99f51f5414cf",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "7da0413b5ac9d619408d7fe1cc501649ebe261a509f27892221542dd5ca074d4",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6609,8 +6622,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.checkin.02",
         "source_revision": 1,
-        "source_digest": "23dee2c3d0109bd5780eae177d907b46a4b8a460aa8dcc9b9094ec9e9de157a2",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "59decda061a636352d18ac94422a4f0aa5ba133c58726909ff34cc00c4b25fed",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6704,8 +6717,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.checkin.03",
         "source_revision": 1,
-        "source_digest": "296bd72d46e310270082cdffcd1348efbb8fbb32aee3b0bf6e2315707474b3a8",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "2670d9c03f349adab8f08f94f8602248387b7a4faa08ebe4dd376b019ef32e45",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6799,8 +6812,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.checkin.04",
         "source_revision": 1,
-        "source_digest": "8ec85e2846bccad66c8e50870abf0f7dd0fe5609bc373db30179c5620dfc9aaf",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5bc3c7fec872d05de9253cfe996738d851d5f1a14499f83e5a824a4b44f9fb88",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6890,8 +6903,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.checkin.05",
         "source_revision": 1,
-        "source_digest": "6dadb7f96a7a42061379e2013681ce03880098f93e22d2a48dca9d2503961bc7",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "1d38f56de4a2e15a3c60f999f417a15bb51301b4d4d4be57cf7cdce0bc7c8029",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -6985,8 +6998,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.diagnostic.01",
         "source_revision": 1,
-        "source_digest": "1171d1a53e7dfa30321c1952cb15680ecf4b8f1a0f91be95eab74af3dc127fdb",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f4906e4f78effdc511fd252669b787215097b1f62922420e7cbecf31233f2a41",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -7080,8 +7093,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.diagnostic.02",
         "source_revision": 1,
-        "source_digest": "3f4a51b1890d1804c4e73062d878ceb627b4d7744a86c57da15f626927aa2fb9",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "368c0b8f11d835db6022f219e7512cc78eb5aab3aafc5514a73b0683f01b4d77",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -7171,8 +7184,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.diagnostic.03",
         "source_revision": 1,
-        "source_digest": "41b763cce655ddc768db7116c8a0f7599b3de5ed1ee5eaa53d3db0d4766acbd3",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "dde461568585c8d21f64f696171414188667a1fbf5da9f80b0a85875f9175b1c",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -7272,8 +7285,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.diagnostic.04",
         "source_revision": 1,
-        "source_digest": "d4322aa764eb6f04c97c5e0090544626838c2f2b4e4cd5275a6969b7df559bf7",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "75fa82cb57f0d64732be51e0206d900bb0afc06793be9eac9257b16b8bfb010d",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -7367,8 +7380,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.guided_widget.01",
         "source_revision": 1,
-        "source_digest": "3509ada951802ae9cf458775d53f1dfd9089b6c65842f2a618581ca0d57e3c09",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "f4c2000534309aecbac684af3b9eb56e862947e16b4999468e56579778f83d12",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
@@ -7535,8 +7548,8 @@
         "reviewed_at": null,
         "source_id": "blueprint.ftcv2.riemann_sums.worked_example.01",
         "source_revision": 1,
-        "source_digest": "76742eee4e5f74051faf8af1c7a8c10e7b67483171bb7354e3b1c82ff4280252",
-        "compiler_version": "ftc-item-compiler-v1"
+        "source_digest": "5bc67fc685c42f1bb5f002fa824ba7b1733abba5921147c37a7319ad54fedf67",
+        "compiler_version": "ftc-item-compiler-v2"
       },
       "error_signatures": [
         {
