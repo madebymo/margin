@@ -26,6 +26,7 @@ dev = [
 ]
 api = [
     "fastapi>=0.111",
+    "sentry-sdk[fastapi]>=2.0",
     "uvicorn>=0.30",
 ]
 pilot = [

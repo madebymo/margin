@@ -17,7 +17,11 @@ function errorMessage(payload, response) {
   if (typeof detail === "string" && detail.trim()) {
     return detail;
   }
-  if (detail && typeof detail.message === "string") {
+  if (
+    detail &&
+    typeof detail.message === "string" &&
+    detail.message.trim()
+  ) {
     return detail.message;
   }
   if (typeof payload?.message === "string" && payload.message.trim()) {
