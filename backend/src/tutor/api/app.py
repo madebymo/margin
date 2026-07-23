@@ -34,6 +34,7 @@ from tutor.api.http_safety import (
     RequestBodyLimitMiddleware,
     trusted_hosts_from_environment,
 )
+from tutor.api.observability import configure_sentry
 from tutor.api.store import SessionStore
 from tutor.api.v2 import install_v2_routes
 from tutor.api.v2_admission import RequestAdmissionGate
@@ -58,6 +59,7 @@ from tutor.schemas.learner import LearnerProfile
 from tutor.seed.load_seed import load_graph
 
 load_dotenv()
+configure_sentry()
 
 logger = logging.getLogger("tutor.api")
 
